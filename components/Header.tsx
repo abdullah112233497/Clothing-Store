@@ -175,7 +175,7 @@ export default function Header() {
             href="/"
             className="text-lg font-black tracking-[0.2em] text-black transition-opacity hover:opacity-70 sm:text-xl"
           >
-            WEARWELL
+            WE ARE WELL
           </Link>
 
           {/* Desktop Navigation */}
@@ -198,7 +198,7 @@ export default function Header() {
               href="/shop?category=Women"
               className="relative text-[13px] font-medium text-gray-700 transition hover:text-black"
             >
-              Women
+              Women 
             </Link>
 
             <Link
