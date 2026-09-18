@@ -178,6 +178,9 @@ export default function Header() {
             WEARWELL
           </Link>
 
+
+
+          
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-7 md:flex lg:gap-9">
             <Link
