@@ -169,7 +169,7 @@ export default function Header() {
       {/* Main Header */}
       <div className="border-b border-black/10">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
-          
+
           {/* Logo */}
           <Link
             href="/"
@@ -198,7 +198,7 @@ export default function Header() {
               href="/shop?category=Women"
               className="relative text-[13px] font-medium text-gray-700 transition hover:text-black"
             >
-              Women 
+              Women
             </Link>
 
             <Link
@@ -218,7 +218,7 @@ export default function Header() {
 
           {/* Right Side */}
           <div className="flex items-center gap-4 sm:gap-5">
-            
+
             {/* Search */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}
@@ -229,12 +229,13 @@ export default function Header() {
             </button>
 
             {/* Account */}
-            <button
+            <Link
+              href="/account/login"
               aria-label="Account"
               className="hidden rounded-full p-2 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:block"
             >
               <UserIcon />
-            </button>
+            </Link>
 
             {/* Cart */}
             <Link
@@ -267,88 +268,92 @@ export default function Header() {
       </div>
 
       {/* Search Box */}
-      {searchOpen && (
-        <div className="border-b border-black/10 bg-white px-5 py-5 sm:px-6">
-          <form
-            onSubmit={handleSearch}
-            className="mx-auto flex max-w-2xl gap-2"
-          >
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search products..."
-              autoFocus
-              className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-black focus:bg-white"
-            />
-
-            <button
-              type="submit"
-              className="rounded-lg bg-black px-5 py-3 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-gray-800"
+      {
+        searchOpen && (
+          <div className="border-b border-black/10 bg-white px-5 py-5 sm:px-6">
+            <form
+              onSubmit={handleSearch}
+              className="mx-auto flex max-w-2xl gap-2"
             >
-              Search
-            </button>
-          </form>
-        </div>
-      )}
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search products..."
+                autoFocus
+                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-black focus:bg-white"
+              />
+
+              <button
+                type="submit"
+                className="rounded-lg bg-black px-5 py-3 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-gray-800"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+        )
+      }
 
       {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="border-b border-black/10 bg-white px-6 py-7 md:hidden">
-          <nav className="flex flex-col gap-6">
-            <Link
-              href="/"
-              onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium text-gray-800 transition hover:text-black"
-            >
-              Home
-            </Link>
+      {
+        menuOpen && (
+          <div className="border-b border-black/10 bg-white px-6 py-7 md:hidden">
+            <nav className="flex flex-col gap-6">
+              <Link
+                href="/"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-gray-800 transition hover:text-black"
+              >
+                Home
+              </Link>
 
-            <Link
-              href="/shop"
-              onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium text-gray-800 transition hover:text-black"
-            >
-              Shop
-            </Link>
+              <Link
+                href="/shop"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-gray-800 transition hover:text-black"
+              >
+                Shop
+              </Link>
 
-            <Link
-              href="/shop?category=Women"
-              onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium text-gray-800 transition hover:text-black"
-            >
-              Women
-            </Link>
+              <Link
+                href="/shop?category=Women"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-gray-800 transition hover:text-black"
+              >
+                Women
+              </Link>
 
-            <Link
-              href="/shop?category=Men"
-              onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium text-gray-800 transition hover:text-black"
-            >
-              Men
-            </Link>
+              <Link
+                href="/shop?category=Men"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-gray-800 transition hover:text-black"
+              >
+                Men
+              </Link>
 
-            <Link
-              href="/shop?category=Accessories"
-              onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium text-gray-800 transition hover:text-black"
-            >
-              Accessories
-            </Link>
+              <Link
+                href="/shop?category=Accessories"
+                onClick={() => setMenuOpen(false)}
+                className="text-sm font-medium text-gray-800 transition hover:text-black"
+              >
+                Accessories
+              </Link>
 
-            <div className="h-px bg-gray-100" />
+              <div className="h-px bg-gray-100" />
 
-            <Link
-              href="/cart"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-black"
-            >
-              <BagIcon />
-              Bag ({cartQuantity})
-            </Link>
-          </nav>
-        </div>
-      )}
-    </header>
+              <Link
+                href="/cart"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 text-sm font-semibold text-black"
+              >
+                <BagIcon />
+                Bag ({cartQuantity})
+              </Link>
+            </nav>
+          </div>
+        )
+      }
+    </header >
   );
 }
