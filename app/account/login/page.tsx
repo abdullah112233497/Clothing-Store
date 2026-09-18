@@ -1,337 +1,176 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import Header from "@/components/Header";
-import ProductCard from "@/components/ProductCard";
+import { useState } from "react";
 
-const products = [
-  {
-    name: "Essential Oversized Tee",
-    price: "Rs. 3,499",
-    category: "Women",
-    image: "/images/product-1.png",
-  },
-  {
-    name: "Classic Casual Shirt",
-    price: "Rs. 4,999",
-    category: "Men",
-    image: "/images/product-2.png",
-  },
-  {
-    name: "Minimal Shoulder Bag",
-    price: "Rs. 5,499",
-    category: "Accessories",
-    image: "/images/product-3.png",
-  },
-  {
-    name: "Relaxed Fit Trousers",
-    price: "Rs. 6,499",
-    category: "Women",
-    image: "/images/product-4.png",
-  },
-  {
-    name: "Urban Denim Jacket",
-    price: "Rs. 7,999",
-    category: "Men",
-    image: "/images/product-5.png",
-  },
-  {
-    name: "Everyday Sneakers",
-    price: "Rs. 8,499",
-    category: "Accessories",
-    image: "/images/product-6.png",
-  },
-  {
-    name: "Premium Basic Hoodie",
-    price: "Rs. 5,999",
-    category: "Women",
-    image: "/images/product-7.png",
-  },
-  {
-    name: "Modern Cargo Pants",
-    price: "Rs. 6,999",
-    category: "Men",
-    image: "/images/product-8.png",
-  },
-];
+export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
 
-const categories = ["All", "Women", "Men", "Accessories"];
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-export default function ShopPage() {
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-
-    const category = params.get("category");
-    const search = params.get("search");
-
-    if (category && categories.includes(category)) {
-      setActiveCategory(category);
-    } else {
-      setActiveCategory("All");
-    }
-
-    if (search) {
-      setSearchQuery(search);
-    }
-  }, []);
-
-  const filteredProducts = products.filter((product) => {
-    const categoryMatch =
-      activeCategory === "All" ||
-      product.category === activeCategory;
-
-    const searchMatch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return categoryMatch && searchMatch;
-  });
-
-  const changeCategory = (category: string) => {
-    setActiveCategory(category);
-    setSearchQuery("");
-
-    if (category === "All") {
-      window.history.pushState({}, "", "/shop");
-    } else {
-      window.history.pushState(
-        {},
-        "",
-        `/shop?category=${category}`
-      );
-    }
+    alert("Welcome back to OUTFITTERS!");
   };
 
-  const pageTitle =
-    activeCategory === "All"
-      ? "Shop All"
-      : activeCategory;
-
-  const pageDescription =
-    activeCategory === "All"
-      ? "Discover our latest collection of modern essentials, everyday styles and statement pieces."
-      : `Explore our ${activeCategory.toLowerCase()} collection featuring modern styles and everyday essentials.`;
-
   return (
-    <>
-      <Header />
+    <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
+      <div className="grid min-h-screen lg:grid-cols-2">
 
-      <main className="min-h-screen bg-[#F8F6F2]">
+        {/* Left Fashion Image */}
+        <div className="relative hidden min-h-screen overflow-hidden lg:block">
+          <img
+            src="/images/hero-fashion.png"
+            alt="Outfitters fashion"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
 
-        {/* Hero / Category Header */}
-        <section className="border-b border-black/10 bg-[#E8E0D6] px-6 py-20">
-          <div className="mx-auto max-w-7xl text-center">
+          <div className="absolute inset-0 bg-black/30" />
 
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">
-              OUTFITTERS COLLECTION
-            </p>
-
-            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-gray-900 md:text-6xl">
-              {pageTitle}
-            </h1>
-
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-gray-600">
-              {pageDescription}
-            </p>
-
-            {searchQuery && (
-              <p className="mt-5 text-sm text-gray-600">
-                Search results for{" "}
-                <span className="font-semibold text-black">
-                  "{searchQuery}"
-                </span>
-              </p>
-            )}
-
-          </div>
-        </section>
-
-        {/* Category Navigation */}
-        <section className="border-b border-black/10 bg-white px-6 py-6">
-          <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3">
-
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => changeCategory(category)}
-                className={`rounded-full px-7 py-3 text-xs font-semibold uppercase tracking-wider transition ${
-                  activeCategory === category
-                    ? "bg-black text-white"
-                    : "border border-gray-200 bg-white text-gray-700 hover:border-black hover:text-black"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-
-          </div>
-        </section>
-
-        {/* Products Heading */}
-        <section className="px-6 pt-14">
-          <div className="mx-auto max-w-7xl">
-
-            <div className="flex items-end justify-between border-b border-black/10 pb-5">
-
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-[#A06E31]">
-                  {activeCategory === "All"
-                    ? "Complete Collection"
-                    : `${activeCategory} Collection`}
-                </p>
-
-                <h2 className="mt-2 text-2xl font-semibold text-gray-900">
-                  {activeCategory === "All"
-                    ? "All Products"
-                    : `${activeCategory} Products`}
-                </h2>
-              </div>
-
-              <p className="text-xs text-gray-500">
-                {filteredProducts.length} products
-              </p>
-
-            </div>
-
-          </div>
-        </section>
-
-        {/* Product Cards */}
-        <section className="px-6 py-12">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
-
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.name}
-                name={product.name}
-                price={product.price}
-                category={product.category}
-                image={product.image}
-              />
-            ))}
-
-          </div>
-
-          {/* Empty State */}
-          {filteredProducts.length === 0 && (
-            <div className="mx-auto max-w-2xl py-24 text-center">
-
-              <div className="text-5xl">🔍</div>
-
-              <h3 className="mt-6 text-2xl font-semibold text-gray-900">
-                No products found
-              </h3>
-
-              <p className="mt-3 text-sm text-gray-500">
-                Try another product name or choose another category.
-              </p>
-
-              <button
-                onClick={() => changeCategory("All")}
-                className="mt-7 rounded-xl bg-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-              >
-                View All Products
-              </button>
-
-            </div>
-          )}
-        </section>
-
-        {/* Collection Information */}
-        <section className="border-y border-black/10 bg-white px-6 py-16">
-          <div className="mx-auto max-w-4xl text-center">
-
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#A06E31]">
+          <div className="absolute bottom-12 left-12 text-white">
+            <p className="mb-3 text-xs uppercase tracking-[0.3em]">
               OUTFITTERS
             </p>
 
-            <h2 className="mt-4 text-3xl font-light tracking-tight md:text-4xl">
-              Designed for everyday elegance.
+            <h2 className="max-w-md text-4xl font-light leading-tight">
+              Style that
+              <br />
+              speaks for you.
             </h2>
-
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-gray-500">
-              Explore carefully selected pieces created for modern,
-              effortless style. Choose a category above and discover
-              your next favourite look.
-            </p>
-
           </div>
-        </section>
+        </div>
 
-        {/* Newsletter */}
-        <section className="bg-black px-6 py-16 text-white">
-          <div className="mx-auto max-w-3xl text-center">
+        {/* Right Login Section */}
+        <div className="flex min-h-screen items-center justify-center px-6 py-12 sm:px-10">
+          <div className="w-full max-w-md">
 
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-gray-400">
-              STAY UPDATED
-            </p>
+            {/* Logo */}
+            <Link
+              href="/"
+              className="mb-12 block text-center text-xl font-black tracking-[0.25em] transition-opacity hover:opacity-60"
+            >
+              OUTFITTERS
+            </Link>
 
-            <h2 className="mt-4 text-3xl font-semibold">
-              Get the latest from OUTFITTERS
-            </h2>
+            {/* Heading */}
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl font-medium tracking-tight">
+                Welcome Back
+              </h1>
 
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-gray-400">
-              Sign up for new arrivals, exclusive offers and fashion updates.
-            </p>
-
-            <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
-
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 rounded-xl px-4 py-3 text-sm text-black outline-none"
-              />
-
-              <button className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200">
-                Subscribe
-              </button>
-
+              <p className="mt-3 text-sm leading-6 text-gray-500">
+                Sign in to your account and continue shopping with OUTFITTERS.
+              </p>
             </div>
 
-          </div>
-        </section>
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* Footer */}
-        <footer className="bg-white px-6 py-10">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 text-center text-sm text-gray-500 md:flex-row md:items-center md:justify-between md:text-left">
+              {/* Email */}
+              <div>
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wider">
+                  Email Address
+                </label>
 
-            <p>
-              © 2026 OUTFITTERS. All rights reserved.
-            </p>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  required
+                  className="w-full border border-gray-200 bg-white px-4 py-3.5 text-sm outline-none transition focus:border-black"
+                />
+              </div>
 
-            <div className="flex justify-center gap-6">
+              {/* Password */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="block text-xs font-medium uppercase tracking-wider">
+                    Password
+                  </label>
 
+                  <button
+                    type="button"
+                    className="text-xs text-gray-500 underline underline-offset-4 transition hover:text-black"
+                    onClick={() => alert("Password reset link coming soon.")}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    required
+                    className="w-full border border-gray-200 bg-white px-4 py-3.5 pr-20 text-sm outline-none transition focus:border-black"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500 transition hover:text-black"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me */}
+              <label className="flex items-center gap-3 text-xs text-gray-500">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-black"
+                />
+
+                <span>Remember me</span>
+              </label>
+
+              {/* Sign In Button */}
+              <button
+                type="submit"
+                className="w-full bg-black py-4 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-gray-800"
+              >
+                Sign In
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="my-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-black/10" />
+
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
+                New to OUTFITTERS?
+              </span>
+
+              <div className="h-px flex-1 bg-black/10" />
+            </div>
+
+            {/* Register */}
+            <Link
+              href="/account/register"
+              className="block w-full border border-black bg-transparent py-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white"
+            >
+              Create Account
+            </Link>
+
+            {/* Back to Home */}
+            <div className="mt-8 text-center">
               <Link
                 href="/"
-                className="transition hover:text-black"
+                className="text-xs text-gray-500 underline underline-offset-4 transition hover:text-black"
               >
-                Home
+                ← Back to Home
               </Link>
+            </div>
 
-              <Link
-                href="/shop"
-                className="transition hover:text-black"
-              >
-                Shop
-              </Link>
-
-              <Link
-                href="/cart"
-                className="transition hover:text-black"
-              >
-                Cart
-              </Link>
-
+            {/* Footer */}
+            <div className="mt-12 border-t border-black/10 pt-6 text-center">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
+                © 2026 OUTFITTERS. All Rights Reserved.
+              </p>
             </div>
 
           </div>
-        </footer>
-
-      </main>
-    </>
+        </div>
+      </div>
+    </main>
   );
 }
