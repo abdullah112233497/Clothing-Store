@@ -175,7 +175,7 @@ export default function Header() {
             href="/"
             className="text-lg font-black tracking-[0.2em] text-black transition-opacity hover:opacity-70 sm:text-xl"
           >
-            WE ARE WELL
+            WEARWELL
           </Link>
 
           {/* Desktop Navigation */}
