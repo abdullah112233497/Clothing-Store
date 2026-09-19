@@ -271,7 +271,7 @@ export default function Header() {
           </nav>
 
           {/* Right Side */}
-          <div className="flex items-center gap-4 sm:gap-5">
+          <div className="flex items-center gap-1.5 sm:gap-4 md:gap-5">
 
             {/* Search */}
             <button
@@ -287,11 +287,11 @@ export default function Header() {
               href="/profile"
               aria-label="Wishlist"
               title="My Wishlist"
-              className="relative flex items-center justify-center rounded-full p-1.5 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+              className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
             >
               <HeartIcon />
               {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
                   {wishlistCount}
                 </span>
               )}
@@ -302,7 +302,7 @@ export default function Header() {
               href="/profile"
               aria-label="Account"
               title="My Profile"
-              className="flex items-center justify-center rounded-full p-1.5 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+              className="flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
             >
               <UserIcon />
             </Link>
@@ -310,7 +310,7 @@ export default function Header() {
             {/* Cart */}
             <Link
               href="/cart"
-              className="group flex items-center gap-2 text-[13px] font-semibold text-gray-900"
+              className="group flex items-center gap-1 sm:gap-2 px-1 text-[13px] font-semibold text-gray-900"
             >
               <span className="transition group-hover:opacity-60">
                 <BagIcon />
@@ -320,7 +320,7 @@ export default function Header() {
                 Bag ({cartQuantity})
               </span>
 
-              <span className="sm:hidden">
+              <span className="sm:hidden text-xs">
                 {cartQuantity}
               </span>
             </Link>
@@ -328,7 +328,7 @@ export default function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="rounded-full p-1.5 text-gray-800 transition hover:bg-gray-100 md:hidden"
+              className="rounded-full p-1 text-gray-800 transition hover:bg-gray-100 md:hidden"
               aria-label="Toggle menu"
             >
               {menuOpen ? <CloseIcon /> : <MenuIcon />}

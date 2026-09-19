@@ -187,6 +187,22 @@ export default function ProfilePage() {
     "details" | "orders" | "addresses" | "wishlist" | "security"
   >("details");
 
+  const handleTabSelect = (
+    tab: "details" | "orders" | "addresses" | "wishlist" | "security",
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setActiveTab(tab);
+    if (e && e.currentTarget) {
+      const btn = e.currentTarget;
+      const container = btn.parentElement;
+      if (container) {
+        const targetLeft =
+          btn.offsetLeft - container.clientWidth / 2 + btn.clientWidth / 2;
+        container.scrollTo({ left: targetLeft, behavior: "smooth" });
+      }
+    }
+  };
+
   // User Profile State
   const [profile, setProfile] = useState<UserProfile>({
     firstName: "Abdullah",
@@ -760,7 +776,7 @@ export default function ProfilePage() {
 
   if (isLoggedIn === null) {
     return (
-      <div className="min-h-screen bg-[#F8F6F2] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-400">
             WEARWELL
@@ -772,7 +788,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F6F2] text-[#080808]">
+    <div className="min-h-screen bg-white text-[#080808] overflow-x-hidden w-full max-w-full">
       {/* Header */}
       <Header />
 
@@ -787,7 +803,7 @@ export default function ProfilePage() {
       )}
 
       {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8 w-full max-w-full overflow-hidden">
         
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-xs text-gray-400 uppercase tracking-widest">
@@ -800,8 +816,8 @@ export default function ProfilePage() {
 
         {/* ================= IF USER IS NOT LOGGED IN ================= */}
         {!isLoggedIn ? (
-          <section className="mx-auto max-w-md rounded-2xl border border-black/10 bg-white p-8 sm:p-12 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#F8F6F2] text-gray-800">
+          <section className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-8 sm:p-12 text-center shadow-xs">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-800">
               <LockIcon />
             </div>
 
@@ -838,8 +854,8 @@ export default function ProfilePage() {
           /* ================= LOGGED IN DASHBOARD ================= */
           <div>
             
-            {/* ================= TIKTOK-STYLE MOBILE PROFILE HEADER (< lg screens) ================= */}
-            <div className="block lg:hidden rounded-2xl border border-black/10 bg-white p-6 shadow-sm mb-6 text-center">
+            {/* ================= SEAMLESS MOBILE PROFILE HEADER (< lg screens) ================= */}
+            <div className="block lg:hidden border-b border-gray-100 pb-8 mb-8 text-center">
               
               {/* Centered Avatar with Camera Upload Badge */}
               <div className="relative mx-auto h-24 w-24">
@@ -919,109 +935,180 @@ export default function ProfilePage() {
               </div>
 
               {/* Mobile Action Bar */}
-              <div className="mt-5 flex items-center justify-center gap-2">
+              <div className="mt-5 flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => {
-                    setActiveTab("details");
-                    setEditMode(true);
+                    if (activeTab === "details" && editMode) {
+                      setEditMode(false);
+                    } else {
+                      setActiveTab("details");
+                      setFormData(profile);
+                      setEditMode(true);
+                    }
                   }}
-                  className="flex-1 rounded-xl bg-black py-2.5 text-xs font-semibold text-white transition hover:bg-gray-800"
+                  className={`flex-1 inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-semibold tracking-wide transition active:scale-[0.98] ${
+                    activeTab === "details" && editMode
+                      ? "border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 shadow-xs"
+                      : "bg-black text-white shadow-sm hover:bg-neutral-800"
+                  }`}
                 >
-                  Edit Profile
+                  {activeTab === "details" && editMode ? (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="h-3.5 w-3.5 text-gray-500"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                      <span>Cancel</span>
+                    </>
+                  ) : (
+                    <>
+                      <EditIcon />
+                      <span>Edit Profile</span>
+                    </>
+                  )}
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => {
                     if (navigator.clipboard) {
                       navigator.clipboard.writeText(window.location.href);
                       showToast("Profile link copied!");
                     }
                   }}
-                  className="flex items-center gap-1.5 rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-medium tracking-wide text-gray-700 shadow-xs transition hover:border-black hover:text-black hover:bg-gray-50 active:scale-[0.98]"
+                  title="Share Profile"
                 >
                   <ShareIcon />
-                  Share
+                  <span>Share</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setShowLogoutModal(true)}
-                  className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-red-600 hover:bg-red-100"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-xs transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98]"
                   title="Sign Out"
                 >
                   <LogOutIcon />
                 </button>
               </div>
 
-              {/* Mobile Icon Tab Bar */}
-              <div className="mt-6 flex overflow-x-auto border-t border-gray-100 pt-4 scrollbar-none justify-around">
-                <button
-                  onClick={() => setActiveTab("details")}
-                  className={`flex flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-wider transition ${
-                    activeTab === "details"
-                      ? "text-black font-bold border-b-2 border-black pb-1"
-                      : "text-gray-400"
-                  }`}
-                >
-                  <UserIcon />
-                  Details
-                </button>
+              {/* Mobile Segmented Navigation Tabs */}
+              <div className="mt-6 border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1">
+                  {/* Details */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleTabSelect("details", e)}
+                    className={`inline-flex items-center gap-2 shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 ${
+                      activeTab === "details"
+                        ? "bg-black text-white shadow-sm ring-1 ring-black"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-black"
+                    }`}
+                  >
+                    <UserIcon />
+                    <span>Details</span>
+                  </button>
 
-                <button
-                  onClick={() => setActiveTab("orders")}
-                  className={`flex flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-wider transition ${
-                    activeTab === "orders"
-                      ? "text-black font-bold border-b-2 border-black pb-1"
-                      : "text-gray-400"
-                  }`}
-                >
-                  <PackageIcon />
-                  Orders
-                </button>
+                  {/* Orders */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleTabSelect("orders", e)}
+                    className={`inline-flex items-center gap-2 shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 ${
+                      activeTab === "orders"
+                        ? "bg-black text-white shadow-sm ring-1 ring-black"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-black"
+                    }`}
+                  >
+                    <PackageIcon />
+                    <span>Orders</span>
+                    {orders.length > 0 && (
+                      <span
+                        className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                          activeTab === "orders" ? "bg-white/25 text-white" : "bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {orders.length}
+                      </span>
+                    )}
+                  </button>
 
-                <button
-                  onClick={() => setActiveTab("addresses")}
-                  className={`flex flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-wider transition ${
-                    activeTab === "addresses"
-                      ? "text-black font-bold border-b-2 border-black pb-1"
-                      : "text-gray-400"
-                  }`}
-                >
-                  <MapPinIcon />
-                  Addresses
-                </button>
+                  {/* Addresses */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleTabSelect("addresses", e)}
+                    className={`inline-flex items-center gap-2 shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 ${
+                      activeTab === "addresses"
+                        ? "bg-black text-white shadow-sm ring-1 ring-black"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-black"
+                    }`}
+                  >
+                    <MapPinIcon />
+                    <span>Addresses</span>
+                    {addresses.length > 0 && (
+                      <span
+                        className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                          activeTab === "addresses" ? "bg-white/25 text-white" : "bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {addresses.length}
+                      </span>
+                    )}
+                  </button>
 
-                <button
-                  onClick={() => setActiveTab("wishlist")}
-                  className={`flex flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-wider transition ${
-                    activeTab === "wishlist"
-                      ? "text-black font-bold border-b-2 border-black pb-1"
-                      : "text-gray-400"
-                  }`}
-                >
-                  <HeartIcon />
-                  Wishlist
-                </button>
+                  {/* Wishlist */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleTabSelect("wishlist", e)}
+                    className={`inline-flex items-center gap-2 shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 ${
+                      activeTab === "wishlist"
+                        ? "bg-black text-white shadow-sm ring-1 ring-black"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-black"
+                    }`}
+                  >
+                    <HeartIcon />
+                    <span>Wishlist</span>
+                    {wishlist.length > 0 && (
+                      <span
+                        className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                          activeTab === "wishlist" ? "bg-white/25 text-white" : "bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {wishlist.length}
+                      </span>
+                    )}
+                  </button>
 
-                <button
-                  onClick={() => setActiveTab("security")}
-                  className={`flex flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-wider transition ${
-                    activeTab === "security"
-                      ? "text-black font-bold border-b-2 border-black pb-1"
-                      : "text-gray-400"
-                  }`}
-                >
-                  <ShieldCheckIcon />
-                  Settings
-                </button>
+                  {/* Settings */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleTabSelect("security", e)}
+                    className={`inline-flex items-center gap-2 shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 ${
+                      activeTab === "security"
+                        ? "bg-black text-white shadow-sm ring-1 ring-black"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-black"
+                    }`}
+                  >
+                    <ShieldCheckIcon />
+                    <span>Settings</span>
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* ================= MAIN DESKTOP 2-COLUMN LUXURY DASHBOARD (≥ lg screens) ================= */}
             <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
               
-              {/* DESKTOP SIDEBAR (Hidden on Mobile < lg) - Height matches screen view size */}
+              {/* DESKTOP SIDEBAR (Hidden on Mobile < lg) - Clean Seamless Column */}
               <aside
-                className="hidden lg:flex flex-col justify-between rounded-2xl border border-black/10 bg-white p-6 shadow-sm sticky top-28"
+                className="hidden lg:flex flex-col justify-between border-r border-gray-100 pr-8 sticky top-28"
                 style={{ height: "calc(100vh - 140px)", minHeight: "calc(100vh - 140px)" }}
               >
                 <div>
@@ -1148,43 +1235,46 @@ export default function ProfilePage() {
                 
                 {/* ================= TAB 1: MY DETAILS ================= */}
                 {activeTab === "details" && (
-                  <section className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
+                  <section className="space-y-6">
                     {/* Single Clean Section Header */}
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-                      <div>
-                        <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900">
+                    <div className="border-b border-gray-100 pb-5 mb-8">
+                      <div className="flex items-center justify-between gap-4">
+                        <h1 className="text-base sm:text-xl font-bold uppercase tracking-wider text-gray-900">
                           My Details
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Manage your personal account details and contact information.
-                        </p>
+
+                        {!editMode ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(profile);
+                              setEditMode(true);
+                            }}
+                            className="hidden lg:inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap shrink-0 shadow-xs transition hover:bg-neutral-800 active:scale-95"
+                          >
+                            <EditIcon />
+                            <span>Edit Details</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setEditMode(false)}
+                            className="hidden lg:inline-flex text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-black whitespace-nowrap shrink-0"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
 
-                      {!editMode ? (
-                        <button
-                          onClick={() => {
-                            setFormData(profile);
-                            setEditMode(true);
-                          }}
-                          className="inline-flex items-center gap-2 rounded-xl bg-black px-4 sm:px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-gray-800"
-                        >
-                          <EditIcon />
-                          <span>Edit Details</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setEditMode(false)}
-                          className="text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-black"
-                        >
-                          Cancel
-                        </button>
-                      )}
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Manage your personal account details and contact information.
+                      </p>
                     </div>
 
                     {!editMode ? (
                       <div className="mt-8 space-y-6">
                         <div className="grid gap-6 sm:grid-cols-2">
-                          <div className="rounded-xl border border-gray-100 bg-[#F8F6F2]/50 p-4">
+                          <div className="border-b border-gray-100 pb-3">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                               First Name
                             </span>
@@ -1193,7 +1283,7 @@ export default function ProfilePage() {
                             </p>
                           </div>
 
-                          <div className="rounded-xl border border-gray-100 bg-[#F8F6F2]/50 p-4">
+                          <div className="border-b border-gray-100 pb-3">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                               Last Name
                             </span>
@@ -1202,7 +1292,7 @@ export default function ProfilePage() {
                             </p>
                           </div>
 
-                          <div className="rounded-xl border border-gray-100 bg-[#F8F6F2]/50 p-4">
+                          <div className="border-b border-gray-100 pb-3">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                               Email Address
                             </span>
@@ -1211,7 +1301,7 @@ export default function ProfilePage() {
                             </p>
                           </div>
 
-                          <div className="rounded-xl border border-gray-100 bg-[#F8F6F2]/50 p-4">
+                          <div className="border-b border-gray-100 pb-3">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                               Phone Number
                             </span>
@@ -1220,7 +1310,7 @@ export default function ProfilePage() {
                             </p>
                           </div>
 
-                          <div className="rounded-xl border border-gray-100 bg-[#F8F6F2]/50 p-4">
+                          <div className="border-b border-gray-100 pb-3">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                               Date of Birth
                             </span>
@@ -1229,7 +1319,7 @@ export default function ProfilePage() {
                             </p>
                           </div>
 
-                          <div className="rounded-xl border border-gray-100 bg-[#F8F6F2]/50 p-4">
+                          <div className="border-b border-gray-100 pb-3">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                               Gender
                             </span>
@@ -1240,7 +1330,7 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Account Summary Strip */}
-                        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-black/10 bg-[#F8F6F2] p-5">
+                        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50/70 p-5">
                           <div>
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
                               WEARWELL ACCOUNT
@@ -1254,6 +1344,7 @@ export default function ProfilePage() {
                           </div>
 
                           <button
+                            type="button"
                             onClick={() => {
                               setFormData(profile);
                               setEditMode(true);
@@ -1383,23 +1474,24 @@ export default function ProfilePage() {
 
                 {/* ================= TAB 2: MY ORDERS ================= */}
                 {activeTab === "orders" && (
-                  <section className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-                      <div>
-                        <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900">
+                  <section className="space-y-6">
+                    <div className="border-b border-gray-100 pb-5 mb-6">
+                      <div className="flex items-center justify-between gap-4">
+                        <h1 className="text-base sm:text-xl font-bold uppercase tracking-wider text-gray-900">
                           My Orders
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Track active shipments and view your purchase history.
-                        </p>
+
+                        <Link
+                          href="/shop"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap shrink-0 shadow-xs transition hover:bg-neutral-800 active:scale-95"
+                        >
+                          Shop Catalog
+                        </Link>
                       </div>
 
-                      <Link
-                        href="/shop"
-                        className="rounded-xl bg-black px-4 sm:px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-gray-800"
-                      >
-                        Shop Catalog
-                      </Link>
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Track active shipments and view your purchase history.
+                      </p>
                     </div>
 
                     {orders.length === 0 ? (
@@ -1499,25 +1591,26 @@ export default function ProfilePage() {
 
                 {/* ================= TAB 3: SAVED ADDRESSES ================= */}
                 {activeTab === "addresses" && (
-                  <section className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-                      <div>
-                        <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900">
+                  <section className="space-y-6">
+                    <div className="border-b border-gray-100 pb-5 mb-6">
+                      <div className="flex items-center justify-between gap-4">
+                        <h1 className="text-base sm:text-xl font-bold uppercase tracking-wider text-gray-900">
                           Saved Addresses
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Manage your delivery addresses for seamless checkout.
-                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowAddressModal(true)}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap shrink-0 shadow-xs transition hover:bg-neutral-800 active:scale-95"
+                        >
+                          <PlusIcon />
+                          <span>Add Address</span>
+                        </button>
                       </div>
 
-                      <button
-                        onClick={() => setShowAddressModal(true)}
-                        className="inline-flex items-center gap-2 rounded-xl bg-black px-4 sm:px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-gray-800"
-                      >
-                        <PlusIcon />
-                        <span className="hidden sm:inline">Add Address</span>
-                        <span className="sm:hidden">Add</span>
-                      </button>
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Manage your delivery addresses for seamless checkout.
+                      </p>
                     </div>
 
                     <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -1584,23 +1677,24 @@ export default function ProfilePage() {
 
                 {/* ================= TAB 4: WISHLIST ================= */}
                 {activeTab === "wishlist" && (
-                  <section className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-6">
-                      <div>
-                        <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900">
+                  <section className="space-y-6">
+                    <div className="border-b border-gray-100 pb-5 mb-6">
+                      <div className="flex items-center justify-between gap-4">
+                        <h1 className="text-base sm:text-xl font-bold uppercase tracking-wider text-gray-900">
                           My Wishlist
                         </h1>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Saved items to buy later or add to bag.
-                        </p>
+
+                        <Link
+                          href="/shop"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-black bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black whitespace-nowrap shrink-0 hover:bg-black hover:text-white transition active:scale-95"
+                        >
+                          Browse Store
+                        </Link>
                       </div>
 
-                      <Link
-                        href="/shop"
-                        className="rounded-xl border border-black px-4 py-2 text-xs font-semibold uppercase tracking-wider text-black hover:bg-black hover:text-white"
-                      >
-                        Browse Store
-                      </Link>
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Saved items to buy later or add to bag.
+                      </p>
                     </div>
 
                     {wishlist.length === 0 ? (
@@ -1669,72 +1763,70 @@ export default function ProfilePage() {
                 {/* ================= TAB 5: SECURITY & SETTINGS ================= */}
                 {activeTab === "security" && (
                   <section className="space-y-6">
-                    <div className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
-                      <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-6">
-                        Security & Settings
-                      </h1>
+                    <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-6">
+                      Security & Settings
+                    </h1>
 
-                      <form onSubmit={handlePasswordSubmit} className="mt-6 max-w-md space-y-4">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
-                          Change Password
-                        </h3>
+                    <form onSubmit={handlePasswordSubmit} className="mt-6 max-w-md space-y-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">
+                        Change Password
+                      </h3>
 
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700">
-                            Current Password
-                          </label>
-                          <input
-                            type="password"
-                            required
-                            value={passwords.current}
-                            onChange={(e) =>
-                              setPasswords({ ...passwords, current: e.target.value })
-                            }
-                            placeholder="••••••••"
-                            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
-                          />
-                        </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700">
+                          Current Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={passwords.current}
+                          onChange={(e) =>
+                            setPasswords({ ...passwords, current: e.target.value })
+                          }
+                          placeholder="••••••••"
+                          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
+                        />
+                      </div>
 
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700">
-                            New Password
-                          </label>
-                          <input
-                            type="password"
-                            required
-                            value={passwords.newPass}
-                            onChange={(e) =>
-                              setPasswords({ ...passwords, newPass: e.target.value })
-                            }
-                            placeholder="At least 6 characters"
-                            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
-                          />
-                        </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={passwords.newPass}
+                          onChange={(e) =>
+                            setPasswords({ ...passwords, newPass: e.target.value })
+                          }
+                          placeholder="At least 6 characters"
+                          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
+                        />
+                      </div>
 
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700">
-                            Confirm New Password
-                          </label>
-                          <input
-                            type="password"
-                            required
-                            value={passwords.confirmPass}
-                            onChange={(e) =>
-                              setPasswords({ ...passwords, confirmPass: e.target.value })
-                            }
-                            placeholder="Repeat new password"
-                            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
-                          />
-                        </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-700">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={passwords.confirmPass}
+                          onChange={(e) =>
+                            setPasswords({ ...passwords, confirmPass: e.target.value })
+                          }
+                          placeholder="Repeat new password"
+                          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
+                        />
+                      </div>
 
-                        <button
-                          type="submit"
-                          className="rounded-xl bg-black px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-gray-800"
-                        >
-                          Update Password
-                        </button>
-                      </form>
-                    </div>
+                      <button
+                        type="submit"
+                        className="rounded-xl bg-black px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-gray-800"
+                      >
+                        Update Password
+                      </button>
+                    </form>
                   </section>
                 )}
 
@@ -1772,7 +1864,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-6 space-y-6">
-              <div className="flex items-center justify-between rounded-xl bg-[#F8F6F2] p-4">
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 border border-gray-100 p-4">
                 <div>
                   <span className="text-[10px] uppercase tracking-wider text-gray-400">
                     Status
