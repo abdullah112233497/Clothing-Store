@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type ProductCardProps = {
   name: string;
@@ -17,12 +18,77 @@ type CartItem = {
   image: string;
 };
 
+type WishlistItem = {
+  id: number;
+  name: string;
+  price: number;
+  category: string;
+  image: string;
+  inStock: boolean;
+};
+
 export default function ProductCard({
   name,
   price,
   category,
   image,
 }: ProductCardProps) {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    const checkWishlist = () => {
+      const saved = localStorage.getItem("wishlistItems");
+      if (saved) {
+        try {
+          const items: WishlistItem[] = JSON.parse(saved);
+          setIsWishlisted(items.some((item) => item.name === name));
+        } catch {
+          setIsWishlisted(false);
+        }
+      } else {
+        setIsWishlisted(false);
+      }
+    };
+
+    checkWishlist();
+    window.addEventListener("wishlistUpdated", checkWishlist);
+    window.addEventListener("storage", checkWishlist);
+    return () => {
+      window.removeEventListener("wishlistUpdated", checkWishlist);
+      window.removeEventListener("storage", checkWishlist);
+    };
+  }, [name]);
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const saved = localStorage.getItem("wishlistItems");
+    let items: WishlistItem[] = saved ? JSON.parse(saved) : [];
+
+    const numericPrice = Number(price.replace(/[^0-9]/g, "")) || 3990;
+
+    const exists = items.some((item) => item.name === name);
+    if (exists) {
+      items = items.filter((item) => item.name !== name);
+      setIsWishlisted(false);
+    } else {
+      const newItem: WishlistItem = {
+        id: Date.now(),
+        name,
+        price: numericPrice,
+        category,
+        image,
+        inStock: true,
+      };
+      items.push(newItem);
+      setIsWishlisted(true);
+    }
+
+    localStorage.setItem("wishlistItems", JSON.stringify(items));
+    window.dispatchEvent(new Event("wishlistUpdated"));
+  };
+
   const productSlug = name
     .toLowerCase()
     .replace(/\s+/g, "-");
@@ -91,6 +157,31 @@ export default function ProductCard({
         <span className="absolute left-3 top-3 bg-white px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider">
           New
         </span>
+
+        {/* Wishlist Heart Button */}
+        <button
+          onClick={handleToggleWishlist}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:scale-110 hover:bg-white"
+        >
+          <svg
+            className={`h-4 w-4 transition duration-200 ${
+              isWishlisted
+                ? "fill-red-500 text-red-500 scale-110"
+                : "fill-none text-gray-700 hover:text-red-500"
+            }`}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.75"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        </button>
 
         <button
           onClick={handleQuickAdd}

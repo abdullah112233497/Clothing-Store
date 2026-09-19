@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 
 type Product = {
@@ -380,7 +381,7 @@ export default function ShopPage() {
         <section className="border-y border-black/10 bg-white px-6 py-16">
           <div className="mx-auto max-w-4xl text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#A06E31]">
-              OUTFITTERS
+              WEARWELL
             </p>
 
             <h2 className="mt-4 text-3xl font-light tracking-tight md:text-4xl">
@@ -395,66 +396,8 @@ export default function ShopPage() {
           </div>
         </section>
 
-        {/* NEWSLETTER */}
-        <section className="bg-black px-6 py-16 text-white">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-gray-400">
-              STAY UPDATED
-            </p>
-
-            <h2 className="mt-4 text-3xl font-semibold">
-              Get the latest from OUTFITTERS
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-gray-400">
-              Sign up for new arrivals, exclusive offers and fashion updates.
-            </p>
-
-            <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 rounded-xl px-4 py-3 text-sm text-black outline-none"
-              />
-
-              <button className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200">
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* FOOTER */}
-        <footer className="bg-white px-6 py-10">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 text-center text-sm text-gray-500 md:flex-row md:items-center md:justify-between md:text-left">
-            <p>
-              © 2026 OUTFITTERS. All rights reserved.
-            </p>
-
-            <div className="flex justify-center gap-6">
-              <Link
-                href="/"
-                className="transition hover:text-black"
-              >
-                Home
-              </Link>
-
-              <Link
-                href="/shop"
-                className="transition hover:text-black"
-              >
-                Shop
-              </Link>
-
-              <Link
-                href="/cart"
-                className="transition hover:text-black"
-              >
-                Cart
-              </Link>
-            </div>
-          </div>
-        </footer>
+        {/* UNIFIED LUXURY FOOTER */}
+        <Footer />
 
       </main>
     </>

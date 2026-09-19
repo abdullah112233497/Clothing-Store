@@ -50,6 +50,25 @@ function UserIcon() {
   );
 }
 
+function HeartIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.6}
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+      />
+    </svg>
+  );
+}
+
 function BagIcon() {
   return (
     <svg
@@ -115,6 +134,7 @@ function CloseIcon() {
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -136,14 +156,33 @@ export default function Header() {
       }
     };
 
+    const updateWishlist = () => {
+      const saved = localStorage.getItem("wishlistItems");
+      if (saved) {
+        try {
+          const items = JSON.parse(saved);
+          setWishlistCount(items.length);
+        } catch {
+          setWishlistCount(0);
+        }
+      } else {
+        setWishlistCount(0);
+      }
+    };
+
     updateCartQuantity();
+    updateWishlist();
 
     window.addEventListener("storage", updateCartQuantity);
     window.addEventListener("cartUpdated", updateCartQuantity);
+    window.addEventListener("storage", updateWishlist);
+    window.addEventListener("wishlistUpdated", updateWishlist);
 
     return () => {
       window.removeEventListener("storage", updateCartQuantity);
       window.removeEventListener("cartUpdated", updateCartQuantity);
+      window.removeEventListener("storage", updateWishlist);
+      window.removeEventListener("wishlistUpdated", updateWishlist);
     };
   }, []);
 
@@ -243,12 +282,27 @@ export default function Header() {
               <SearchIcon />
             </button>
 
-            {/* Account */}
+            {/* Wishlist Link */}
+            <Link
+              href="/profile"
+              aria-label="Wishlist"
+              title="My Wishlist"
+              className="relative flex items-center justify-center rounded-full p-1.5 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+            >
+              <HeartIcon />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Account / Profile (Visible on all devices including small mobile) */}
             <Link
               href="/profile"
               aria-label="Account"
               title="My Profile"
-              className="hidden rounded-full p-2 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:block"
+              className="flex items-center justify-center rounded-full p-1.5 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
             >
               <UserIcon />
             </Link>
@@ -419,6 +473,22 @@ export default function Header() {
             </Link>
 
             <div className="my-2 h-px bg-gray-100" />
+
+            <Link
+              href="/profile"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center justify-between rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              <div className="flex items-center gap-3">
+                <HeartIcon />
+                <span>My Wishlist</span>
+              </div>
+              {wishlistCount > 0 && (
+                <span className="rounded-full bg-[#A06E31] px-2.5 py-0.5 text-[10px] font-bold text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             <Link
               href="/profile"

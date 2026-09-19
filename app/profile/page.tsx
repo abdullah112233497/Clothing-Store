@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import jsPDF from "jspdf";
 
 // ================= TYPES =================
 type UserProfile = {
@@ -299,6 +301,18 @@ export default function ProfilePage() {
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // Disable background scrolling when any modal is active
+  useEffect(() => {
+    if (selectedOrder || showAddressModal || showLogoutModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedOrder, showAddressModal, showLogoutModal]);
+
   // ================= LOAD STORED DATA & AUTH =================
   useEffect(() => {
     const logged = localStorage.getItem("isLoggedIn");
@@ -333,6 +347,32 @@ export default function ProfilePage() {
         console.error("Failed to parse savedAddresses", err);
       }
     }
+
+    // Load & sync wishlist
+    const savedWishlist = localStorage.getItem("wishlistItems");
+    if (savedWishlist) {
+      try {
+        setWishlist(JSON.parse(savedWishlist));
+      } catch (err) {
+        console.error("Failed to parse wishlistItems", err);
+      }
+    } else {
+      localStorage.setItem("wishlistItems", JSON.stringify(wishlist));
+    }
+
+    const handleSyncWishlist = () => {
+      const items = localStorage.getItem("wishlistItems");
+      if (items) {
+        try {
+          setWishlist(JSON.parse(items));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
+
+    window.addEventListener("wishlistUpdated", handleSyncWishlist);
+    window.addEventListener("storage", handleSyncWishlist);
 
     const baseOrders: Order[] = [
       {
@@ -542,7 +582,10 @@ export default function ProfilePage() {
   };
 
   const handleRemoveWishlist = (id: number) => {
-    setWishlist(wishlist.filter((w) => w.id !== id));
+    const updated = wishlist.filter((w) => w.id !== id);
+    setWishlist(updated);
+    localStorage.setItem("wishlistItems", JSON.stringify(updated));
+    window.dispatchEvent(new Event("wishlistUpdated"));
     showToast("Item removed from your wishlist.");
   };
 
@@ -558,6 +601,151 @@ export default function ProfilePage() {
     }
     setPasswords({ current: "", newPass: "", confirmPass: "" });
     showToast("Password changed successfully!");
+  };
+
+  const handleDownloadReceipt = (order: Order) => {
+    try {
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Dark Header Bar
+      doc.setFillColor(8, 8, 8);
+      doc.rect(0, 0, 210, 32, "F");
+
+      // Brand Name
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text("WEARWELL", 15, 18);
+
+      doc.setFontSize(8);
+      doc.setTextColor(190, 150, 90);
+      doc.setFont("helvetica", "normal");
+      doc.text("LUXURY APPAREL & READY TO WEAR", 15, 24);
+
+      // Receipt badge & order ID on right
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("OFFICIAL RECEIPT", 195, 15, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(200, 200, 200);
+      doc.text(`Order ID: ${order.id}`, 195, 21, { align: "right" });
+      doc.text(`Date: ${order.date}`, 195, 26, { align: "right" });
+
+      // Customer & Order Info Box
+      doc.setFillColor(248, 246, 242);
+      doc.roundedRect(15, 40, 180, 32, 2, 2, "F");
+
+      doc.setTextColor(120, 120, 120);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("CUSTOMER NAME", 20, 47);
+      doc.text("PAYMENT METHOD", 110, 47);
+      doc.text("DELIVERY DESTINATION", 20, 59);
+
+      doc.setTextColor(15, 15, 15);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      const customerName = `${profile.firstName} ${profile.lastName}`.trim() || "Valued Customer";
+      doc.text(customerName, 20, 53);
+      doc.text(order.paymentMethod, 110, 53);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      const splitAddress = doc.splitTextToSize(order.shippingAddress || "N/A", 170);
+      doc.text(splitAddress, 20, 65);
+
+      // Table Header
+      let y = 80;
+      doc.setFillColor(8, 8, 8);
+      doc.rect(15, y, 180, 8, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("ITEM DESCRIPTION", 20, y + 5.5);
+      doc.text("SIZE", 120, y + 5.5);
+      doc.text("QTY", 145, y + 5.5);
+      doc.text("TOTAL", 190, y + 5.5, { align: "right" });
+
+      // Items Rows
+      y += 8;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(20, 20, 20);
+
+      order.items.forEach((item, index) => {
+        if (index % 2 === 1) {
+          doc.setFillColor(252, 252, 252);
+          doc.rect(15, y, 180, 9, "F");
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.text(item.name, 20, y + 6);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.text(item.size || "M", 120, y + 6);
+        doc.text(String(item.quantity), 145, y + 6);
+        doc.text(`Rs. ${(item.price * item.quantity).toLocaleString()}`, 190, y + 6, { align: "right" });
+
+        doc.setDrawColor(240, 240, 240);
+        doc.line(15, y + 9, 195, y + 9);
+        y += 9;
+      });
+
+      // Price Summary
+      y += 6;
+      const summaryX = 120;
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(90, 90, 90);
+
+      doc.text("Subtotal:", summaryX, y);
+      doc.setTextColor(15, 15, 15);
+      doc.text(`Rs. ${order.subtotal.toLocaleString()}`, 190, y, { align: "right" });
+
+      y += 6;
+      doc.setTextColor(90, 90, 90);
+      doc.text("Express Shipping:", summaryX, y);
+      doc.setTextColor(22, 163, 74);
+      doc.setFont("helvetica", "bold");
+      doc.text("FREE", 190, y, { align: "right" });
+
+      y += 7;
+      doc.setDrawColor(8, 8, 8);
+      doc.setLineWidth(0.3);
+      doc.line(summaryX, y - 2, 195, y - 2);
+
+      doc.setFontSize(10.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(8, 8, 8);
+      doc.text("Total Paid:", summaryX, y + 4);
+      doc.text(`Rs. ${order.total.toLocaleString()}`, 190, y + 4, { align: "right" });
+
+      // Guarantee footer
+      y += 24;
+      doc.setFillColor(248, 246, 242);
+      doc.roundedRect(15, y, 180, 16, 2, 2, "F");
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("GUARANTEE: 14-Day Hassle-Free Returns & Exchanges across Pakistan.", 20, y + 7);
+      doc.text("Customer Care: support@wearwell.pk | Official E-Commerce Store", 20, y + 12);
+
+      // Download file directly
+      const cleanId = order.id.replace(/[^a-zA-Z0-9-_]/g, "");
+      doc.save(`WEARWELL-Receipt-${cleanId}.pdf`);
+      showToast("Receipt PDF downloaded successfully!");
+    } catch (err) {
+      console.error("PDF generation failed", err);
+      showToast("Failed to generate PDF. Please try again.");
+    }
   };
 
   const handleConfirmLogout = () => {
@@ -1558,7 +1746,12 @@ export default function ProfilePage() {
 
       {/* ================= ORDER DETAILS MODAL ================= */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedOrder(null);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        >
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
@@ -1653,7 +1846,17 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-5">
+              <button
+                onClick={() => handleDownloadReceipt(selectedOrder)}
+                className="inline-flex items-center gap-2 rounded-xl border border-black bg-white px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black transition hover:bg-black hover:text-white"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Receipt
+              </button>
+
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="rounded-xl bg-black px-6 py-3 text-xs font-semibold uppercase tracking-wider text-white hover:bg-gray-800"
@@ -1667,7 +1870,12 @@ export default function ProfilePage() {
 
       {/* ================= ADD ADDRESS MODAL ================= */}
       {showAddressModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAddressModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        >
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="text-lg font-bold text-gray-900">
@@ -1814,7 +2022,12 @@ export default function ProfilePage() {
 
       {/* ================= LOGOUT CONFIRMATION MODAL ================= */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLogoutModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        >
           <div className="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 text-center shadow-2xl">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600">
               <LogOutIcon />
@@ -1847,93 +2060,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ================= FOOTER ================= */}
-      <footer className="mt-20 border-t border-black/10 bg-black text-white">
-        <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
-          <div className="grid gap-10 md:grid-cols-4">
-            <div>
-              <p className="text-base font-black tracking-[0.25em]">WEARWELL</p>
-              <p className="mt-3 text-xs leading-relaxed text-white/60">
-                Modern essentials and timeless silhouettes curated for elevated everyday living.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                Shop Collections
-              </h4>
-              <div className="mt-4 space-y-2 text-xs text-white/60">
-                <Link href="/shop" className="block hover:text-white transition">
-                  All Products
-                </Link>
-                <Link href="/shop?category=Women" className="block hover:text-white transition">
-                  Women
-                </Link>
-                <Link href="/shop?category=Men" className="block hover:text-white transition">
-                  Men
-                </Link>
-                <Link href="/shop?category=Accessories" className="block hover:text-white transition">
-                  Accessories
-                </Link>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                Customer Care
-              </h4>
-              <div className="mt-4 space-y-2 text-xs text-white/60">
-                <Link href="/cart" className="block hover:text-white transition">
-                  Shopping Bag
-                </Link>
-                <Link href="/checkout" className="block hover:text-white transition">
-                  Checkout
-                </Link>
-                <Link href="/profile" className="block hover:text-white transition">
-                  My Profile
-                </Link>
-                <a href="mailto:support@wearwell.com" className="block hover:text-white transition">
-                  Help & Contact
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                Newsletter
-              </h4>
-              <p className="mt-4 text-xs text-white/60">
-                Subscribe for secret sales and private collection previews.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Enter email..."
-                  className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs text-white placeholder:text-white/40 outline-none focus:border-white"
-                />
-                <button
-                  type="button"
-                  onClick={() => showToast("Subscribed to WEARWELL Newsletter!")}
-                  className="rounded-lg bg-white px-4 py-2 text-xs font-bold uppercase text-black hover:bg-gray-200 transition"
-                >
-                  Join
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[11px] text-white/40">
-              © 2026 WEARWELL. All rights reserved.
-            </p>
-            <div className="flex gap-6 text-[11px] text-white/40">
-              <span>Privacy Policy</span>
-              <span>Terms of Service</span>
-              <span>Shipping & Returns</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* ================= UNIFIED LUXURY FOOTER ================= */}
+      <Footer />
     </div>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ProductCard from "@/components/ProductCard";
 
 type Product = {
 name: string;
@@ -561,6 +563,58 @@ const [selectedImage, setSelectedImage] = useState(
 product?.image || ""
 );
 
+const [isWishlisted, setIsWishlisted] = useState(false);
+
+useEffect(() => {
+  if (!product) return;
+  const checkWishlist = () => {
+    const saved = localStorage.getItem("wishlistItems");
+    if (saved) {
+      try {
+        const items = JSON.parse(saved);
+        setIsWishlisted(items.some((item: { name: string }) => item.name === product.name));
+      } catch {
+        setIsWishlisted(false);
+      }
+    } else {
+      setIsWishlisted(false);
+    }
+  };
+
+  checkWishlist();
+  window.addEventListener("wishlistUpdated", checkWishlist);
+  window.addEventListener("storage", checkWishlist);
+  return () => {
+    window.removeEventListener("wishlistUpdated", checkWishlist);
+    window.removeEventListener("storage", checkWishlist);
+  };
+}, [product]);
+
+const handleToggleWishlist = () => {
+  if (!product) return;
+  const saved = localStorage.getItem("wishlistItems");
+  let items = saved ? JSON.parse(saved) : [];
+
+  const exists = items.some((item: { name: string }) => item.name === product.name);
+  if (exists) {
+    items = items.filter((item: { name: string }) => item.name !== product.name);
+    setIsWishlisted(false);
+  } else {
+    items.push({
+      id: Date.now(),
+      name: product.name,
+      price: product.price,
+      category: product.category,
+      image: product.image,
+      inStock: true,
+    });
+    setIsWishlisted(true);
+  }
+
+  localStorage.setItem("wishlistItems", JSON.stringify(items));
+  window.dispatchEvent(new Event("wishlistUpdated"));
+};
+
 if (!product) {
     return (
       <>
@@ -690,12 +744,36 @@ return (
             ))}
           </div>
 
-          <div className="order-1 overflow-hidden bg-[#EAE4DC] sm:order-2">
+          <div className="relative order-1 overflow-hidden bg-[#EAE4DC] sm:order-2 rounded-2xl">
             <img
               src={selectedImage}
               alt={product.name}
               className="aspect-[3/4] w-full object-cover transition duration-700 hover:scale-[1.02]"
             />
+            {/* Floating Wishlist Heart */}
+            <button
+              onClick={handleToggleWishlist}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur transition hover:scale-110 hover:bg-white"
+            >
+              <svg
+                className={`h-5 w-5 transition duration-200 ${
+                  isWishlisted
+                    ? "fill-red-500 text-red-500 scale-110"
+                    : "fill-none text-gray-700 hover:text-red-500"
+                }`}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.75"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -851,126 +929,181 @@ return (
           </div>
 
           {/* ACTION BUTTONS */}
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            <button
-              onClick={handleAddToCart}
-              className="rounded-xl border border-black bg-white py-4 text-sm font-semibold transition hover:bg-black hover:text-white"
-            >
-              Add to Bag
-            </button>
+          <div className="mt-8 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                onClick={handleAddToCart}
+                className="rounded-xl border border-black bg-white py-4 text-sm font-semibold transition hover:bg-black hover:text-white"
+              >
+                Add to Bag
+              </button>
+
+              <button
+                onClick={handleBuyNow}
+                className="rounded-xl bg-black py-4 text-sm font-semibold text-white transition hover:bg-[#A06E31]"
+              >
+                Buy Now
+              </button>
+            </div>
 
             <button
-              onClick={handleBuyNow}
-              className="rounded-xl bg-black py-4 text-sm font-semibold text-white transition hover:bg-gray-800"
+              onClick={handleToggleWishlist}
+              className={`w-full rounded-xl border py-3.5 text-xs font-semibold uppercase tracking-wider transition flex items-center justify-center gap-2 ${
+                isWishlisted
+                  ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                  : "border-gray-200 bg-white text-gray-800 hover:border-black hover:bg-gray-50"
+              }`}
             >
-              Buy Now
+              <svg
+                className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : "fill-none text-gray-700"}`}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.75"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              {isWishlisted ? "Saved in Wishlist (Remove)" : "Add to Wishlist"}
             </button>
           </div>
 
-          {/* DELIVERY BENEFITS */}
-          <div className="mt-8 space-y-3 border-t border-black/10 pt-6 text-xs text-gray-600">
-            <p>✓ Free shipping on all orders</p>
-            <p>✓ Secure checkout</p>
-            <p>✓ Easy returns & exchanges</p>
+          {/* DELIVERY MINI PERKS */}
+          <div className="mt-8 grid grid-cols-3 gap-2 border-t border-black/10 pt-5 text-center text-[11px] text-gray-600">
+            <div className="rounded-xl border border-gray-100 bg-white p-2.5 shadow-sm flex flex-col items-center">
+              <svg className="w-4 h-4 text-black mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              <span className="font-semibold text-gray-900">Free Shipping</span>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-white p-2.5 shadow-sm flex flex-col items-center">
+              <svg className="w-4 h-4 text-black mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="font-semibold text-gray-900">14-Day Returns</span>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-white p-2.5 shadow-sm flex flex-col items-center">
+              <svg className="w-4 h-4 text-black mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="font-semibold text-gray-900">Secure Order</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* PRODUCT DETAILS */}
-      <section className="mt-20 border-t border-black/10 py-14">
-        <div className="grid gap-10 md:grid-cols-2">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#A06E31]">
-              Product Information
-            </p>
-
-            <h2 className="mt-3 text-2xl font-semibold text-gray-900">
-              Product Details
+      {/* LUXURY SPECIFICATIONS & CRAFTSMANSHIP */}
+      <section className="mt-16 sm:mt-20 border-t border-black/10 pt-12 sm:pt-14">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
+            <span className="inline-block rounded-full bg-[#A06E31]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#A06E31]">
+              Craftsmanship & Features
+            </span>
+            <h2 className="mt-3 text-xl sm:text-2xl font-bold text-gray-900">
+              Product Overview
             </h2>
-          </div>
-
-          <div>
-            <p className="text-sm leading-7 text-gray-600">
+            <p className="mt-3 text-xs sm:text-sm leading-relaxed text-gray-600">
               {product.description}
             </p>
 
-            <ul className="mt-6 space-y-3 text-sm text-gray-600">
+            <div className="mt-6 flex flex-wrap gap-2">
+              <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-[11px] font-semibold text-gray-700">
+                Category: {product.category}
+              </span>
+              <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-[11px] font-semibold text-gray-700">
+                Fit: Tailored Contemporary
+              </span>
+              <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-[11px] font-semibold text-gray-700">
+                Season: 2026 Collection
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-black/10 bg-white p-6 sm:p-8 shadow-sm">
+            <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-700">
+              Material & Care
+            </span>
+            <h2 className="mt-3 text-xl sm:text-2xl font-bold text-gray-900">
+              Key Details
+            </h2>
+            <ul className="mt-4 space-y-3">
               {product.details.map((detail) => (
-                <li key={detail} className="flex gap-3">
-                  <span className="text-black">✓</span>
+                <li key={detail} className="flex items-center gap-3 text-xs sm:text-sm text-gray-600">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white">
+                    ✓
+                  </span>
                   <span>{detail}</span>
                 </li>
               ))}
+              <li className="flex items-center gap-3 text-xs sm:text-sm text-gray-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white">
+                  ✓
+                </span>
+                <span>Pre-shrunk finish for consistent everyday sizing</span>
+              </li>
             </ul>
           </div>
         </div>
       </section>
 
-      {/* SHIPPING INFO */}
-      <section className="border-y border-black/10 py-10">
-        <div className="grid gap-8 sm:grid-cols-3">
-          <div>
-            <p className="text-sm font-semibold">
-              Free Shipping
-            </p>
-
-            <p className="mt-2 text-xs leading-6 text-gray-500">
-              Enjoy free shipping on all orders.
-            </p>
+      {/* SHIPPING & GUARANTEE RIBBON */}
+      <section className="mt-8 border-y border-black/10 bg-white py-8 px-4 sm:px-6 rounded-2xl shadow-sm">
+        <div className="grid gap-6 sm:grid-cols-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#F8F6F2] text-black">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-xs sm:text-sm font-bold text-gray-900">
+                Free Express Shipping
+              </p>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Door-to-door delivery within 2–4 business days across Pakistan.
+              </p>
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm font-semibold">
-              Easy Returns
-            </p>
-
-            <p className="mt-2 text-xs leading-6 text-gray-500">
-              Simple returns and exchanges for eligible items.
-            </p>
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#F8F6F2] text-black">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-xs sm:text-sm font-bold text-gray-900">
+                14-Day Easy Returns
+              </p>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Hassle-free exchanges or refunds within 14 days of receipt.
+              </p>
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm font-semibold">
-              Secure Checkout
-            </p>
-
-            <p className="mt-2 text-xs leading-6 text-gray-500">
-              Your checkout experience is designed to be safe and secure.
-            </p>
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#F8F6F2] text-black">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-xs sm:text-sm font-bold text-gray-900">
+                Encrypted Checkout
+              </p>
+              <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                Safe and secure order processing with direct customer support.
+              </p>
+            </div>
           </div>
         </div>
       </section>
     </div>
 
-    {/* NEWSLETTER */}
-    <section className="mt-16 bg-black px-6 py-16 text-white">
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-gray-400">
-          WEARWELL
-        </p>
-
-        <h2 className="mt-4 text-3xl font-semibold">
-          Stay in the loop
-        </h2>
-
-        <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-gray-400">
-          Get updates about new arrivals, exclusive offers and
-          the latest collection.
-        </p>
-
-        <div className="mx-auto mt-7 flex max-w-md flex-col gap-3 sm:flex-row">
-          <input
-            type="email"
-            placeholder="Enter your email"
-            className="flex-1 rounded-xl px-4 py-3 text-sm text-black outline-none"
-          />
-
-          <button className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200">
-            Subscribe
-          </button>
-        </div>
-      </div>
-    </section>
+    {/* UNIFIED LUXURY FOOTER */}
+    <Footer />
   </main>
 </>
 );

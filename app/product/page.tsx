@@ -296,14 +296,17 @@ export default function ProductPage() {
               </button>
 
               {/* Delivery */}
-              <div className="mt-8 rounded-xl border bg-gray-50 p-5">
-
-                <div className="flex gap-4">
-                  <span className="text-xl">🚚</span>
+              <div className="mt-8 rounded-xl border border-gray-200/70 bg-gray-50/60 p-5">
+                <div className="flex gap-4 items-start">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs border border-gray-100 text-black">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
 
                   <div>
                     <p className="text-sm font-semibold text-gray-900">
-                      Free Delivery
+                      Free Express Delivery
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-gray-500">
@@ -312,14 +315,17 @@ export default function ProductPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 border-t pt-5">
-
-                  <div className="flex gap-4">
-                    <span className="text-xl">↩</span>
+                <div className="mt-4 border-t border-gray-200/60 pt-4">
+                  <div className="flex gap-4 items-start">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs border border-gray-100 text-black">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    </div>
 
                     <div>
                       <p className="text-sm font-semibold text-gray-900">
-                        Easy Returns
+                        14-Day Returns
                       </p>
 
                       <p className="mt-1 text-xs leading-5 text-gray-500">
@@ -327,7 +333,6 @@ export default function ProductPage() {
                       </p>
                     </div>
                   </div>
-
                 </div>
               </div>
 
