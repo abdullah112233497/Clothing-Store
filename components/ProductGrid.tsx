@@ -5,7 +5,7 @@ const products = [
   {
     id: 1,
     name: "Relaxed Fit Coat",
-    price: "Rs. 3,490",
+    price: "Rs. 4500",
     category: "Women",
     image: "/images/product-1.png",
   },
