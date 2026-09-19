@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
@@ -563,11 +564,16 @@ const [selectedImage, setSelectedImage] = useState(
 product?.image || ""
 );
 
+const { isLoggedIn } = useAuth();
 const [isWishlisted, setIsWishlisted] = useState(false);
 
 useEffect(() => {
   if (!product) return;
   const checkWishlist = () => {
+    if (!isLoggedIn) {
+      setIsWishlisted(false);
+      return;
+    }
     const saved = localStorage.getItem("wishlistItems");
     if (saved) {
       try {
@@ -588,31 +594,59 @@ useEffect(() => {
     window.removeEventListener("wishlistUpdated", checkWishlist);
     window.removeEventListener("storage", checkWishlist);
   };
-}, [product]);
+}, [product, isLoggedIn]);
 
-const handleToggleWishlist = () => {
+const handleToggleWishlist = async () => {
   if (!product) return;
-  const saved = localStorage.getItem("wishlistItems");
-  let items = saved ? JSON.parse(saved) : [];
-
-  const exists = items.some((item: { name: string }) => item.name === product.name);
-  if (exists) {
-    items = items.filter((item: { name: string }) => item.name !== product.name);
-    setIsWishlisted(false);
-  } else {
-    items.push({
-      id: Date.now(),
-      name: product.name,
-      price: product.price,
-      category: product.category,
-      image: product.image,
-      inStock: true,
-    });
-    setIsWishlisted(true);
+  if (!isLoggedIn) {
+    router.push(`/account/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`);
+    return;
   }
 
-  localStorage.setItem("wishlistItems", JSON.stringify(items));
-  window.dispatchEvent(new Event("wishlistUpdated"));
+  const nextState = !isWishlisted;
+  setIsWishlisted(nextState);
+
+  try {
+    const res = await fetch("/api/wishlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: product.name,
+        price: product.price,
+        originalPrice: product.oldPrice,
+        category: product.category,
+        image: product.image,
+        inStock: true,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setIsWishlisted(!nextState);
+      return;
+    }
+
+    const saved = localStorage.getItem("wishlistItems");
+    let items = saved ? JSON.parse(saved) : [];
+    if (data.wishlisted) {
+      if (!items.some((i: { name: string }) => i.name === product.name)) {
+        items.push({
+          id: data.item?.id || Date.now(),
+          name: product.name,
+          price: product.price,
+          category: product.category,
+          image: product.image,
+          inStock: true,
+        });
+      }
+    } else {
+      items = items.filter((i: { name: string }) => i.name !== product.name);
+    }
+    localStorage.setItem("wishlistItems", JSON.stringify(items));
+    window.dispatchEvent(new Event("wishlistUpdated"));
+  } catch {
+    setIsWishlisted(!nextState);
+  }
 };
 
 if (!product) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 type CartItem = {
   quantity: number;
@@ -132,6 +133,7 @@ function CloseIcon() {
 }
 
 export default function Header() {
+  const { user, isLoggedIn, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
@@ -156,7 +158,21 @@ export default function Header() {
       }
     };
 
-    const updateWishlist = () => {
+    const updateWishlist = async () => {
+      if (!isLoggedIn) {
+        setWishlistCount(0);
+        return;
+      }
+      try {
+        const res = await fetch("/api/wishlist", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setWishlistCount(data.count || 0);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to fetch wishlist count", e);
+      }
       const saved = localStorage.getItem("wishlistItems");
       if (saved) {
         try {
@@ -184,7 +200,7 @@ export default function Header() {
       window.removeEventListener("storage", updateWishlist);
       window.removeEventListener("wishlistUpdated", updateWishlist);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (menuOpen) {
@@ -282,30 +298,43 @@ export default function Header() {
               <SearchIcon />
             </button>
 
-            {/* Wishlist Link */}
-            <Link
-              href="/profile"
-              aria-label="Wishlist"
-              title="My Wishlist"
-              className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
-            >
-              <HeartIcon />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
+            {/* Wishlist Link (Only visible when user is logged in) */}
+            {isLoggedIn && (
+              <Link
+                href="/profile"
+                aria-label="Wishlist"
+                title="My Wishlist"
+                className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+              >
+                <HeartIcon />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
-            {/* Account / Profile (Visible on all devices including small mobile) */}
-            <Link
-              href="/profile"
-              aria-label="Account"
-              title="My Profile"
-              className="flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
-            >
-              <UserIcon />
-            </Link>
+            {/* Account / Login (Responsive for all screen sizes: converts to Login button when logged out) */}
+            {isLoggedIn ? (
+              <Link
+                href="/profile"
+                aria-label="Account"
+                title={user?.firstName ? `Hi, ${user.firstName}` : "My Profile"}
+                className="flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+              >
+                <UserIcon />
+              </Link>
+            ) : (
+              <Link
+                href="/account/login"
+                aria-label="Sign In"
+                title="Sign In to your account"
+                className="inline-flex items-center justify-center rounded-full border border-black/25 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-black shadow-2xs transition hover:border-black hover:bg-black hover:text-white active:scale-95 sm:px-3.5 sm:py-1.5 sm:text-xs"
+              >
+                <span>Login</span>
+              </Link>
+            )}
 
             {/* Cart */}
             <Link
@@ -474,30 +503,75 @@ export default function Header() {
 
             <div className="my-2 h-px bg-gray-100" />
 
-            <Link
-              href="/profile"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center justify-between rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
-            >
-              <div className="flex items-center gap-3">
-                <HeartIcon />
-                <span>My Wishlist</span>
-              </div>
-              {wishlistCount > 0 && (
-                <span className="rounded-full bg-[#A06E31] px-2.5 py-0.5 text-[10px] font-bold text-white">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+                >
+                  <div className="flex items-center gap-3">
+                    <HeartIcon />
+                    <span>My Wishlist</span>
+                  </div>
+                  {wishlistCount > 0 && (
+                    <span className="rounded-full bg-[#A06E31] px-2.5 py-0.5 text-[10px] font-bold text-white">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
 
-            <Link
-              href="/profile"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
-            >
-              <UserIcon />
-              <span>My Profile</span>
-            </Link>
+                <Link
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+                >
+                  <div className="flex items-center gap-3">
+                    <UserIcon />
+                    <span>My Profile</span>
+                  </div>
+                  {user?.firstName && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                      {user.firstName}
+                    </span>
+                  )}
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    logout();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-red-600 transition hover:bg-red-50"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.6}
+                    stroke="currentColor"
+                    className="h-4 w-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+                    />
+                  </svg>
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/account/login"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 rounded-xl bg-black px-4 py-3 text-white transition hover:bg-neutral-800"
+              >
+                <UserIcon />
+                <span>Sign In / Register</span>
+              </Link>
+            )}
 
             <Link
               href="/cart"

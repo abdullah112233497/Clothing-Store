@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import jsPDF from "jspdf";
@@ -178,6 +179,7 @@ function ShareIcon() {
 // ================= COMPONENT =================
 export default function ProfilePage() {
   const router = useRouter();
+  const { user, isLoading, logout, updateUser } = useAuth();
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -259,44 +261,8 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // Wishlist State
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([
-    {
-      id: 101,
-      name: "Relaxed Fit Wool Coat",
-      price: 4500,
-      originalPrice: 5990,
-      category: "Women",
-      image: "/images/product-1.png",
-      inStock: true,
-    },
-    {
-      id: 102,
-      name: "Classic Tailored Brown Blazer",
-      price: 4990,
-      originalPrice: 6200,
-      category: "Women",
-      image: "/images/product-3.png",
-      inStock: true,
-    },
-    {
-      id: 103,
-      name: "Minimalist Leather Shoulder Bag",
-      price: 3990,
-      category: "Accessories",
-      image: "/images/product-5.png",
-      inStock: true,
-    },
-    {
-      id: 104,
-      name: "Everyday Minimal Sneakers",
-      price: 5490,
-      originalPrice: 6990,
-      category: "Accessories",
-      image: "/images/product-6.png",
-      inStock: true,
-    },
-  ]);
+  // Wishlist State (Loaded dynamically from PostgreSQL)
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
 
   // Passwords Form
   const [passwords, setPasswords] = useState({
@@ -331,28 +297,41 @@ export default function ProfilePage() {
 
   // ================= LOAD STORED DATA & AUTH =================
   useEffect(() => {
-    const logged = localStorage.getItem("isLoggedIn");
-    if (logged === "true") {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
+    if (!isLoading && !user) {
+      router.replace("/account/login?redirect=/profile");
     }
+  }, [isLoading, user, router]);
 
+  useEffect(() => {
+    if (user) {
+      setIsLoggedIn(true);
+      setProfile((prev) => ({
+        ...prev,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone || prev.phone,
+        birthday: user.birthday || prev.birthday,
+        gender: user.gender || prev.gender,
+        memberSince: user.memberSince || prev.memberSince,
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone || prev.phone,
+        birthday: user.birthday || prev.birthday,
+        gender: user.gender || prev.gender,
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
     // Load Avatar
     const savedAvatar = localStorage.getItem("userAvatar");
     if (savedAvatar) {
       setAvatarUrl(savedAvatar);
-    }
-
-    const savedProfile = localStorage.getItem("userProfile");
-    if (savedProfile) {
-      try {
-        const parsed = JSON.parse(savedProfile);
-        setProfile(parsed);
-        setFormData(parsed);
-      } catch (err) {
-        console.error("Failed to parse userProfile", err);
-      }
     }
 
     const savedAddrs = localStorage.getItem("savedAddresses");
@@ -364,27 +343,35 @@ export default function ProfilePage() {
       }
     }
 
-    // Load & sync wishlist
-    const savedWishlist = localStorage.getItem("wishlistItems");
-    if (savedWishlist) {
+    // Load & sync wishlist from PostgreSQL database
+    const fetchUserWishlist = async () => {
       try {
-        setWishlist(JSON.parse(savedWishlist));
-      } catch (err) {
-        console.error("Failed to parse wishlistItems", err);
+        const res = await fetch("/api/wishlist", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.items)) {
+            setWishlist(data.items);
+            localStorage.setItem("wishlistItems", JSON.stringify(data.items));
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load wishlist from DB", e);
       }
-    } else {
-      localStorage.setItem("wishlistItems", JSON.stringify(wishlist));
-    }
-
-    const handleSyncWishlist = () => {
-      const items = localStorage.getItem("wishlistItems");
-      if (items) {
+      const savedWishlist = localStorage.getItem("wishlistItems");
+      if (savedWishlist) {
         try {
-          setWishlist(JSON.parse(items));
-        } catch (e) {
-          console.error(e);
+          setWishlist(JSON.parse(savedWishlist));
+        } catch (err) {
+          console.error("Failed to parse wishlistItems", err);
         }
       }
+    };
+
+    fetchUserWishlist();
+
+    const handleSyncWishlist = () => {
+      fetchUserWishlist();
     };
 
     window.addEventListener("wishlistUpdated", handleSyncWishlist);
@@ -463,7 +450,7 @@ export default function ProfilePage() {
 
         setOrders([newLiveOrder, ...baseOrders]);
 
-        if (parsedOrder.customer && !savedProfile) {
+        if (parsedOrder.customer && !user) {
           const names = parsedOrder.customer.name.split(" ");
           const updated: UserProfile = {
             firstName: names[0] || "Abdullah",
@@ -511,12 +498,26 @@ export default function ProfilePage() {
     showToast("Signed in as " + profile.firstName + " " + profile.lastName);
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfile(formData);
-    localStorage.setItem("userProfile", JSON.stringify(formData));
-    setEditMode(false);
-    showToast("Profile details updated successfully!");
+    try {
+      const res = await fetch("/api/auth/update-profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setProfile(formData);
+        updateUser(formData);
+        setEditMode(false);
+        showToast("Profile details updated successfully!");
+      } else {
+        showToast(data.error || "Failed to update profile.");
+      }
+    } catch {
+      showToast("Error updating profile. Please try again.");
+    }
   };
 
   const handleAddAddress = (e: React.FormEvent) => {
@@ -597,12 +598,23 @@ export default function ProfilePage() {
     showToast(`Added "${item.name}" to your shopping bag!`);
   };
 
-  const handleRemoveWishlist = (id: number) => {
+  const handleRemoveWishlist = async (id: number) => {
+    const target = wishlist.find((w) => w.id === id);
     const updated = wishlist.filter((w) => w.id !== id);
     setWishlist(updated);
     localStorage.setItem("wishlistItems", JSON.stringify(updated));
     window.dispatchEvent(new Event("wishlistUpdated"));
     showToast("Item removed from your wishlist.");
+
+    try {
+      await fetch("/api/wishlist", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, name: target?.name }),
+      });
+    } catch (e) {
+      console.error("Failed to delete wishlist item from DB", e);
+    }
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -764,24 +776,21 @@ export default function ProfilePage() {
     }
   };
 
-  const handleConfirmLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
+  const handleConfirmLogout = async () => {
     setShowLogoutModal(false);
-    showToast("You have been signed out.");
-    setTimeout(() => {
-      router.push("/account/login");
-    }, 500);
+    showToast("Signing out...");
+    await logout();
   };
 
-  if (isLoggedIn === null) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gray-400">
             WEARWELL
           </p>
-          <p className="mt-2 text-sm text-gray-500">Loading your profile...</p>
+          <div className="mt-4 mx-auto h-6 w-6 animate-spin rounded-full border-2 border-black border-t-transparent" />
+          <p className="mt-3 text-sm text-gray-500">Loading your profile...</p>
         </div>
       </div>
     );
@@ -814,45 +823,8 @@ export default function ProfilePage() {
           <span className="text-black font-semibold">My Account</span>
         </nav>
 
-        {/* ================= IF USER IS NOT LOGGED IN ================= */}
-        {!isLoggedIn ? (
-          <section className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-8 sm:p-12 text-center shadow-xs">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-800">
-              <LockIcon />
-            </div>
-
-            <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
-              WEARWELL ACCOUNT
-            </p>
-
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-900">
-              Sign In to Your Account
-            </h1>
-
-            <p className="mt-3 text-xs leading-relaxed text-gray-500">
-              Sign in to manage your profile, view orders, and access saved addresses.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3">
-              <Link
-                href="/account/login"
-                className="w-full rounded-xl bg-black py-4 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-gray-800"
-              >
-                Sign In
-              </Link>
-
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                className="w-full rounded-xl border border-black bg-white py-3.5 text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white"
-              >
-                Quick Guest Preview
-              </button>
-            </div>
-          </section>
-        ) : (
-          /* ================= LOGGED IN DASHBOARD ================= */
-          <div>
+        {/* ================= LOGGED IN DASHBOARD ================= */}
+        <div>
             
             {/* ================= SEAMLESS MOBILE PROFILE HEADER (< lg screens) ================= */}
             <div className="block lg:hidden border-b border-gray-100 pb-8 mb-8 text-center">
@@ -1833,7 +1805,6 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-        )}
       </main>
 
       {/* ================= ORDER DETAILS MODAL ================= */}

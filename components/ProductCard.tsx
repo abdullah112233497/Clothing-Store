@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 type ProductCardProps = {
   name: string;
@@ -33,10 +35,16 @@ export default function ProductCard({
   category,
   image,
 }: ProductCardProps) {
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     const checkWishlist = () => {
+      if (!isLoggedIn) {
+        setIsWishlisted(false);
+        return;
+      }
       const saved = localStorage.getItem("wishlistItems");
       if (saved) {
         try {
@@ -57,36 +65,61 @@ export default function ProductCard({
       window.removeEventListener("wishlistUpdated", checkWishlist);
       window.removeEventListener("storage", checkWishlist);
     };
-  }, [name]);
+  }, [name, isLoggedIn]);
 
-  const handleToggleWishlist = (e: React.MouseEvent) => {
+  const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const saved = localStorage.getItem("wishlistItems");
-    let items: WishlistItem[] = saved ? JSON.parse(saved) : [];
-
-    const numericPrice = Number(price.replace(/[^0-9]/g, "")) || 3990;
-
-    const exists = items.some((item) => item.name === name);
-    if (exists) {
-      items = items.filter((item) => item.name !== name);
-      setIsWishlisted(false);
-    } else {
-      const newItem: WishlistItem = {
-        id: Date.now(),
-        name,
-        price: numericPrice,
-        category,
-        image,
-        inStock: true,
-      };
-      items.push(newItem);
-      setIsWishlisted(true);
+    if (!isLoggedIn) {
+      router.push(`/account/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/shop")}`);
+      return;
     }
 
-    localStorage.setItem("wishlistItems", JSON.stringify(items));
-    window.dispatchEvent(new Event("wishlistUpdated"));
+    const numericPrice = Number(price.replace(/[^0-9]/g, "")) || 3990;
+    const nextState = !isWishlisted;
+    setIsWishlisted(nextState);
+
+    try {
+      const res = await fetch("/api/wishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          price: numericPrice,
+          category,
+          image,
+          inStock: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setIsWishlisted(!nextState);
+        return;
+      }
+
+      const saved = localStorage.getItem("wishlistItems");
+      let items: WishlistItem[] = saved ? JSON.parse(saved) : [];
+      if (data.wishlisted) {
+        if (!items.some((i) => i.name === name)) {
+          items.push({
+            id: data.item?.id || Date.now(),
+            name,
+            price: numericPrice,
+            category,
+            image,
+            inStock: true,
+          });
+        }
+      } else {
+        items = items.filter((i) => i.name !== name);
+      }
+      localStorage.setItem("wishlistItems", JSON.stringify(items));
+      window.dispatchEvent(new Event("wishlistUpdated"));
+    } catch {
+      setIsWishlisted(!nextState);
+    }
   };
 
   const productSlug = name
