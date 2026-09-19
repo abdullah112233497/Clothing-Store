@@ -100,28 +100,28 @@ export default function ProductCard({
         </button>
       </div>
 
-      <div className="pt-4">
-        <p className="mb-1 text-[10px] uppercase tracking-[0.2em] text-[#A06E31]">
+      <div className="pt-3 sm:pt-4">
+        <p className="mb-1 text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#A06E31]">
           {category}
         </p>
 
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-3">
           <Link
             href={productLink}
-            className="text-sm font-medium transition hover:text-[#A06E31]"
+            className="text-xs sm:text-sm font-medium leading-snug transition hover:text-[#A06E31] line-clamp-2"
           >
             {name}
           </Link>
 
-          <p className="whitespace-nowrap text-sm font-medium">
+          <p className="whitespace-nowrap text-xs sm:text-sm font-semibold sm:font-medium text-gray-900">
             {price}
           </p>
         </div>
 
-        <div className="mt-3 flex gap-1.5">
-          <span className="h-3 w-3 rounded-full border border-black/20 bg-black" />
-          <span className="h-3 w-3 rounded-full border border-black/20 bg-[#D5C1A9]" />
-          <span className="h-3 w-3 rounded-full border border-black/20 bg-white" />
+        <div className="mt-2 flex gap-1.5">
+          <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-black" />
+          <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-[#D5C1A9]" />
+          <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-white" />
         </div>
       </div>
     </article>

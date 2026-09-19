@@ -268,23 +268,23 @@ export default function ShopPage() {
 
       <main className="min-h-screen bg-[#F8F6F2]">
 
-        {/* HERO */}
-        <section className="border-b border-black/10 bg-[#E8E0D6] px-6 py-20">
-          <div className="mx-auto max-w-7xl text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-500">
-              OUTFITTERS COLLECTION
+        {/* COMPACT HERO SECTION */}
+        <section className="border-b border-black/10 bg-[#E8E0D6] px-4 py-6 sm:px-6 sm:py-9 text-center">
+          <div className="mx-auto max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gray-500">
+              WEARWELL COLLECTION
             </p>
 
-            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-gray-900 md:text-6xl">
+            <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
               {pageTitle}
             </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-gray-600">
+            <p className="mx-auto mt-1 max-w-lg text-xs leading-relaxed text-gray-600 sm:text-sm">
               {pageDescription}
             </p>
 
             {searchQuery && (
-              <p className="mt-5 text-sm text-gray-600">
+              <p className="mt-2 text-xs sm:text-sm text-gray-600">
                 Search results for{" "}
                 <span className="font-semibold text-black">
                   "{searchQuery}"
@@ -294,53 +294,54 @@ export default function ShopPage() {
           </div>
         </section>
 
-        {/* CATEGORY BUTTONS */}
-        <section className="border-b border-black/10 bg-white px-6 py-6">
-          <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-3">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => changeCategory(category)}
-                className={`rounded-full px-7 py-3 text-xs font-semibold uppercase tracking-wider transition ${
-                  activeCategory === category
-                    ? "bg-black text-white"
-                    : "border border-gray-200 bg-white text-gray-700 hover:border-black hover:text-black"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* PRODUCTS HEADER */}
-        <section className="px-6 pt-14">
-          <div className="mx-auto max-w-7xl">
-            <div className="flex items-end justify-between border-b border-black/10 pb-5">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-[#A06E31]">
-                  {activeCategory === "All"
-                    ? "Complete Collection"
-                    : `${activeCategory} Collection`}
-                </p>
-
-                <h2 className="mt-2 text-2xl font-semibold text-gray-900">
-                  {activeCategory === "All"
-                    ? "All Products"
-                    : `${activeCategory} Products`}
-                </h2>
-              </div>
-
-              <p className="text-xs text-gray-500">
-                {filteredProducts.length} products
-              </p>
+        {/* COMPACT CATEGORY BUTTONS */}
+        <section className="sticky top-20 z-30 border-b border-black/10 bg-white/95 backdrop-blur px-4 py-2.5 sm:py-3.5">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+            <div className="flex flex-1 items-center justify-center sm:justify-start gap-2 overflow-x-auto py-0.5 scrollbar-none">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => changeCategory(category)}
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 sm:px-5 sm:py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-wider transition ${
+                    activeCategory === category
+                      ? "bg-black text-white shadow-sm"
+                      : "border border-gray-200 bg-white text-gray-700 hover:border-black hover:text-black"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
+
+            <p className="hidden whitespace-nowrap text-xs font-medium text-gray-500 sm:block">
+              {filteredProducts.length} items
+            </p>
           </div>
         </section>
 
-        {/* PRODUCT GRID */}
-        <section className="px-6 py-12">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
+        {/* PRODUCTS HEADER (Compact & Clean) */}
+        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-6 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#A06E31]">
+              {activeCategory === "All"
+                ? "Complete Collection"
+                : `${activeCategory} Collection`}
+            </p>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              {activeCategory === "All"
+                ? "All Products"
+                : `${activeCategory} Products`}
+            </h2>
+          </div>
+
+          <p className="text-xs font-medium text-gray-500 sm:hidden">
+            {filteredProducts.length} products
+          </p>
+        </div>
+
+        {/* PRODUCT GRID - 2 columns on small devices / mobile */}
+        <section className="px-4 py-4 sm:px-6 sm:py-8">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:grid-cols-4">
             {filteredProducts.map((product) => (
               <ProductCard
                 key={`${product.category}-${product.name}`}

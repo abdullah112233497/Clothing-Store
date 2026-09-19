@@ -87,8 +87,8 @@ export default function ProductGrid() {
       </div>
 
 
-      {/* Products */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+      {/* Products - 2 Columns on small devices */}
+      <div className="grid grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
 
         {products.map((product) => (
           <ProductCard

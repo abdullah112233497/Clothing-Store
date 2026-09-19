@@ -562,54 +562,50 @@ product?.image || ""
 );
 
 if (!product) {
-return (
-<> <Header />
+    return (
+      <>
+        <Header />
+        <main className="flex min-h-[70vh] items-center justify-center bg-[#F8F6F2] px-6">
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-[0.25em] text-gray-400">
+              WEARWELL
+            </p>
 
-```
-    <main className="flex min-h-[70vh] items-center justify-center bg-[#F8F6F2] px-6">
-      <div className="text-center">
-        <p className="text-xs uppercase tracking-[0.25em] text-gray-400">
-          OUTFITTERS
-        </p>
+            <h1 className="mt-4 text-3xl font-semibold text-gray-900">
+              Product Not Found
+            </h1>
 
-        <h1 className="mt-4 text-3xl font-semibold text-gray-900">
-          Product Not Found
-        </h1>
+            <p className="mt-3 text-sm text-gray-500">
+              Sorry, this product could not be found.
+            </p>
 
-        <p className="mt-3 text-sm text-gray-500">
-          Sorry, this product could not be found.
-        </p>
+            <Link
+              href="/shop"
+              className="mt-7 inline-block rounded-xl bg-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+            >
+              Back to Shop
+            </Link>
+          </div>
+        </main>
+      </>
+    );
+  }
 
-        <Link
-          href="/shop"
-          className="mt-7 inline-block rounded-xl bg-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-        >
-          Back to Shop
-        </Link>
-      </div>
-    </main>
-  </>
-);
-```
+  const addToCart = () => {
+    const newItem: CartItem = {
+      name: product.name,
+      price: product.price,
+      size: selectedSize,
+      color: selectedColor,
+      quantity,
+      image: product.image,
+    };
 
-}
+    const savedCart = localStorage.getItem("cartItems");
 
-const addToCart = () => {
-const newItem: CartItem = {
-name: product.name,
-price: product.price,
-size: selectedSize,
-color: selectedColor,
-quantity,
-image: product.image,
-};
-
-```
-const savedCart = localStorage.getItem("cartItems");
-
-let cartItems: CartItem[] = savedCart
-  ? JSON.parse(savedCart)
-  : [];
+    let cartItems: CartItem[] = savedCart
+      ? JSON.parse(savedCart)
+      : [];
 
 const existingItemIndex = cartItems.findIndex(
   (item) =>
@@ -950,7 +946,7 @@ return (
     <section className="mt-16 bg-black px-6 py-16 text-white">
       <div className="mx-auto max-w-3xl text-center">
         <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-gray-400">
-          OUTFITTERS
+          WEARWELL
         </p>
 
         <h2 className="mt-4 text-3xl font-semibold">

@@ -291,7 +291,7 @@ export default function Home() {
         <div className="mx-auto max-w-4xl text-center">
 
           <p className="text-xs font-medium uppercase tracking-[0.35em] text-[#8B6A4A]">
-            The Outfitters Edit
+            The WEARWELL Edit
           </p>
 
           <h2 className="mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl md:text-6xl">

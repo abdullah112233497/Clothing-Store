@@ -2,14 +2,47 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    alert("Welcome back to OUTFITTERS!");
+    // 1. Mark user as logged in
+    localStorage.setItem("isLoggedIn", "true");
+
+    // 2. Derive user name from email
+    const cleanEmail = email.trim();
+    const namePart = cleanEmail.includes("@")
+      ? cleanEmail.split("@")[0]
+      : "User";
+    const formattedName =
+      namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
+    const savedProfile = localStorage.getItem("userProfile");
+    let currentProfile = savedProfile ? JSON.parse(savedProfile) : {};
+
+    const updatedProfile = {
+      firstName: currentProfile.firstName || formattedName,
+      lastName: currentProfile.lastName || "Khan",
+      email: cleanEmail,
+      phone: currentProfile.phone || "+92 300 1234567",
+      birthday: currentProfile.birthday || "1998-05-14",
+      gender: currentProfile.gender || "Male",
+      membershipTier: currentProfile.membershipTier || "VIP Black",
+      memberSince: currentProfile.memberSince || "November 2024",
+      rewardPoints: currentProfile.rewardPoints || 450,
+    };
+
+    localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
+
+    // 3. Navigate to profile
+    router.push("/profile");
   };
 
   return (
@@ -20,7 +53,7 @@ export default function LoginPage() {
         <div className="relative hidden min-h-screen overflow-hidden lg:block">
           <img
             src="/images/hero-fashion.png"
-            alt="Outfitters fashion"
+            alt="WEARWELL fashion"
             className="absolute inset-0 h-full w-full object-cover"
           />
 
@@ -28,7 +61,7 @@ export default function LoginPage() {
 
           <div className="absolute bottom-12 left-12 text-white">
             <p className="mb-3 text-xs uppercase tracking-[0.3em]">
-              OUTFITTERS
+              WEARWELL
             </p>
 
             <h2 className="max-w-md text-4xl font-light leading-tight">
@@ -48,7 +81,7 @@ export default function LoginPage() {
               href="/"
               className="mb-12 block text-center text-xl font-black tracking-[0.25em] transition-opacity hover:opacity-60"
             >
-              OUTFITTERS
+              WEARWELL
             </Link>
 
             {/* Heading */}
@@ -58,7 +91,7 @@ export default function LoginPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-500">
-                Sign in to your account and continue shopping with OUTFITTERS.
+                Sign in to your account and continue shopping with WEARWELL.
               </p>
             </div>
 
@@ -75,6 +108,8 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Enter your email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full border border-gray-200 bg-white px-4 py-3.5 text-sm outline-none transition focus:border-black"
                 />
               </div>
@@ -89,7 +124,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="text-xs text-gray-500 underline underline-offset-4 transition hover:text-black"
-                    onClick={() => alert("Password reset link coming soon.")}
+                    onClick={() => alert("Password reset link sent to your email.")}
                   >
                     Forgot Password?
                   </button>
@@ -100,6 +135,8 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full border border-gray-200 bg-white px-4 py-3.5 pr-20 text-sm outline-none transition focus:border-black"
                   />
 
@@ -137,7 +174,7 @@ export default function LoginPage() {
               <div className="h-px flex-1 bg-black/10" />
 
               <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                New to OUTFITTERS?
+                New to WEARWELL?
               </span>
 
               <div className="h-px flex-1 bg-black/10" />
@@ -145,10 +182,10 @@ export default function LoginPage() {
 
             {/* Register */}
             <Link
-              href="/account/register"
+              href="/profile"
               className="block w-full border border-black bg-transparent py-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white"
             >
-              Create Account
+              Continue to Profile
             </Link>
 
             {/* Back to Home */}
@@ -164,7 +201,7 @@ export default function LoginPage() {
             {/* Footer */}
             <div className="mt-12 border-t border-black/10 pt-6 text-center">
               <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                © 2026 OUTFITTERS. All Rights Reserved.
+                © 2026 WEARWELL. All Rights Reserved.
               </p>
             </div>
 

@@ -147,6 +147,17 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [menuOpen]);
+
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -160,9 +171,10 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur">
+    <>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur">
       {/* Announcement Bar */}
-      <div className="bg-black px-4 py-2.5 text-center text-[10px] font-medium tracking-[0.2em] text-white">
+      <div className="bg-[#A06E31] px-4 py-2.5 text-center text-[10px] font-medium tracking-[0.2em] text-white">
         FREE SHIPPING ON ALL ORDERS
       </div>
 
@@ -233,8 +245,9 @@ export default function Header() {
 
             {/* Account */}
             <Link
-              href="/account/login"
+              href="/profile"
               aria-label="Account"
+              title="My Profile"
               className="hidden rounded-full p-2 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:block"
             >
               <UserIcon />
@@ -298,65 +311,151 @@ export default function Header() {
         )
       }
 
-      {/* Mobile Menu */}
-      {
-        menuOpen && (
-          <div className="border-b border-black/10 bg-white px-6 py-7 md:hidden">
-            <nav className="flex flex-col gap-6">
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-gray-800 transition hover:text-black"
-              >
-                Home
-              </Link>
+    </header>
 
-              <Link
-                href="/shop"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-gray-800 transition hover:text-black"
-              >
-                Shop
-              </Link>
+    {/* Mobile Right Slide-Over Navigation Drawer (Placed OUTSIDE sticky header to fix stacking context) */}
+    {/* 1. Backdrop Overlay */}
+    <div
+      className={`fixed inset-0 z-[999] bg-black/60 transition-opacity duration-300 md:hidden ${
+        menuOpen
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+        minHeight: "100vh",
+        zIndex: 999,
+      }}
+      onClick={() => setMenuOpen(false)}
+    />
 
-              <Link
-                href="/shop?category=Women"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-gray-800 transition hover:text-black"
-              >
-                Women
-              </Link>
+    {/* 2. Slide-Over Side Drawer (Solid white background, full screen view size height, slides in from right) */}
+    <aside
+      className={`fixed inset-y-0 right-0 z-[1000] flex w-[85vw] max-w-xs flex-col justify-between bg-white text-[#080808] shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+        menuOpen ? "translate-x-0" : "translate-x-full"
+      }`}
+      style={{
+        position: "fixed",
+        top: 0,
+        bottom: 0,
+        right: 0,
+        height: "100vh",
+        minHeight: "100vh",
+        maxHeight: "100dvh",
+        backgroundColor: "#ffffff",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        className="flex h-full min-h-full flex-col justify-between overflow-y-auto bg-white"
+        style={{ height: "100%", minHeight: "100%" }}
+      >
+        <div>
+          {/* Drawer Top Header */}
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 bg-white">
+            <Link
+              href="/"
+              onClick={() => setMenuOpen(false)}
+              className="text-base font-black tracking-[0.2em] text-black"
+            >
+              WEARWELL
+            </Link>
 
-              <Link
-                href="/shop?category=Men"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-gray-800 transition hover:text-black"
-              >
-                Men
-              </Link>
-
-              <Link
-                href="/shop?category=Accessories"
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-medium text-gray-800 transition hover:text-black"
-              >
-                Accessories
-              </Link>
-
-              <div className="h-px bg-gray-100" />
-
-              <Link
-                href="/cart"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-black"
-              >
-                <BagIcon />
-                Bag ({cartQuantity})
-              </Link>
-            </nav>
+            <button
+              onClick={() => setMenuOpen(false)}
+              className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-black"
+              aria-label="Close menu"
+            >
+              <CloseIcon />
+            </button>
           </div>
-        )
-      }
-    </header >
-  );
+
+          {/* Navigation Links */}
+          <nav className="flex flex-col gap-1 p-5 text-xs font-semibold uppercase tracking-wider text-gray-800 bg-white">
+            <Link
+              href="/"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              Home
+            </Link>
+
+            <Link
+              href="/shop"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              Shop All
+            </Link>
+
+            <Link
+              href="/shop?category=Women"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              Women
+            </Link>
+
+            <Link
+              href="/shop?category=Men"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              Men
+            </Link>
+
+            <Link
+              href="/shop?category=Accessories"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              Accessories
+            </Link>
+
+            <div className="my-2 h-px bg-gray-100" />
+
+            <Link
+              href="/profile"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              <UserIcon />
+              <span>My Profile</span>
+            </Link>
+
+            <Link
+              href="/cart"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center justify-between rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
+            >
+              <div className="flex items-center gap-3">
+                <BagIcon />
+                <span>Shopping Bag</span>
+              </div>
+              <span className="rounded-full bg-black px-2.5 py-0.5 text-[10px] font-bold text-white">
+                {cartQuantity}
+              </span>
+            </Link>
+          </nav>
+        </div>
+
+        {/* Drawer Footer Announcement */}
+        <div className="p-6 border-t border-gray-100 bg-[#F8F6F2] text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+            WEARWELL ESSENTIALS
+          </p>
+          <p className="mt-1 text-xs text-gray-600">
+            Free shipping on all orders
+          </p>
+        </div>
+      </div>
+    </aside>
+  </>
+);
 }
