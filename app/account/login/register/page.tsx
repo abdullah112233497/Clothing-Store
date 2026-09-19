@@ -11,7 +11,7 @@ export default function RegisterPage() {
         <div className="relative hidden min-h-screen overflow-hidden lg:block">
           <img
             src="/images/hero-fashion.png"
-            alt="Outfitters fashion"
+            alt="WEARWELL fashion"
             className="absolute inset-0 h-full w-full object-cover"
           />
 
@@ -19,7 +19,7 @@ export default function RegisterPage() {
 
           <div className="absolute bottom-12 left-12 text-white">
             <p className="mb-3 text-xs uppercase tracking-[0.3em]">
-              OUTFITTERS
+              WEARWELL
             </p>
 
             <h2 className="max-w-md text-4xl font-light leading-tight">
@@ -39,7 +39,7 @@ export default function RegisterPage() {
               href="/"
               className="mb-12 block text-center text-xl font-black tracking-[0.25em]"
             >
-              OUTFITTERS
+              WEARWELL
             </Link>
 
             {/* Heading */}
@@ -164,7 +164,7 @@ export default function RegisterPage() {
             {/* Footer */}
             <div className="mt-12 border-t border-black/10 pt-6 text-center">
               <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                © 2026 OUTFITTERS. All Rights Reserved.
+                © 2026 WEARWELL. All Rights Reserved.
               </p>
             </div>
 
