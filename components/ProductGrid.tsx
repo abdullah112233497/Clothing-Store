@@ -9,6 +9,7 @@ const products = [
     category: "Women",
     image: "/images/product-1.png",
   },
+  
   {
     id: 2,
     name: "Classic Oversized Black Dress",
