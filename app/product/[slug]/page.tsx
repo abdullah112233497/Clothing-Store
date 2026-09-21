@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 
 type Product = {
+id?: number;
 name: string;
 price: number;
 oldPrice: number;
@@ -17,6 +18,8 @@ image: string;
 images: string[];
 description: string;
 details: string[];
+variants?: Array<{ id: number; sku: string; price: number; stock: number; available: boolean; options: Record<string, { label: string; value: string; displayValue?: string; colorHex?: string }> }>;
+attributes?: Array<{ code: string; name: string; displayType: string; required: boolean; variant: boolean }>;
 };
 
 const products: Product[] = [
@@ -538,6 +541,7 @@ details: [
 ];
 
 type CartItem = {
+variantId?: number;
 name: string;
 price: number;
 size: string;
@@ -552,10 +556,13 @@ const router = useRouter();
 
 const slug = params.slug as string;
 
-const product = products.find(
+const staticProduct = products.find(
 (item) =>
 item.name.toLowerCase().replace(/\s+/g, "-") === slug
 );
+
+const [databaseProduct, setDatabaseProduct] = useState<Product | null>(null);
+const product = databaseProduct || staticProduct;
 
 const [selectedSize, setSelectedSize] = useState("M");
 const [selectedColor, setSelectedColor] = useState("Black");
@@ -566,6 +573,30 @@ product?.image || ""
 
 const { isLoggedIn } = useAuth();
 const [isWishlisted, setIsWishlisted] = useState(false);
+
+useEffect(() => {
+  let active = true;
+  fetch(`/api/products?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
+    .then((response) => response.ok ? response.json() : null)
+    .then((data) => {
+      const row = data?.products?.[0];
+      if (!active || !row) return;
+      const mapped: Product = {
+        id: Number(row.id), name: row.name, price: Number(row.sale_price ?? row.base_price),
+        oldPrice: Number(row.base_price), category: row.category_slug?.startsWith("men-") ? "Men" : row.category_slug?.startsWith("ladies-") ? "Women" : "Accessories",
+        image: row.images?.[0]?.url || staticProduct?.image || "", images: row.images?.map((image: { url: string }) => image.url) || [],
+        description: row.description || "", details: staticProduct?.details || [], variants: row.variants || [], attributes: row.attributes || [],
+      };
+      setDatabaseProduct(mapped);
+      setSelectedImage(mapped.image);
+      const options = mapped.variants?.[0]?.options || {};
+      const sizeOption = options.size || options.shoe_size || options.waist;
+      if (sizeOption?.value) setSelectedSize(sizeOption.value);
+      if (options.color?.value) setSelectedColor(options.color.value);
+    })
+    .catch(() => undefined);
+  return () => { active = false; };
+}, [slug, staticProduct]);
 
 useEffect(() => {
   if (!product) return;
@@ -680,7 +711,16 @@ if (!product) {
   }
 
   const addToCart = () => {
+    const variant = product.variants?.find((item) => {
+      const size = item.options.size || item.options.shoe_size || item.options.waist;
+      return (!size || size.value === selectedSize) && (!item.options.color || item.options.color.value === selectedColor);
+    });
+    if (product.variants && (!variant || !variant.available || variant.stock < quantity)) {
+      alert("This option does not have enough stock.");
+      return false;
+    }
     const newItem: CartItem = {
+      variantId: variant?.id,
       name: product.name,
       price: product.price,
       size: selectedSize,
@@ -691,7 +731,7 @@ if (!product) {
 
     const savedCart = localStorage.getItem("cartItems");
 
-    let cartItems: CartItem[] = savedCart
+    const cartItems: CartItem[] = savedCart
       ? JSON.parse(savedCart)
       : [];
 
@@ -719,18 +759,26 @@ localStorage.setItem(
 );
 
 window.dispatchEvent(new Event("cartUpdated"));
-
+return true;
 };
 
 const handleAddToCart = () => {
-addToCart();
-alert(`${product.name} added to your bag!`);
+if (addToCart()) alert(`${product.name} added to your bag!`);
 };
 
 const handleBuyNow = () => {
-addToCart();
-router.push("/checkout");
+if (addToCart()) router.push("/checkout");
 };
+
+const availableVariants = product.variants?.filter((variant) => variant.available && variant.stock > 0);
+const colorOptions = availableVariants
+  ? Array.from(new Map(availableVariants.flatMap((variant) => variant.options.color ? [[variant.options.color.value, variant.options.color]] : [])).values())
+  : [{ value: "Black", colorHex: "#111111" }, { value: "Beige", colorHex: "#D5C1A9" }, { value: "White", colorHex: "#FFFFFF" }];
+const sizeAttribute = product.attributes?.find((attribute) => ["size", "shoe_size", "waist"].includes(attribute.code));
+const sizeOptions = availableVariants
+  ? Array.from(new Set(availableVariants.filter((variant) => !variant.options.color || variant.options.color.value === selectedColor).map((variant) => variant.options.size?.value || variant.options.shoe_size?.value || variant.options.waist?.value).filter(Boolean))) as string[]
+  : ["XS", "S", "M", "L", "XL"];
+const hasColor = !product.attributes || product.attributes.some((attribute) => attribute.code === "color");
 
 return (
 <> <Header />
@@ -855,7 +903,7 @@ return (
           </div>
 
           {/* COLOR */}
-          <div className="mt-7">
+          {hasColor && <div className="mt-7">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">
                 Color
@@ -867,42 +915,38 @@ return (
             </div>
 
             <div className="mt-4 flex gap-3">
-              {[
-                { name: "Black", className: "bg-black" },
-                {
-                  name: "Beige",
-                  className: "bg-[#D5C1A9]",
-                },
-                {
-                  name: "White",
-                  className: "bg-white",
-                },
-              ].map((color) => (
+              {colorOptions.map((color) => (
                 <button
-                  key={color.name}
+                  key={color.value}
                   onClick={() =>
-                    setSelectedColor(color.name)
+                    {
+                      setSelectedColor(color.value);
+                      const matching = availableVariants?.find((variant) => variant.options.color?.value === color.value);
+                      const matchingSize = matching && (matching.options.size || matching.options.shoe_size || matching.options.waist);
+                      if (matchingSize?.value) setSelectedSize(matchingSize.value);
+                    }
                   }
-                  aria-label={`Select ${color.name}`}
+                  aria-label={`Select ${color.value}`}
                   className={`rounded-full border-2 p-1 transition ${
-                    selectedColor === color.name
+                    selectedColor === color.value
                       ? "border-black"
                       : "border-transparent"
                   }`}
                 >
                   <span
-                    className={`block h-8 w-8 rounded-full border border-black/10 ${color.className}`}
+                    className="block h-8 w-8 rounded-full border border-black/10"
+                    style={{ backgroundColor: color.colorHex || color.value }}
                   />
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* SIZE */}
-          <div className="mt-7">
+          {sizeOptions.length > 0 && <div className="mt-7">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">
-                Select Size
+                {sizeAttribute?.name || "Select Size"}
               </p>
 
               <button className="text-xs text-gray-500 underline underline-offset-4 transition hover:text-black">
@@ -911,7 +955,7 @@ return (
             </div>
 
             <div className="mt-4 grid grid-cols-5 gap-2">
-              {["XS", "S", "M", "L", "XL"].map(
+              {sizeOptions.map(
                 (size) => (
                   <button
                     key={size}
@@ -927,7 +971,7 @@ return (
                 )
               )}
             </div>
-          </div>
+          </div>}
 
           {/* QUANTITY */}
           <div className="mt-7">

@@ -10,12 +10,23 @@ type ProductCardProps = {
   price: string;
   category: string;
   image: string;
+  variants?: ProductVariant[];
+};
+
+type ProductVariant = {
+  id: number;
+  stock: number;
+  available: boolean;
+  price: number;
+  options: Record<string, { value: string; displayValue?: string; colorHex?: string }>;
 };
 
 type CartItem = {
+  variantId?: number;
   name: string;
   price: number;
   size: string;
+  color?: string;
   quantity: number;
   image: string;
 };
@@ -34,6 +45,7 @@ export default function ProductCard({
   price,
   category,
   image,
+  variants,
 }: ProductCardProps) {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
@@ -133,24 +145,32 @@ export default function ProductCard({
       price.replace("Rs. ", "").replace(",", "")
     );
 
+    const firstAvailable = variants?.find((variant) => variant.available && variant.stock > 0);
+    if (variants && !firstAvailable) {
+      alert(`${name} is currently out of stock.`);
+      return;
+    }
+    const sizeOption = firstAvailable?.options.size || firstAvailable?.options.shoe_size || firstAvailable?.options.waist;
     const newItem: CartItem = {
+      variantId: firstAvailable?.id,
       name,
-      price: numericPrice,
-      size: "M",
+      price: firstAvailable?.price || numericPrice,
+      size: sizeOption?.value || "",
+      color: firstAvailable?.options.color?.value || "",
       quantity: 1,
       image,
     };
 
     const savedCart = localStorage.getItem("cartItems");
 
-    let cartItems: CartItem[] = savedCart
+    const cartItems: CartItem[] = savedCart
       ? JSON.parse(savedCart)
       : [];
 
     const existingItemIndex = cartItems.findIndex(
       (item) =>
         item.name === newItem.name &&
-        item.size === newItem.size
+        item.size === newItem.size && item.color === newItem.color
     );
 
     if (existingItemIndex !== -1) {
@@ -242,11 +262,26 @@ export default function ProductCard({
           </p>
         </div>
 
-        <div className="mt-2 flex gap-1.5">
-          <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-black" />
-          <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-[#D5C1A9]" />
-          <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-white" />
-        </div>
+        {variants ? (
+          <div className="mt-2 space-y-1.5">
+            <div className="flex gap-1.5" aria-label="Available colors">
+              {Array.from(new Map(variants.filter((variant) => variant.available && variant.stock > 0 && variant.options.color).map((variant) => [variant.options.color.value, variant.options.color])).values()).map((color) => (
+                <span key={color.value} title={color.displayValue || color.value} className="h-2.5 w-2.5 rounded-full border border-black/20 sm:h-3 sm:w-3" style={{ backgroundColor: color.colorHex || color.value }} />
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1" aria-label="Available sizes">
+              {Array.from(new Set(variants.filter((variant) => variant.available && variant.stock > 0).map((variant) => variant.options.size?.value || variant.options.shoe_size?.value || variant.options.waist?.value).filter(Boolean))).map((size) => (
+                <span key={size} className="rounded border border-black/15 px-1.5 py-0.5 text-[8px] font-medium text-gray-600 sm:text-[9px]">{size}</span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-2 flex gap-1.5">
+            <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-black" />
+            <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-[#D5C1A9]" />
+            <span className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full border border-black/20 bg-white" />
+          </div>
+        )}
       </div>
     </article>
   );

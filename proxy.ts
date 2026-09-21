@@ -3,12 +3,12 @@ import type { NextRequest } from "next/server";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 // Routes that require authentication
-const protectedRoutes = ["/profile"];
+const protectedRoutes = ["/profile", "/checkout"];
 
 // Routes only accessible to logged-out users
 const authRoutes = ["/account/login", "/account/signup", "/login", "/signup"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -39,9 +39,11 @@ export const config = {
   matcher: [
     "/profile/:path*",
     "/profile",
+    "/checkout",
     "/account/login",
     "/account/signup",
     "/login",
     "/signup",
   ],
 };
+

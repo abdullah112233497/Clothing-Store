@@ -377,6 +377,33 @@ export default function ProfilePage() {
     window.addEventListener("wishlistUpdated", handleSyncWishlist);
     window.addEventListener("storage", handleSyncWishlist);
 
+    // Database is the source of truth for authenticated order history.
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch("/api/orders", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!Array.isArray(data.orders)) return;
+        setOrders(data.orders.map((order: {
+          orderNumber: string; createdAt: string; status: string; items: Array<{ name: string; price: number; quantity: number; image: string; size?: string; attributes?: Record<string, string | { value?: string }> }>;
+          subtotal: number; shipping: number; total: number; paymentMethod: string; customer?: { address?: string; city?: string };
+        }) => ({
+          id: order.orderNumber,
+          date: new Date(order.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+          status: order.status === "shipped" ? "In Transit" : `${order.status.charAt(0).toUpperCase()}${order.status.slice(1)}` as Order["status"],
+          items: order.items.map((item) => ({ ...item, size: item.size || "—" })),
+          subtotal: order.subtotal,
+          shipping: order.shipping,
+          total: order.total,
+          paymentMethod: order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod,
+          shippingAddress: [order.customer?.address, order.customer?.city].filter(Boolean).join(", "),
+        })));
+      } catch (error) {
+        console.error("Failed to load orders from database", error);
+      }
+    };
+    fetchOrders();
+
     const baseOrders: Order[] = [
       {
         id: "#WW-849102",

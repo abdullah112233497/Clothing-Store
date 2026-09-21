@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 
 type CartItem = {
+  variantId?: number;
   name: string;
   price: number;
   size: string;
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState("");
 
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
   useEffect(() => {
     try {
@@ -69,44 +71,35 @@ export default function CheckoutPage() {
     0
   );
 
-  const handlePlaceOrder = (event: React.FormEvent) => {
+  const handlePlaceOrder = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (cartItems.length === 0) return;
 
     setPlacingOrder(true);
-
-    const orderNumber = `#WW-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    const orderData = {
-      orderNumber,
-      items: cartItems,
-      subtotal,
-      shipping,
-      total,
-      customer: {
-        name,
-        email,
-        phone,
-        address,
-        city,
-        postalCode,
-        notes: orderNotes,
-      },
-      paymentMethod: "Cash on Delivery / Rep Contact",
-      createdAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem("lastOrder", JSON.stringify(orderData));
-    localStorage.setItem("orderNumber", orderNumber);
-
-    // Empty Cart
-    localStorage.removeItem("cartItems");
-    window.dispatchEvent(new Event("cartUpdated"));
-
-    setTimeout(() => {
+    setOrderError("");
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cartItems, customer: { name, email, phone, address, city, postalCode, notes: orderNotes }, paymentMethod: "cod" }),
+      });
+      const data = await response.json();
+      if (response.status === 401) {
+        router.push(`/account/login?redirect=${encodeURIComponent("/checkout")}`);
+        return;
+      }
+      if (!response.ok || !data.order) throw new Error(data.error || "Unable to place your order.");
+      const orderData = { ...data.order, paymentMethod: "Cash on Delivery / Rep Contact" };
+      localStorage.setItem("lastOrder", JSON.stringify(orderData));
+      localStorage.setItem("orderNumber", data.order.orderNumber);
+      localStorage.removeItem("cartItems");
+      window.dispatchEvent(new Event("cartUpdated"));
       router.push("/order-success");
-    }, 400);
+    } catch (error) {
+      setOrderError(error instanceof Error ? error.message : "Unable to place your order.");
+      setPlacingOrder(false);
+    }
   };
 
   if (!loaded) {
@@ -185,6 +178,7 @@ export default function CheckoutPage() {
             onSubmit={handlePlaceOrder}
             className="grid gap-8 lg:grid-cols-[1fr_400px]"
           >
+            {orderError && <p className="lg:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700" role="alert">{orderError}</p>}
             {/* LEFT COLUMN: DELIVERY DETAILS FORM */}
             <div className="space-y-6">
 

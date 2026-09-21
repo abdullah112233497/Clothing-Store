@@ -1,7 +1,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
@@ -13,9 +12,10 @@ type Product = {
   price: string;
   category: "Women" | "Men" | "Accessories";
   image: string;
+  variants?: Array<{ id: number; stock: number; available: boolean; price: number; options: Record<string, { value: string; displayValue?: string; colorHex?: string }> }>;
 };
 
-const products: Product[] = [
+const fallbackProducts: Product[] = [
   // WOMEN
   {
     name: "Essential Oversized Tee",
@@ -210,18 +210,33 @@ export default function ShopPage() {
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/products", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!active || !Array.isArray(data?.products) || data.products.length === 0) return;
+        setProducts(data.products.map((product: { name: string; category_slug: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
+          name: product.name,
+          price: `Rs. ${Number(product.sale_price ?? product.base_price).toLocaleString()}`,
+          category: product.category_slug.startsWith("ladies-") ? "Women" : product.category_slug.startsWith("men-") ? "Men" : "Accessories",
+          image: product.images?.[0]?.url || "/images/product-1.png",
+          variants: product.variants,
+        })));
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const category = searchParams.get("category");
     const search = searchParams.get("search");
-
-    if (category && categories.includes(category)) {
-      setActiveCategory(category);
-    } else {
-      setActiveCategory("All");
-    }
-
-    setSearchQuery(search || "");
+    queueMicrotask(() => {
+      setActiveCategory(category && categories.includes(category) ? category : "All");
+      setSearchQuery(search || "");
+    });
   }, [searchParams]);
 
   const filteredProducts = products.filter((product) => {
@@ -288,7 +303,7 @@ export default function ShopPage() {
               <p className="mt-2 text-xs sm:text-sm text-gray-600">
                 Search results for{" "}
                 <span className="font-semibold text-black">
-                  "{searchQuery}"
+                  &ldquo;{searchQuery}&rdquo;
                 </span>
               </p>
             )}
@@ -350,6 +365,7 @@ export default function ShopPage() {
                 price={product.price}
                 category={product.category}
                 image={product.image}
+                variants={product.variants}
               />
             ))}
           </div>
