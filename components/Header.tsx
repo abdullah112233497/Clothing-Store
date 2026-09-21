@@ -298,22 +298,20 @@ export default function Header() {
               <SearchIcon />
             </button>
 
-            {/* Wishlist Link (Only visible when user is logged in) */}
-            {isLoggedIn && (
-              <Link
-                href="/profile"
-                aria-label="Wishlist"
-                title="My Wishlist"
-                className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
-              >
-                <HeartIcon />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-            )}
+            {/* Wishlist Link */}
+            <Link
+              href={isLoggedIn ? "/profile?tab=wishlist" : "/account/login?redirect=%2Fprofile%3Ftab%3Dwishlist"}
+              aria-label="Wishlist"
+              title="My Wishlist"
+              className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+            >
+              <HeartIcon />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             {/* Account / Login (Responsive for all screen sizes: converts to Login button when logged out) */}
             {isLoggedIn ? (
@@ -506,7 +504,7 @@ export default function Header() {
             {isLoggedIn ? (
               <>
                 <Link
-                  href="/profile"
+                  href="/profile?tab=wishlist"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-between rounded-xl px-4 py-3 transition hover:bg-gray-100 hover:text-black"
                 >

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -176,6 +176,26 @@ function ShareIcon() {
   );
 }
 
+function ProfileTabUrlSync({
+  onTabChange,
+}: {
+  onTabChange: (tab: "details" | "orders" | "addresses" | "wishlist" | "security") => void;
+}) {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
+  useEffect(() => {
+    if (
+      tabParam &&
+      ["details", "orders", "addresses", "wishlist", "security"].includes(tabParam)
+    ) {
+      onTabChange(tabParam as "details" | "orders" | "addresses" | "wishlist" | "security");
+    }
+  }, [tabParam, onTabChange]);
+
+  return null;
+}
+
 // ================= COMPONENT =================
 export default function ProfilePage() {
   const router = useRouter();
@@ -189,11 +209,44 @@ export default function ProfilePage() {
     "details" | "orders" | "addresses" | "wishlist" | "security"
   >("details");
 
+  useEffect(() => {
+    const checkUrlTab = () => {
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (
+        tabParam &&
+        ["details", "orders", "addresses", "wishlist", "security"].includes(tabParam)
+      ) {
+        setActiveTab(tabParam as "details" | "orders" | "addresses" | "wishlist" | "security");
+      }
+    };
+    checkUrlTab();
+    window.addEventListener("popstate", checkUrlTab);
+    return () => window.removeEventListener("popstate", checkUrlTab);
+  }, []);
+
+  // Helper: switch tab AND update URL search param so URL stays in sync
+  const switchTab = (
+    tab: "details" | "orders" | "addresses" | "wishlist" | "security"
+  ) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "details") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
+  };
+
   const handleTabSelect = (
     tab: "details" | "orders" | "addresses" | "wishlist" | "security",
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {
-    setActiveTab(tab);
+    switchTab(tab);
     if (e && e.currentTarget) {
       const btn = e.currentTarget;
       const container = btn.parentElement;
@@ -828,6 +881,10 @@ export default function ProfilePage() {
       {/* Header */}
       <Header />
 
+      {/* Sync URL ?tab= parameter to active tab (reacts to client-side navigation) */}
+      <Suspense fallback={null}>
+        <ProfileTabUrlSync onTabChange={setActiveTab} />
+      </Suspense>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-black px-5 py-3.5 text-xs font-medium tracking-wide text-white shadow-2xl">
@@ -893,7 +950,7 @@ export default function ProfilePage() {
               {/* Mobile Stats Row (Orders | Wishlist | Addresses) */}
               <div className="mt-6 flex items-center justify-center gap-8 border-y border-gray-100 py-3.5">
                 <button
-                  onClick={() => setActiveTab("orders")}
+                  onClick={() => switchTab("orders")}
                   className="text-center group"
                 >
                   <p className="text-lg font-bold text-gray-900 group-hover:text-black transition">
@@ -907,7 +964,7 @@ export default function ProfilePage() {
                 <div className="h-6 w-px bg-gray-200" />
 
                 <button
-                  onClick={() => setActiveTab("wishlist")}
+                  onClick={() => switchTab("wishlist")}
                   className="text-center group"
                 >
                   <p className="text-lg font-bold text-gray-900 group-hover:text-black transition">
@@ -921,7 +978,7 @@ export default function ProfilePage() {
                 <div className="h-6 w-px bg-gray-200" />
 
                 <button
-                  onClick={() => setActiveTab("addresses")}
+                  onClick={() => switchTab("addresses")}
                   className="text-center group"
                 >
                   <p className="text-lg font-bold text-gray-900 group-hover:text-black transition">
@@ -941,7 +998,7 @@ export default function ProfilePage() {
                     if (activeTab === "details" && editMode) {
                       setEditMode(false);
                     } else {
-                      setActiveTab("details");
+                      switchTab("details");
                       setFormData(profile);
                       setEditMode(true);
                     }
@@ -1156,7 +1213,7 @@ export default function ProfilePage() {
                   {/* Sidebar Navigation */}
                   <nav className="mt-6 flex flex-col gap-1">
                     <button
-                      onClick={() => setActiveTab("details")}
+                      onClick={() => switchTab("details")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "details"
                           ? "bg-black text-white shadow-sm"
@@ -1168,7 +1225,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
-                      onClick={() => setActiveTab("orders")}
+                      onClick={() => switchTab("orders")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "orders"
                           ? "bg-black text-white shadow-sm"
@@ -1180,7 +1237,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
-                      onClick={() => setActiveTab("addresses")}
+                      onClick={() => switchTab("addresses")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "addresses"
                           ? "bg-black text-white shadow-sm"
@@ -1192,7 +1249,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
-                      onClick={() => setActiveTab("wishlist")}
+                      onClick={() => switchTab("wishlist")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "wishlist"
                           ? "bg-black text-white shadow-sm"
@@ -1204,7 +1261,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
-                      onClick={() => setActiveTab("security")}
+                      onClick={() => switchTab("security")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "security"
                           ? "bg-black text-white shadow-sm"
