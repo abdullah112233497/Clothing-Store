@@ -980,134 +980,155 @@ export default function PaymentsPage() {
       {/* ==========================================================================
          TRANSACTION DETAILS / RECEIPT MODAL
          ========================================================================== */}
+      {/* TRANSACTION DETAILS / RECEIPT MODAL */}
       {selectedPayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/70 p-3 sm:p-5 backdrop-blur-md overscroll-contain overflow-y-auto animate-fade-in"
+          onClick={() => setSelectedPayment(null)}
+        >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-            onClick={() => setSelectedPayment(null)}
-          />
-
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-2xl z-10 space-y-5 animate-scale-up">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[#D5C1A9]/60 pb-4">
+            className="w-full max-w-xl max-h-[92vh] overflow-y-auto custom-scrollbar-thin rounded-2xl bg-white shadow-2xl border border-[#D5C1A9]/60 transition-all flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* MODAL HEADER */}
+            <div className="flex items-center justify-between border-b border-[#D5C1A9]/60 px-6 py-4 sticky top-0 bg-white z-20 shadow-xs">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#A06E31]">
+                <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#A06E31]">
                   Official Settlement Voucher
-                </span>
-                <h3 className="mt-0.5 text-xl font-bold text-[#1D1612]">
-                  Payment {selectedPayment.id}
-                </h3>
+                </p>
+                <div className="flex items-center gap-2.5 mt-1">
+                  <h3 className="text-xl font-bold tracking-tight text-[#080808]">
+                    {selectedPayment.id}
+                  </h3>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                      getStatusBadge(selectedPayment.status).bg
+                    }`}
+                  >
+                    {getStatusBadge(selectedPayment.status).label}
+                  </span>
+                </div>
               </div>
+
               <button
                 onClick={() => setSelectedPayment(null)}
-                className="rounded-lg p-1.5 text-[#8B7A6C] hover:bg-[#FAF7F2] hover:text-[#1D1612] transition"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FAF7F2] text-[#8B7A6C] border border-[#D5C1A9]/40 transition hover:bg-[#D5C1A9]/50 hover:text-[#080808]"
+                title="Close modal"
               >
                 <CloseIcon />
               </button>
             </div>
 
-            {/* Voucher Information Grid */}
-            <div className="rounded-xl border border-[#D5C1A9]/60 bg-[#FAF7F2]/80 p-4 space-y-3 text-xs">
-              <div className="flex justify-between items-center">
-                <span className="text-[#8B7A6C]">Order Reference:</span>
-                <span className="font-bold text-[#1D1612]">{selectedPayment.orderId}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#8B7A6C]">Transaction Date:</span>
-                <span className="font-medium text-[#1D1612]">
-                  {selectedPayment.date} at {selectedPayment.time}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#8B7A6C]">Payment Method:</span>
-                <span className="font-semibold text-[#1D1612]">{selectedPayment.method}</span>
-              </div>
-              {selectedPayment.courier && (
+            {/* MODAL BODY */}
+            <div className="p-6 space-y-5">
+              {/* Voucher Information Grid */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-[#FAF7F2]/80 p-4 space-y-3 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-[#8B7A6C]">Courier Logistics:</span>
-                  <span className="font-semibold text-[#1D1612]">
-                    {selectedPayment.courier} ({selectedPayment.trackingNumber})
+                  <span className="text-[#8B7A6C]">Order Reference:</span>
+                  <span className="font-bold text-[#1D1612]">{selectedPayment.orderId}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[#8B7A6C]">Transaction Date:</span>
+                  <span className="font-medium text-[#1D1612]">
+                    {selectedPayment.date} at {selectedPayment.time}
                   </span>
                 </div>
-              )}
-              {selectedPayment.cardBrand && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[#8B7A6C]">Card Details:</span>
-                  <span className="font-semibold text-[#1D1612]">
-                    {selectedPayment.cardBrand} •••• {selectedPayment.cardLast4}
+                  <span className="text-[#8B7A6C]">Payment Method:</span>
+                  <span className="font-semibold text-[#1D1612]">{selectedPayment.method}</span>
+                </div>
+                {selectedPayment.courier && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#8B7A6C]">Courier Logistics:</span>
+                    <span className="font-semibold text-[#1D1612]">
+                      {selectedPayment.courier} ({selectedPayment.trackingNumber})
+                    </span>
+                  </div>
+                )}
+                {selectedPayment.cardBrand && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#8B7A6C]">Card Details:</span>
+                    <span className="font-semibold text-[#1D1612]">
+                      {selectedPayment.cardBrand} •••• {selectedPayment.cardLast4}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center border-t border-[#D5C1A9]/40 pt-2.5">
+                  <span className="text-[#8B7A6C]">Settlement Status:</span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      getStatusBadge(selectedPayment.status).bg
+                    }`}
+                  >
+                    {getStatusBadge(selectedPayment.status).label}
                   </span>
                 </div>
-              )}
-              <div className="flex justify-between items-center border-t border-[#D5C1A9]/40 pt-2.5">
-                <span className="text-[#8B7A6C]">Settlement Status:</span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                    getStatusBadge(selectedPayment.status).bg
-                  }`}
-                >
-                  {getStatusBadge(selectedPayment.status).label}
-                </span>
+              </div>
+
+              {/* Customer Details */}
+              <div className="space-y-1.5 text-xs">
+                <p className="font-bold uppercase tracking-wider text-[11px] text-[#A06E31]">
+                  Customer & Shipping
+                </p>
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3 space-y-1 text-[#1D1612]">
+                  <p className="font-semibold text-sm">{selectedPayment.customer}</p>
+                  <p className="text-[#8B7A6C]">{selectedPayment.email} · {selectedPayment.phone}</p>
+                  <p className="text-[#8B7A6C]">{selectedPayment.address}, {selectedPayment.city}</p>
+                </div>
+              </div>
+
+              {/* Purchased Items Note */}
+              <div className="space-y-1.5 text-xs">
+                <p className="font-bold uppercase tracking-wider text-[11px] text-[#A06E31]">
+                  Order Items Summary
+                </p>
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3 text-[#1D1612] flex items-center justify-between">
+                  <span>{selectedPayment.itemsSummary}</span>
+                  <span className="font-bold">{formatPKR(selectedPayment.amount)}</span>
+                </div>
+              </div>
+
+              {/* Total Highlight */}
+              <div className="flex items-center justify-between rounded-xl bg-[#1D1612] px-5 py-4 text-white shadow-xs">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[#D5C1A9]">Net Settled Amount</p>
+                  <p className="text-[10px] text-[#D5C1A9]/60">Includes all applicable duties & delivery</p>
+                </div>
+                <p className="text-2xl font-bold tracking-tight text-[#D5C1A9]">
+                  {formatPKR(selectedPayment.amount)}
+                </p>
               </div>
             </div>
 
-            {/* Customer Details */}
-            <div className="space-y-1.5 text-xs">
-              <p className="font-bold uppercase tracking-wider text-[11px] text-[#A06E31]">
-                Customer & Shipping
-              </p>
-              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3 space-y-1 text-[#1D1612]">
-                <p className="font-semibold text-sm">{selectedPayment.customer}</p>
-                <p className="text-[#8B7A6C]">{selectedPayment.email} · {selectedPayment.phone}</p>
-                <p className="text-[#8B7A6C]">{selectedPayment.address}, {selectedPayment.city}</p>
-              </div>
-            </div>
-
-            {/* Purchased Items Note */}
-            <div className="space-y-1.5 text-xs">
-              <p className="font-bold uppercase tracking-wider text-[11px] text-[#A06E31]">
-                Order Items Summary
-              </p>
-              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3 text-[#1D1612] flex items-center justify-between">
-                <span>{selectedPayment.itemsSummary}</span>
-                <span className="font-bold">{formatPKR(selectedPayment.amount)}</span>
-              </div>
-            </div>
-
-            {/* Total Highlight */}
-            <div className="flex items-center justify-between rounded-xl bg-[#1D1612] px-5 py-4 text-white shadow-xs">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[#D5C1A9]">Net Settled Amount</p>
-                <p className="text-[10px] text-[#D5C1A9]/60">Includes all applicable duties & delivery</p>
-              </div>
-              <p className="text-2xl font-bold tracking-tight text-[#D5C1A9]">
-                {formatPKR(selectedPayment.amount)}
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2">
-              {selectedPayment.status === "Pending" && (
+            {/* MODAL FOOTER */}
+            <div className="px-6 py-4 bg-white border-t border-[#D5C1A9]/60 flex flex-wrap items-center justify-between gap-3 sticky bottom-0 z-20 shadow-xs">
+              {selectedPayment.status === "Pending" ? (
                 <button
                   onClick={() => handleMarkReconciled(selectedPayment.id)}
-                  className="rounded-xl bg-[#A06E31] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#855822] shadow-sm"
+                  className="rounded-lg bg-[#A06E31] px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#855822]"
                 >
                   Mark as Collected & Settled
                 </button>
+              ) : (
+                <div />
               )}
-              <button
-                onClick={() => {
-                  window.print();
-                }}
-                className="rounded-xl border border-[#D5C1A9] bg-[#FAF7F2] px-4 py-2.5 text-xs font-semibold text-[#1D1612] transition hover:bg-[#1D1612] hover:text-white"
-              >
-                Print Receipt
-              </button>
-              <button
-                onClick={() => setSelectedPayment(null)}
-                className="rounded-xl bg-[#1D1612] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31]"
-              >
-                Done
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    window.print();
+                  }}
+                  className="rounded-lg border border-[#D5C1A9] bg-white px-3.5 py-2 text-xs font-semibold text-[#080808] transition hover:bg-[#FAF7F2]"
+                >
+                  Print Receipt
+                </button>
+                <button
+                  onClick={() => setSelectedPayment(null)}
+                  className="rounded-lg bg-[#080808] px-5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#A06E31]"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
