@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 
 type Product = {
   name: string;
@@ -210,23 +211,34 @@ export default function ShopPage() {
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
+    setIsLoading(true);
     fetch("/api/products", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (!active || !Array.isArray(data?.products) || data.products.length === 0) return;
-        setProducts(data.products.map((product: { name: string; category_slug: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
-          name: product.name,
-          price: `Rs. ${Number(product.sale_price ?? product.base_price).toLocaleString()}`,
-          category: product.category_slug.startsWith("ladies-") ? "Women" : product.category_slug.startsWith("men-") ? "Men" : "Accessories",
-          image: product.images?.[0]?.url || "/images/product-1.png",
-          variants: product.variants,
-        })));
+        if (!active) return;
+        if (Array.isArray(data?.products) && data.products.length > 0) {
+          setProducts(data.products.map((product: { name: string; category_slug: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
+            name: product.name,
+            price: `Rs. ${Number(product.sale_price ?? product.base_price).toLocaleString()}`,
+            category: product.category_slug.startsWith("ladies-") ? "Women" : product.category_slug.startsWith("men-") ? "Men" : "Accessories",
+            image: product.images?.[0]?.url || "/images/product-1.png",
+            variants: product.variants,
+          })));
+        } else {
+          setProducts(fallbackProducts);
+        }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setProducts(fallbackProducts);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
     return () => { active = false; };
   }, []);
 
@@ -329,9 +341,13 @@ export default function ShopPage() {
               ))}
             </div>
 
-            <p className="hidden whitespace-nowrap text-xs font-medium text-gray-500 sm:block">
-              {filteredProducts.length} items
-            </p>
+            <div className="hidden whitespace-nowrap text-xs font-medium text-gray-500 sm:block">
+              {isLoading ? (
+                <span className="inline-block h-3.5 w-12 rounded skeleton-shimmer align-middle" />
+              ) : (
+                `${filteredProducts.length} items`
+              )}
+            </div>
           </div>
         </section>
 
@@ -350,46 +366,58 @@ export default function ShopPage() {
             </h2>
           </div>
 
-          <p className="text-xs font-medium text-gray-500 sm:hidden">
-            {filteredProducts.length} products
-          </p>
+          <div className="text-xs font-medium text-gray-500 sm:hidden">
+            {isLoading ? (
+              <span className="inline-block h-3 w-14 rounded skeleton-shimmer align-middle" />
+            ) : (
+              `${filteredProducts.length} products`
+            )}
+          </div>
         </div>
 
         {/* PRODUCT GRID - 2 columns on small devices / mobile */}
         <section className="px-4 py-4 sm:px-6 sm:py-8">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:grid-cols-4">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={`${product.category}-${product.name}`}
-                name={product.name}
-                price={product.price}
-                category={product.category}
-                image={product.image}
-                variants={product.variants}
-              />
-            ))}
-          </div>
-
-          {/* EMPTY STATE */}
-          {filteredProducts.length === 0 && (
-            <div className="mx-auto max-w-2xl py-24 text-center">
-              <div className="text-5xl">🔍</div>
-
-              <h3 className="mt-6 text-2xl font-semibold text-gray-900">
-                No products found
-              </h3>
-
-              <p className="mt-3 text-sm text-gray-500">
-                Try another product name or choose another category.
-              </p>
-
-              <button
-                onClick={() => changeCategory("All")}
-                className="mt-7 rounded-xl bg-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-              >
-                View All Products
-              </button>
+          {isLoading ? (
+            <div className="mx-auto max-w-7xl">
+              <ProductGridSkeleton count={8} />
             </div>
+          ) : (
+            <>
+              <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-14 lg:grid-cols-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={`${product.category}-${product.name}`}
+                    name={product.name}
+                    price={product.price}
+                    category={product.category}
+                    image={product.image}
+                    variants={product.variants}
+                  />
+                ))}
+              </div>
+
+              {/* EMPTY STATE */}
+              {filteredProducts.length === 0 && (
+                <div className="mx-auto max-w-2xl py-24 text-center">
+                  <div className="text-5xl">🔍</div>
+
+                  <h3 className="mt-6 text-2xl font-semibold text-gray-900">
+                    No products found
+                  </h3>
+
+                  <p className="mt-3 text-sm text-gray-500">
+                    Try another product name or choose another category.
+                  </p>
+
+                  <button
+                    onClick={() => changeCategory("All")}
+                    className="mt-7 rounded-xl bg-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                  >
+                    View All Products
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
 

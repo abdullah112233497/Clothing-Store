@@ -50,6 +50,11 @@ export default function ProductCard({
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsImageLoaded(false);
+  }, [image]);
 
   useEffect(() => {
     const checkWishlist = () => {
@@ -196,6 +201,11 @@ export default function ProductCard({
   return (
     <article className="group">
       <div className="relative block aspect-[3/4] overflow-hidden bg-[#F1EEE9]">
+        {/* Professional skeleton shimmer while image is loading */}
+        {!isImageLoaded && (
+          <div className="skeleton-shimmer absolute inset-0 z-0 h-full w-full" />
+        )}
+
         <Link
           href={productLink}
           className="block h-full w-full"
@@ -203,7 +213,12 @@ export default function ProductCard({
           <img
             src={image}
             alt={name}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+            loading="lazy"
+            onLoad={() => setIsImageLoaded(true)}
+            onError={() => setIsImageLoaded(true)}
+            className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${
+              isImageLoaded ? "opacity-100" : "opacity-0"
+            }`}
           />
         </Link>
 

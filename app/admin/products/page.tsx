@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
+import AdminDropdown from "@/components/AdminDropdown";
 
 /* ==========================================================================
    TYPES & DATA MODELS
@@ -506,6 +508,17 @@ export default function ProductsPage() {
   const [newColorName, setNewColorName] = useState("");
   const [newColorHex, setNewColorHex] = useState("#8B5A2B");
 
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (modalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow || "unset";
+      };
+    }
+  }, [modalOpen]);
+
   /* ------------------- LOCAL FILE UPLOAD LOGIC ------------------- */
 
   const processUploadedFiles = (files: FileList | null) => {
@@ -767,117 +780,51 @@ export default function ProductsPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
-      <div className="flex min-h-screen">
+      <AdminSidebar currentTab="products" />
 
-        {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex border-r border-white/10">
-          <div className="border-b border-white/10 px-6 py-7">
-            <Link href="/admin" className="text-xl font-black tracking-[0.2em]">
-              WEARWELL
-            </Link>
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
-              Admin Panel
-            </p>
-          </div>
-
-          <nav className="flex-1 px-4 py-6">
-            <Link
-              href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <DashboardIcon />
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/orders"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <OrdersIcon />
-              Orders
-            </Link>
-            <Link
-              href="/admin/products"
-              className="mb-2 flex items-center justify-between rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-medium text-white shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <ProductsIcon />
-                <span>Products</span>
-              </div>
-              <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-bold">
-                {products.length}
-              </span>
-            </Link>
-            <Link
-              href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <InventoryIcon />
-              Inventory
-            </Link>
-            <Link
-              href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <CustomersIcon />
-              Customers
-            </Link>
-            <Link
-              href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <PaymentsIcon />
-              Payments
-            </Link>
-            <Link
-              href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <SettingsIcon />
-              Settings
-            </Link>
-          </nav>
-
-          <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-[#8B7A6C]">Signed in as</p>
-            <p className="mt-1 text-sm font-medium">Store Admin</p>
-          </div>
-        </aside>
-
-        {/* MAIN BODY */}
-        <section className="min-w-0 flex-1">
-
-          {/* TOP BAR */}
-          <header className="flex h-20 items-center justify-between border-b border-[#8B7A6C]/20 bg-white px-6 lg:px-8 sticky top-0 z-30">
+      {/* MAIN BODY */}
+      <section className="lg:ml-64">
+        {/* TOP BAR */}
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
+          <div className="flex items-center gap-4">
             <div>
-              <p className="text-xs text-[#8B7A6C]">Admin / Products Catalog</p>
-              <h1 className="mt-1 text-xl font-semibold">Store Products & Variations</h1>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31] font-semibold">
+                Admin Portal
+              </p>
+              <h2 className="text-lg font-semibold tracking-tight text-[#1D1612] sm:text-xl">
+                Products Catalog
+              </h2>
             </div>
+          </div>
 
-            <div className="flex items-center gap-3">
-              {/* CLEAN ACTION BUTTON - FIXED DOUBLE PLUS ICON */}
-              <button
-                onClick={openCreateModal}
-                className="rounded-lg bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31] shadow-sm flex items-center gap-2"
-              >
-                <PlusIcon />
-                <span>Create New Product</span>
-              </button>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9] text-xs font-semibold text-[#080808]">
-                AD
-              </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openCreateModal}
+              className="rounded-xl bg-[#1D1612] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31] shadow-xs flex items-center gap-2"
+            >
+              <PlusIcon />
+              <span>Create New Product</span>
+            </button>
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
+              <p className="text-xs text-[#8B7A6C]">Store Manager</p>
             </div>
-          </header>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1D1612] text-sm font-semibold text-[#D5C1A9] border border-[#A06E31]/40 shadow-xs">
+              A
+            </div>
+          </div>
+        </header>
 
-          {/* CONTENT SECTION */}
-          <div className="p-5 sm:p-7 lg:p-8">
+        {/* CONTENT SECTION */}
+        <div className="px-5 py-7 sm:px-8 lg:px-10">
 
             {/* HEADER BANNER */}
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#8B7A6C]">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31] font-semibold">
                   Catalog Management
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold">
+                <h2 className="mt-2 text-2xl font-semibold text-[#1D1612]">
                   Product Types, Variations & Media
                 </h2>
                 <p className="mt-1 text-sm text-[#8B7A6C]">
@@ -887,14 +834,14 @@ export default function ProductsPage() {
 
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[#8B7A6C]">Catalog:</span>
-                <span className="rounded-lg bg-white border border-[#8B7A6C]/25 px-3 py-1 text-xs font-bold text-[#080808]">
+                <span className="rounded-lg bg-white border border-[#D5C1A9]/60 px-3 py-1 text-xs font-bold text-[#1D1612]">
                   {filteredProducts.length} items
                 </span>
               </div>
             </div>
 
             {/* STATUS TABS */}
-            <div className="mb-5 flex gap-2 overflow-x-auto border-b border-[#8B7A6C]/20 pb-3">
+            <div className="mb-5 flex gap-2 overflow-x-auto border-b border-[#D5C1A9]/40 pb-3">
               {[
                 { label: "All Products", key: "All", count: products.length },
                 { label: "Active", key: "Active", count: products.filter((p) => p.status === "Active").length },
@@ -906,14 +853,14 @@ export default function ProductsPage() {
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
                     activeTab === tab.key
-                      ? "bg-[#080808] text-white shadow-sm"
-                      : "border border-[#8B7A6C]/25 bg-white text-[#5f554e] hover:bg-[#F8F6F2] hover:border-[#A06E31]"
+                      ? "bg-[#1D1612] text-white shadow-xs"
+                      : "border border-[#D5C1A9]/70 bg-white text-[#694F3D] hover:bg-[#FAF7F2] hover:border-[#A06E31]"
                   }`}
                 >
                   <span>{tab.label}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      activeTab === tab.key ? "bg-[#A06E31] text-white" : "bg-[#F8F6F2] text-[#8B7A6C]"
+                      activeTab === tab.key ? "bg-[#A06E31] text-white" : "bg-[#F4EEE7] text-[#694F3D]"
                     }`}
                   >
                     {tab.count}
@@ -923,7 +870,7 @@ export default function ProductsPage() {
             </div>
 
             {/* SEARCH AND FILTER BAR */}
-            <div className="mb-5 flex flex-col gap-3 rounded-xl border border-[#8B7A6C]/20 bg-white p-4 shadow-sm md:flex-row">
+            <div className="mb-5 flex flex-col gap-3 rounded-xl border border-[#D5C1A9]/60 bg-white p-4 shadow-xs md:flex-row">
               <div className="relative flex-1">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B7A6C]">
                   <SearchIcon />
@@ -933,20 +880,21 @@ export default function ProductsPage() {
                   placeholder="Search products by title, type, fabric or SKU..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-[#8B7A6C]/25 bg-[#F8F6F2] px-4 py-2.5 pl-10 text-sm outline-none transition focus:border-[#A06E31] focus:bg-white"
+                  className="w-full rounded-lg border border-[#D5C1A9]/80 bg-[#FAF7F2] px-4 py-2.5 pl-10 text-sm text-[#1D1612] outline-none transition placeholder:text-[#8B7A6C] focus:border-[#A06E31] focus:bg-white"
                 />
               </div>
 
-              <select
+              <AdminDropdown
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="rounded-lg border border-[#8B7A6C]/25 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[#A06E31]"
-              >
-                <option value="All">All Categories</option>
-                <option value="Women">Women Clothing</option>
-                <option value="Men">Men Clothing</option>
-                <option value="Accessories">Accessories</option>
-              </select>
+                onChange={setCategory}
+                options={[
+                  { value: "All", label: "All Categories" },
+                  { value: "Women", label: "Women Clothing" },
+                  { value: "Men", label: "Men Clothing" },
+                  { value: "Accessories", label: "Accessories" },
+                ]}
+                className="w-full sm:w-48"
+              />
 
               <button
                 onClick={() => {
@@ -954,17 +902,17 @@ export default function ProductsPage() {
                   setCategory("All");
                   setActiveTab("All");
                 }}
-                className="rounded-lg border border-[#8B7A6C]/25 bg-[#F8F6F2] px-4 py-2.5 text-xs font-semibold text-[#5f554e] hover:bg-[#D5C1A9]/30"
+                className="rounded-lg border border-[#D5C1A9]/80 bg-white px-4 py-2.5 text-xs font-semibold text-[#694F3D] hover:bg-[#FAF7F2]"
               >
                 Reset
               </button>
             </div>
 
             {/* PRODUCTS TABLE */}
-            <div className="overflow-hidden rounded-2xl border border-[#8B7A6C]/20 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-[#D5C1A9]/60 bg-white shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-[#080808]">
-                  <thead className="border-b border-[#8B7A6C]/15 bg-[#F8F6F2] text-[11px] uppercase tracking-wider text-[#8B7A6C]">
+                <table className="w-full text-left text-sm text-[#1D1612]">
+                  <thead className="border-b border-[#D5C1A9]/60 bg-[#FAF7F2] text-[11px] uppercase tracking-wider text-[#8B7A6C]">
                     <tr>
                       <th className="px-5 py-4">Product & Visual</th>
                       <th className="px-5 py-4">Classification & Fit</th>
@@ -978,7 +926,7 @@ export default function ProductsPage() {
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-[#8B7A6C]/10 text-xs">
+                  <tbody className="divide-y divide-[#D5C1A9]/30 text-xs">
                     {filteredProducts.map((product) => {
                       const galleryCount = product.images?.length || 1;
                       return (
@@ -1135,14 +1083,12 @@ export default function ProductsPage() {
 
         </section>
 
-      </div>
-
       {/* ==========================================================================
           PROFESSIONAL PRODUCT STUDIO MODAL (SEAMLESS SINGLE-FLOW LAYOUT)
           ========================================================================== */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/75 p-3 sm:p-5 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/75 p-3 sm:p-5 backdrop-blur-sm overflow-y-auto overscroll-contain"
           onClick={() => setModalOpen(false)}
         >
           <div
@@ -1429,34 +1375,24 @@ export default function ProductsPage() {
                       <label className="block text-[11px] font-semibold text-[#5f554e] mb-1">
                         Fit Profile
                       </label>
-                      <select
+                      <AdminDropdown
                         value={formFitType}
-                        onChange={(e) => setFormFitType(e.target.value)}
-                        className="w-full rounded-lg border border-[#8B7A6C]/30 bg-white p-2.5 text-xs text-[#080808] outline-none focus:border-[#A06E31]"
-                      >
-                        {FIT_OPTIONS.map((fit) => (
-                          <option key={fit} value={fit}>
-                            {fit}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setFormFitType}
+                        options={FIT_OPTIONS.map((fit) => ({ value: fit, label: fit }))}
+                        className="w-full"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-[11px] font-semibold text-[#5f554e] mb-1">
                         Season / Collection
                       </label>
-                      <select
+                      <AdminDropdown
                         value={formSeason}
-                        onChange={(e) => setFormSeason(e.target.value)}
-                        className="w-full rounded-lg border border-[#8B7A6C]/30 bg-white p-2.5 text-xs text-[#080808] outline-none focus:border-[#A06E31]"
-                      >
-                        {SEASON_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setFormSeason}
+                        options={SEASON_OPTIONS.map((s) => ({ value: s, label: s }))}
+                        className="w-full"
+                      />
                     </div>
                   </div>
 
@@ -1510,15 +1446,16 @@ export default function ProductsPage() {
                       <label className="block text-[11px] font-semibold text-[#5f554e] mb-1">
                         Status Override
                       </label>
-                      <select
+                      <AdminDropdown
                         value={formStatus}
-                        onChange={(e) => setFormStatus(e.target.value as any)}
-                        className="w-full rounded-lg border border-[#8B7A6C]/30 bg-white p-2.5 text-xs font-semibold text-[#080808] outline-none focus:border-[#A06E31]"
-                      >
-                        <option value="Active">Active (In Stock)</option>
-                        <option value="Low Stock">Low Stock</option>
-                        <option value="Out of Stock">Out of Stock</option>
-                      </select>
+                        onChange={(val) => setFormStatus(val as any)}
+                        options={[
+                          { value: "Active", label: "Active (In Stock)" },
+                          { value: "Low Stock", label: "Low Stock" },
+                          { value: "Out of Stock", label: "Out of Stock" },
+                        ]}
+                        className="w-full"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1877,7 +1814,7 @@ export default function ProductsPage() {
                     <button
                       type="button"
                       onClick={handleSaveProduct}
-                      className="rounded-lg bg-[#080808] px-5 py-2 text-xs font-bold text-white hover:bg-[#A06E31] transition shadow-sm"
+                      className="rounded-lg bg-[#1D1612] px-5 py-2 text-xs font-bold text-white hover:bg-[#A06E31] transition shadow-xs"
                     >
                       {isNewProduct ? "Create & Publish Product" : "Save Changes"}
                     </button>

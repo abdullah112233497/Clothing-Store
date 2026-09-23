@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
+import AdminDropdown from "@/components/AdminDropdown";
 
 type InventoryItem = {
   name: string;
@@ -11,483 +14,334 @@ type InventoryItem = {
   status: "In Stock" | "Low Stock" | "Out of Stock";
 };
 
-const inventory: InventoryItem[] = [
+const initialInventory: InventoryItem[] = [
   {
     name: "Essential Oversized Tee",
     category: "Women",
-    sku: "OUT-W-001",
+    sku: "WW-TEE-01",
     stock: 24,
-    sold: 18,
+    sold: 42,
     status: "In Stock",
   },
   {
     name: "Classic Casual Shirt",
     category: "Men",
-    sku: "OUT-M-002",
+    sku: "WW-SHT-02",
     stock: 18,
-    sold: 12,
+    sold: 28,
     status: "In Stock",
   },
   {
     name: "Minimal Shoulder Bag",
     category: "Accessories",
-    sku: "OUT-A-003",
+    sku: "WW-BAG-03",
     stock: 7,
-    sold: 21,
+    sold: 35,
     status: "Low Stock",
   },
   {
     name: "Relaxed Fit Trousers",
     category: "Women",
-    sku: "OUT-W-004",
+    sku: "WW-TRS-04",
     stock: 15,
-    sold: 14,
+    sold: 21,
     status: "In Stock",
   },
   {
     name: "Urban Denim Jacket",
     category: "Men",
-    sku: "OUT-M-005",
+    sku: "WW-JCK-05",
     stock: 3,
-    sold: 27,
+    sold: 19,
     status: "Low Stock",
   },
   {
     name: "Everyday Sneakers",
     category: "Accessories",
-    sku: "OUT-A-006",
+    sku: "WW-SNK-06",
     stock: 0,
-    sold: 32,
+    sold: 47,
     status: "Out of Stock",
   },
   {
     name: "Premium Basic Hoodie",
     category: "Women",
-    sku: "OUT-W-007",
+    sku: "WW-HOD-07",
     stock: 21,
-    sold: 16,
+    sold: 33,
     status: "In Stock",
   },
   {
-    name: "Modern Cargo Pants",
+    name: "Tactical Cargo Pants",
     category: "Men",
-    sku: "OUT-M-008",
+    sku: "WW-PNT-08",
     stock: 11,
-    sold: 19,
+    sold: 26,
     status: "In Stock",
   },
 ];
 
-export default function InventoryPage() {
-  const totalStock = inventory.reduce(
-    (total, item) => total + item.stock,
-    0
+/* Minimalist Stroke SVG Icons */
+function StockIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
   );
+}
 
-  const lowStock = inventory.filter(
-    (item) => item.status === "Low Stock"
-  ).length;
+function AlertTriangleIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
 
-  const outOfStock = inventory.filter(
-    (item) => item.status === "Out of Stock"
-  ).length;
+function TrendingUpIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+export default function InventoryPage() {
+  const [inventoryList, setInventoryList] = useState<InventoryItem[]>(initialInventory);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  const totalStock = inventoryList.reduce((sum, item) => sum + item.stock, 0);
+  const totalSold = inventoryList.reduce((sum, item) => sum + item.sold, 0);
+  const lowStockCount = inventoryList.filter((item) => item.status === "Low Stock").length;
+  const outOfStockCount = inventoryList.filter((item) => item.status === "Out of Stock").length;
+
+  const filteredItems = inventoryList.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.sku.toLowerCase().includes(search.toLowerCase()) ||
+      item.category.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
-      <div className="flex min-h-screen">
+      {/* UNIFIED SIDEBAR */}
+      <AdminSidebar currentTab="inventory" />
 
-        {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex">
-
-          <div className="border-b border-white/10 px-6 py-7">
-            <Link
-              href="/admin"
-              className="text-xl font-black tracking-[0.2em]"
-            >
-              WEARWELL
-            </Link>
-
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
-              Admin Panel
-            </p>
+      {/* MAIN BODY */}
+      <section className="lg:ml-64">
+        {/* TOP BAR */}
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31] font-semibold">
+                Admin Portal
+              </p>
+              <h2 className="text-lg font-semibold tracking-tight text-[#1D1612] sm:text-xl">
+                Inventory & Stock
+              </h2>
+            </div>
           </div>
 
-          <nav className="flex-1 px-4 py-6">
-
-            {/* Dashboard */}
-            <Link
-              href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
-            >
-              <span className="text-base">▦</span>
-              Dashboard
-            </Link>
-
-            {/* Orders */}
-            <Link
-              href="/admin/orders"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
-            >
-              <span className="text-base">▤</span>
-              Orders
-            </Link>
-
-            {/* Products */}
+          <div className="flex items-center gap-3">
             <Link
               href="/admin/products"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
+              className="rounded-xl bg-[#1D1612] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31] shadow-xs"
             >
-              <span className="text-base">□</span>
-              Products
+              Manage Products
             </Link>
-
-            {/* Inventory - ACTIVE */}
-            <Link
-              href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-semibold text-white shadow-sm"
-            >
-              <span className="text-base">◫</span>
-              Inventory
-            </Link>
-
-            {/* Customers */}
-            <Link
-              href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
-            >
-              <span className="text-base">♙</span>
-              Customers
-            </Link>
-
-            {/* Payments */}
-            <Link
-              href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
-            >
-              <span className="text-base">◈</span>
-              Payments
-            </Link>
-
-            {/* Settings */}
-            <Link
-              href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
-            >
-              <span className="text-base">⚙</span>
-              Settings
-            </Link>
-
-          </nav>
-
-          <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-[#8B7A6C]">
-              Signed in as
-            </p>
-
-            <p className="mt-1 text-sm font-medium">
-              Khizra Malik
-            </p>
-          </div>
-        </aside>
-
-        {/* MAIN */}
-        <section className="min-w-0 flex-1">
-
-          {/* HEADER */}
-          <header className="flex h-20 items-center justify-between border-b border-[#D5C1A9]/50 bg-white px-6 lg:px-8">
-
-            <div>
-              <p className="text-xs text-[#8B7A6C]">
-                Admin / Inventory
-              </p>
-
-              <h1 className="mt-1 text-xl font-semibold">
-                Inventory
-              </h1>
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
+              <p className="text-xs text-[#8B7A6C]">Store Manager</p>
             </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1D1612] text-sm font-semibold text-[#D5C1A9] border border-[#A06E31]/40 shadow-xs">
+              A
+            </div>
+          </div>
+        </header>
 
-            <button
-              className="rounded-lg bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31]"
-            >
-              Update Stock
-            </button>
+        {/* CONTENT */}
+        <div className="px-5 py-7 sm:px-8 lg:px-10">
 
-          </header>
-
-          {/* CONTENT */}
-          <div className="p-5 sm:p-7 lg:p-8">
-
-            {/* PAGE INTRO */}
-            <div className="mb-7">
-
-              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31]">
-                Stock management
+          {/* PAGE HEADER */}
+          <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-[#A06E31] font-semibold">
+                Stock Management
               </p>
-
-              <h2 className="mt-2 text-2xl font-semibold">
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#1D1612]">
                 Inventory Overview
               </h2>
-
               <p className="mt-1 text-sm text-[#8B7A6C]">
-                Monitor product stock and identify items that need attention.
+                Monitor available units, restock warnings, and sales velocity across all apparel.
               </p>
-
             </div>
-
-            {/* STATS */}
-            <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-              {/* Total Stock */}
-              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#8B7A6C]">
-                    Total Stock
-                  </p>
-
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
-                    ◫
-                  </span>
-                </div>
-
-                <p className="mt-3 text-2xl font-semibold">
-                  {totalStock}
-                </p>
-
-                <p className="mt-1 text-xs text-[#8B7A6C]">
-                  Units available
-                </p>
-
-              </div>
-
-              {/* Products */}
-              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#8B7A6C]">
-                    Products
-                  </p>
-
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
-                    □
-                  </span>
-                </div>
-
-                <p className="mt-3 text-2xl font-semibold">
-                  {inventory.length}
-                </p>
-
-                <p className="mt-1 text-xs text-[#8B7A6C]">
-                  Total SKUs
-                </p>
-
-              </div>
-
-              {/* Low Stock */}
-              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#8B7A6C]">
-                    Low Stock
-                  </p>
-
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
-                    !
-                  </span>
-                </div>
-
-                <p className="mt-3 text-2xl font-semibold text-[#A06E31]">
-                  {lowStock}
-                </p>
-
-                <p className="mt-1 text-xs text-[#8B7A6C]">
-                  Need attention
-                </p>
-
-              </div>
-
-              {/* Out of Stock */}
-              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
-
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#8B7A6C]">
-                    Out of Stock
-                  </p>
-
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-[#080808]">
-                    ×
-                  </span>
-                </div>
-
-                <p className="mt-3 text-2xl font-semibold">
-                  {outOfStock}
-                </p>
-
-                <p className="mt-1 text-xs text-[#8B7A6C]">
-                  Currently unavailable
-                </p>
-
-              </div>
-
-            </div>
-
-            {/* ALERT */}
-            <div className="mb-6 rounded-xl border border-[#D5C1A9] bg-[#D5C1A9]/30 p-5">
-
-              <div className="flex items-start gap-4">
-
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#A06E31] text-lg font-bold text-white">
-                  !
-                </div>
-
-                <div>
-
-                  <h3 className="text-sm font-semibold text-[#080808]">
-                    Inventory attention required
-                  </h3>
-
-                  <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
-                    {lowStock} products are running low and{" "}
-                    {outOfStock} product is currently out of stock.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* TABLE */}
-            <div className="overflow-hidden rounded-xl border border-[#D5C1A9]/60 bg-white shadow-sm">
-
-              <div className="border-b border-[#D5C1A9]/50 px-5 py-5">
-
-                <h3 className="font-semibold">
-                  Stock Levels
-                </h3>
-
-                <p className="mt-1 text-xs text-[#8B7A6C]">
-                  Current inventory by product
-                </p>
-
-              </div>
-
-              <div className="overflow-x-auto">
-
-                <table className="w-full min-w-[800px] text-left">
-
-                  <thead className="border-b border-[#D5C1A9]/50 bg-[#F8F6F2]">
-
-                    <tr>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
-                        Product
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
-                        SKU
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
-                        Category
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
-                        Stock
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
-                        Sold
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
-                        Status
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody className="divide-y divide-[#D5C1A9]/30">
-
-                    {inventory.map((item) => (
-
-                      <tr
-                        key={item.sku}
-                        className="transition hover:bg-[#F8F6F2]"
-                      >
-
-                        <td className="px-5 py-5">
-
-                          <p className="text-sm font-semibold">
-                            {item.name}
-                          </p>
-
-                          <p className="mt-1 text-xs text-[#8B7A6C]">
-                            WEARWELL Collection
-                          </p>
-
-                        </td>
-
-                        <td className="px-5 py-5 text-xs font-medium text-[#8B7A6C]">
-                          {item.sku}
-                        </td>
-
-                        <td className="px-5 py-5 text-sm text-[#8B7A6C]">
-                          {item.category}
-                        </td>
-
-                        <td className="px-5 py-5">
-
-                          <span
-                            className={`text-sm font-semibold ${
-                              item.stock === 0
-                                ? "text-red-600"
-                                : item.stock <= 7
-                                ? "text-[#A06E31]"
-                                : "text-[#080808]"
-                            }`}
-                          >
-                            {item.stock}
-                          </span>
-
-                        </td>
-
-                        <td className="px-5 py-5 text-sm text-[#8B7A6C]">
-                          {item.sold}
-                        </td>
-
-                        <td className="px-5 py-5">
-
-                          <span
-                            className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ${
-                              item.status === "In Stock"
-                                ? "bg-[#F8F6F2] text-[#080808]"
-                                : item.status === "Low Stock"
-                                ? "bg-[#D5C1A9]/50 text-[#A06E31]"
-                                : "bg-red-50 text-red-700"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-
-                        </td>
-
-                      </tr>
-
-                    ))}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            </div>
-
+            <p className="text-sm font-medium text-[#8B7A6C]">
+              {filteredItems.length} items listed
+            </p>
           </div>
-        </section>
-      </div>
+
+          {/* STATS CARDS */}
+          <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-wider text-[#8B7A6C] font-semibold">Total In Stock</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FAF7F2] text-[#A06E31] border border-[#D5C1A9]/50">
+                  <StockIcon />
+                </div>
+              </div>
+              <p className="mt-4 text-2xl font-bold text-[#1D1612]">{totalStock} <span className="text-xs font-normal text-[#8B7A6C]">units</span></p>
+              <p className="mt-1 text-xs text-emerald-700 font-medium">Ready to dispatch</p>
+            </div>
+
+            <div className="rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-wider text-[#8B7A6C] font-semibold">Total Sold</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FAF7F2] text-emerald-700 border border-[#D5C1A9]/50">
+                  <TrendingUpIcon />
+                </div>
+              </div>
+              <p className="mt-4 text-2xl font-bold text-[#1D1612]">{totalSold} <span className="text-xs font-normal text-[#8B7A6C]">units</span></p>
+              <p className="mt-1 text-xs text-[#8B7A6C]">Customer orders shipped</p>
+            </div>
+
+            <div className="rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-wider text-[#8B7A6C] font-semibold">Low Stock Alert</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F4EEE7] text-[#A06E31] border border-[#D5C1A9]/50">
+                  <AlertTriangleIcon />
+                </div>
+              </div>
+              <p className="mt-4 text-2xl font-bold text-[#A06E31]">{lowStockCount} <span className="text-xs font-normal text-[#8B7A6C]">items</span></p>
+              <p className="mt-1 text-xs text-[#A06E31] font-medium">Reorder recommended</p>
+            </div>
+
+            <div className="rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-wider text-[#8B7A6C] font-semibold">Out of Stock</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 border border-rose-200">
+                  <AlertTriangleIcon />
+                </div>
+              </div>
+              <p className="mt-4 text-2xl font-bold text-rose-600">{outOfStockCount} <span className="text-xs font-normal text-[#8B7A6C]">items</span></p>
+              <p className="mt-1 text-xs text-rose-500 font-medium">Disabled on storefront</p>
+            </div>
+          </div>
+
+          {/* SEARCH & FILTER BAR */}
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#D5C1A9]/60 bg-white p-4 shadow-xs md:flex-row">
+            <div className="relative flex-1">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B7A6C]">
+                <SearchIcon />
+              </span>
+              <input
+                type="text"
+                placeholder="Search inventory by item title or SKU..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-[#D5C1A9]/80 bg-[#FAF7F2] px-4 py-2.5 pl-10 text-sm text-[#1D1612] outline-none transition placeholder:text-[#8B7A6C] focus:border-[#A06E31] focus:bg-white"
+              />
+            </div>
+
+            <AdminDropdown
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: "All", label: "All Statuses" },
+                { value: "In Stock", label: "In Stock" },
+                { value: "Low Stock", label: "Low Stock" },
+                { value: "Out of Stock", label: "Out of Stock" },
+              ]}
+              className="w-full md:w-48"
+            />
+          </div>
+
+          {/* INVENTORY TABLE */}
+          <div className="overflow-hidden rounded-2xl border border-[#D5C1A9]/60 bg-white shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-[#1D1612]">
+                <thead className="border-b border-[#D5C1A9]/60 bg-[#FAF7F2] text-xs uppercase tracking-wider text-[#8B7A6C]">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold">Product Item</th>
+                    <th className="px-6 py-4 font-semibold">Category</th>
+                    <th className="px-6 py-4 font-semibold">SKU</th>
+                    <th className="px-6 py-4 font-semibold">Available Units</th>
+                    <th className="px-6 py-4 font-semibold">Total Sold</th>
+                    <th className="px-6 py-4 font-semibold">Stock Status</th>
+                    <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-[#D5C1A9]/30">
+                  {filteredItems.map((item) => (
+                    <tr key={item.sku} className="transition-colors hover:bg-[#FAF7F2]/80">
+                      <td className="px-6 py-4 font-semibold text-[#1D1612]">
+                        {item.name}
+                      </td>
+                      <td className="px-6 py-4 text-[#8B7A6C]">
+                        {item.category}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-[#8B7A6C]">
+                        {item.sku}
+                      </td>
+                      <td className="px-6 py-4 font-bold text-[#1D1612]">
+                        {item.stock} units
+                      </td>
+                      <td className="px-6 py-4 text-[#8B7A6C]">
+                        {item.sold} sold
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                            item.status === "In Stock"
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                              : item.status === "Low Stock"
+                              ? "bg-[#F4EEE7] text-[#A06E31] border-[#D5C1A9]"
+                              : "bg-rose-50 text-rose-700 border-rose-200"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href="/admin/products"
+                          className="text-xs font-semibold text-[#A06E31] hover:underline"
+                        >
+                          Edit Stock →
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredItems.length === 0 && (
+              <div className="p-12 text-center text-sm text-[#8B7A6C]">
+                No inventory items match your search.
+              </div>
+            )}
+          </div>
+
+        </div>
+      </section>
     </main>
   );
 }

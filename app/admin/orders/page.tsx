@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
+import AdminDropdown from "@/components/AdminDropdown";
+import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
 
 /* =========================
    TYPES
@@ -305,6 +308,15 @@ function DotsIcon() {
   );
 }
 
+function EyeIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 function CloseIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -345,10 +357,30 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"All" | "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled">("All");
   const [cityFilter, setCityFilter] = useState("All");
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    startDate: "",
+    endDate: "",
+    preset: "all",
+    label: "All Dates",
+  });
 
   // Dispatch fields inside modal
   const [courierName, setCourierName] = useState("TCS Express");
   const [trackingNumberInput, setTrackingNumberInput] = useState("");
+
+  // Prevent background scrolling and interaction when modal is open
+  useEffect(() => {
+    if (selectedOrder) {
+      const origBody = document.body.style.overflow;
+      const origHtml = document.documentElement.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = origBody || "";
+        document.documentElement.style.overflow = origHtml || "";
+      };
+    }
+  }, [selectedOrder]);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -361,7 +393,22 @@ export default function OrdersPage() {
     const matchesTab = activeTab === "All" || order.status === activeTab;
     const matchesCity = cityFilter === "All" || order.city === cityFilter;
 
-    return matchesSearch && matchesTab && matchesCity;
+    let matchesDate = true;
+    if (dateRange.startDate || dateRange.endDate) {
+      const orderDate = new Date(order.date);
+      if (dateRange.startDate) {
+        const start = new Date(dateRange.startDate);
+        start.setHours(0, 0, 0, 0);
+        if (orderDate < start) matchesDate = false;
+      }
+      if (dateRange.endDate) {
+        const end = new Date(dateRange.endDate);
+        end.setHours(23, 59, 59, 999);
+        if (orderDate > end) matchesDate = false;
+      }
+    }
+
+    return matchesSearch && matchesTab && matchesCity && matchesDate;
   });
 
   // Tab counts
@@ -386,134 +433,39 @@ export default function OrdersPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
-      <div className="flex min-h-screen">
+      <AdminSidebar currentTab="orders" />
 
-        {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex border-r border-white/10">
-
-          {/* LOGO */}
-          <div className="border-b border-white/10 px-6 py-7">
-            <Link
-              href="/admin"
-              className="text-xl font-black tracking-[0.2em]"
-            >
-              WEARWELL
-            </Link>
-
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
-              Admin Panel
-            </p>
-          </div>
-
-          {/* NAVIGATION */}
-          <nav className="flex-1 px-4 py-6">
-
-            <Link
-              href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <DashboardIcon />
-              Dashboard
-            </Link>
-
-            <Link
-              href="/admin/orders"
-              className="mb-2 flex items-center justify-between rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-medium text-white shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <OrdersIcon />
-                <span>Orders</span>
-              </div>
-              <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-bold">
-                {orders.length}
-              </span>
-            </Link>
-
-            <Link
-              href="/admin/products"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <ProductsIcon />
-              Products
-            </Link>
-
-            <Link
-              href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <InventoryIcon />
-              Inventory
-            </Link>
-
-            <Link
-              href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <CustomersIcon />
-              Customers
-            </Link>
-
-            <Link
-              href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <PaymentsIcon />
-              Payments
-            </Link>
-
-            <Link
-              href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
-            >
-              <SettingsIcon />
-              Settings
-            </Link>
-
-          </nav>
-
-          {/* ADMIN INFO */}
-          <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-[#8B7A6C]">
-              Signed in as
-            </p>
-
-            <p className="mt-1 text-sm font-medium">
-              Admin
-            </p>
-          </div>
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <section className="min-w-0 flex-1">
-
-          {/* TOP BAR */}
-          <header className="flex h-20 items-center justify-between border-b border-[#8B7A6C]/20 bg-white px-6 lg:px-8 sticky top-0 z-30">
-
+      {/* MAIN CONTENT */}
+      <section className={`lg:ml-64 ${selectedOrder ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedOrder}>
+        {/* TOP BAR */}
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
+          <div className="flex items-center gap-4">
             <div>
-              <p className="text-xs text-[#8B7A6C]">
-                Admin / Orders
+              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31] font-semibold">
+                Admin Panel
               </p>
-
-              <h1 className="mt-1 text-xl font-semibold">
+              <h2 className="text-lg font-semibold tracking-tight text-[#1D1612] sm:text-xl">
                 Orders & Deliveries
-              </h1>
+              </h2>
             </div>
+          </div>
 
-            <div className="flex items-center gap-3">
-
-              <span className="hidden sm:inline-block rounded-lg border border-[#8B7A6C]/30 bg-[#F8F6F2] px-3.5 py-1.5 text-xs text-[#5d4634] font-medium">
-                Payment: Cash on Delivery (COD)
-              </span>
-
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9] text-xs font-semibold text-[#080808]">
-                AD
-              </div>
-
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-block rounded-xl border border-[#D5C1A9]/80 bg-white px-3.5 py-1.5 text-xs text-[#5d4634] font-medium shadow-2xs">
+              Payment: Cash on Delivery (COD)
+            </span>
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-medium text-[#1D1612]">Admin</p>
+              <p className="text-xs text-[#8B7A6C]">Administrator</p>
             </div>
-          </header>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1D1612] text-sm font-semibold text-[#D5C1A9] border border-[#A06E31]/40">
+              A
+            </div>
+          </div>
+        </header>
 
-          {/* CONTENT */}
-          <div className="p-5 sm:p-7 lg:p-8">
+        {/* CONTENT */}
+        <div className="px-5 py-7 sm:px-8 lg:px-10">
 
             {/* PAGE HEADER */}
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -539,7 +491,7 @@ export default function OrdersPage() {
             </div>
 
             {/* ESSENTIAL STATUS TABS */}
-            <div className="mb-5 flex gap-2 overflow-x-auto border-b border-[#8B7A6C]/20 pb-3">
+            <div className="mb-5 flex gap-2 overflow-x-auto border-b border-[#D5C1A9]/40 pb-3">
               {[
                 { label: "All Orders", key: "All", count: orders.length },
                 { label: "Pending Verification", key: "Pending", count: pendingCount },
@@ -551,10 +503,10 @@ export default function OrdersPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold whitespace-nowrap transition-all ${
                     activeTab === tab.key
-                      ? "bg-[#080808] text-white shadow-sm"
-                      : "border border-[#8B7A6C]/25 bg-white text-[#5f554e] hover:bg-[#F8F6F2] hover:border-[#A06E31]"
+                      ? "bg-[#1D1612] text-white shadow-xs"
+                      : "border border-[#D5C1A9]/70 bg-white text-[#694F3D] hover:bg-[#FAF7F2] hover:border-[#A06E31]"
                   }`}
                 >
                   <span>{tab.label}</span>
@@ -562,7 +514,7 @@ export default function OrdersPage() {
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                       activeTab === tab.key
                         ? "bg-[#A06E31] text-white"
-                        : "bg-[#F8F6F2] text-[#8B7A6C]"
+                        : "bg-[#F4EEE7] text-[#694F3D]"
                     }`}
                   >
                     {tab.count}
@@ -572,13 +524,10 @@ export default function OrdersPage() {
             </div>
 
             {/* FILTER BAR */}
-            <div className="mb-5 rounded-xl border border-[#8B7A6C]/20 bg-white p-4 shadow-sm">
-
-              <div className="flex flex-col gap-3 md:flex-row">
-
+            <div className="mb-5 rounded-2xl border border-[#D5C1A9]/60 bg-white p-4 shadow-xs">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 <div className="relative flex-1">
-
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B7A6C]">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B7A6C]">
                     <SearchIcon />
                   </span>
 
@@ -587,35 +536,49 @@ export default function OrdersPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search order ID, customer name, phone number or product..."
-                    className="w-full rounded-lg border border-[#8B7A6C]/25 bg-[#F8F6F2] py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#A06E31] focus:bg-white"
+                    className="w-full rounded-xl border border-black/10 bg-[#F8F6F2]/50 py-2.5 pl-10 pr-4 text-xs text-[#080808] outline-none transition focus:border-black/30 focus:bg-white placeholder:text-black/40"
                   />
-
                 </div>
 
-                <select
+                {/* CUSTOM CITY DROPDOWN */}
+                <AdminDropdown
                   value={cityFilter}
-                  onChange={(e) => setCityFilter(e.target.value)}
-                  className="rounded-lg border border-[#8B7A6C]/25 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#A06E31]"
-                >
-                  <option value="All">All Cities</option>
-                  <option value="Lahore">Lahore</option>
-                  <option value="Karachi">Karachi</option>
-                  <option value="Islamabad">Islamabad</option>
-                  <option value="Rawalpindi">Rawalpindi</option>
-                  <option value="Faisalabad">Faisalabad</option>
-                </select>
+                  onChange={setCityFilter}
+                  options={[
+                    { value: "All", label: "All Cities" },
+                    { value: "Lahore", label: "Lahore" },
+                    { value: "Karachi", label: "Karachi" },
+                    { value: "Islamabad", label: "Islamabad" },
+                    { value: "Rawalpindi", label: "Rawalpindi" },
+                    { value: "Faisalabad", label: "Faisalabad" },
+                  ]}
+                  className="w-full md:w-44"
+                />
+
+                {/* DATE & TIME RANGE FILTER */}
+                <AdminDateRangeFilter
+                  value={dateRange}
+                  onChange={setDateRange}
+                  className="w-full md:w-auto"
+                />
 
                 <button
+                  type="button"
                   onClick={() => {
                     setSearch("");
                     setActiveTab("All");
                     setCityFilter("All");
+                    setDateRange({
+                      startDate: "",
+                      endDate: "",
+                      preset: "all",
+                      label: "All Dates",
+                    });
                   }}
-                  className="rounded-lg border border-[#8B7A6C]/25 px-5 py-2.5 text-sm font-medium transition hover:border-[#A06E31] hover:bg-[#D5C1A9]/30"
+                  className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-black/60 transition hover:bg-black/5 hover:text-black"
                 >
                   Reset
                 </button>
-
               </div>
             </div>
 
@@ -669,23 +632,18 @@ export default function OrdersPage() {
                     {filteredOrders.map((order) => (
                       <tr
                         key={order.id}
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setCourierName(order.courier !== "Unassigned" ? order.courier : "TCS Express");
-                          setTrackingNumberInput(order.trackingNumber || "");
-                        }}
-                        className="transition hover:bg-[#F8F6F2]/70 cursor-pointer"
+                        className="transition hover:bg-[#F8F6F2]/50"
                       >
 
                         <td className="px-5 py-4">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            onClick={() => {
                               setSelectedOrder(order);
                               setCourierName(order.courier !== "Unassigned" ? order.courier : "TCS Express");
                               setTrackingNumberInput(order.trackingNumber || "");
                             }}
                             className="font-bold text-[#080808] hover:text-[#A06E31] hover:underline"
+                            title="Click to view order details"
                           >
                             {order.id}
                           </button>
@@ -783,16 +741,16 @@ export default function OrdersPage() {
                         <td className="px-5 py-4 text-right">
 
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            onClick={() => {
                               setSelectedOrder(order);
                               setCourierName(order.courier !== "Unassigned" ? order.courier : "TCS Express");
                               setTrackingNumberInput(order.trackingNumber || "");
                             }}
-                            className="rounded-lg p-2 text-[#8B7A6C] transition hover:bg-[#D5C1A9]/40 hover:text-[#080808]"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5C1A9]/70 bg-white px-3 py-1.5 text-xs font-semibold text-[#080808] shadow-sm transition hover:border-[#A06E31] hover:bg-[#FAF7F2] hover:text-[#A06E31]"
                             title="View Order Details"
                           >
-                            <DotsIcon />
+                            <EyeIcon className="h-4 w-4 text-[#A06E31]" />
+                            <span>View</span>
                           </button>
 
                         </td>
@@ -842,45 +800,48 @@ export default function OrdersPage() {
 
           </div>
         </section>
-      </div>
 
       {/* ORDER DETAILS & DELIVERY MODAL */}
       {selectedOrder && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/65 p-3 sm:p-5 backdrop-blur-sm overscroll-contain overflow-y-auto"
           onClick={() => setSelectedOrder(null)}
         >
 
           <div
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-[#8B7A6C]/20"
+            className="w-full max-w-3xl lg:max-w-4xl max-h-[92vh] overflow-y-auto custom-scrollbar-thin rounded-2xl bg-white shadow-2xl border border-[#D5C1A9]/60 transition-all flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
 
             {/* MODAL HEADER */}
-            <div className="flex items-center justify-between border-b border-[#8B7A6C]/15 px-6 py-5 sticky top-0 bg-white z-10">
+            <div className="flex items-center justify-between border-b border-[#D5C1A9]/60 px-6 py-4 sticky top-0 bg-white z-20 shadow-xs">
 
               <div>
-                <p className="text-xs text-[#8B7A6C]">
+                <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#A06E31]">
                   Order details & Delivery Management
                 </p>
 
-                <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-lg font-bold">
+                <div className="flex items-center gap-2.5 mt-1">
+                  <h3 className="text-xl font-bold tracking-tight text-[#080808]">
                     {selectedOrder.id}
                   </h3>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${getStatusClass(
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${getStatusClass(
                       selectedOrder.status
                     )}`}
                   >
                     {selectedOrder.status}
+                  </span>
+                  <span className="text-xs text-[#8B7A6C] hidden sm:inline">
+                    · Placed on {selectedOrder.date}
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8F6F2] text-[#8B7A6C] transition hover:bg-[#D5C1A9] hover:text-[#080808]"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F6F2] text-[#8B7A6C] border border-[#D5C1A9]/40 transition hover:bg-[#D5C1A9]/50 hover:text-[#080808]"
+                title="Close modal"
               >
                 <CloseIcon />
               </button>
@@ -888,186 +849,238 @@ export default function OrdersPage() {
             </div>
 
             {/* MANUAL STATUS & COD PAYMENT CONTROLS */}
-            <div className="border-b border-[#8B7A6C]/15 px-6 py-3.5 bg-[#F8F6F2]/40 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[#8B7A6C]">Change Status:</span>
-                <select
+            <div className="border-b border-[#D5C1A9]/50 px-6 py-3.5 bg-[#FAF7F2] flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-semibold text-[#080808]/70">Change Status:</span>
+                <AdminDropdown
                   value={selectedOrder.status}
-                  onChange={(e) => handleUpdateStatus(e.target.value as any)}
-                  className="rounded-lg border border-[#8B7A6C]/30 bg-white px-3 py-1.5 text-xs font-semibold text-[#080808] outline-none focus:border-[#A06E31]"
-                >
-                  <option value="Pending">Pending Verification</option>
-                  <option value="Confirmed">Confirmed & Packing</option>
-                  <option value="Shipped">Shipped (In Transit)</option>
-                  <option value="Delivered">Delivered & Paid</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
+                  onChange={(val) => handleUpdateStatus(val as any)}
+                  options={[
+                    { value: "Pending", label: "Pending Verification" },
+                    { value: "Confirmed", label: "Confirmed & Packing" },
+                    { value: "Shipped", label: "Shipped (In Transit)" },
+                    { value: "Delivered", label: "Delivered & Paid" },
+                    { value: "Cancelled", label: "Cancelled" },
+                  ]}
+                  size="sm"
+                  className="w-48 sm:w-52"
+                />
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[#8B7A6C]">COD Payment:</span>
-                <select
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-semibold text-[#080808]/70">COD Payment:</span>
+                <AdminDropdown
                   value={selectedOrder.paymentStatus}
-                  onChange={(e) => handleUpdateStatus(selectedOrder.status, { paymentStatus: e.target.value as any })}
-                  className="rounded-lg border border-[#8B7A6C]/30 bg-white px-3 py-1.5 text-xs font-semibold text-[#080808] outline-none focus:border-[#A06E31]"
-                >
-                  <option value="Pending">Pending (Not Collected)</option>
-                  <option value="Collected">Collected (Cash Received)</option>
-                </select>
+                  onChange={(val) => handleUpdateStatus(selectedOrder.status, { paymentStatus: val as any })}
+                  options={[
+                    { value: "Pending", label: "Pending (Not Collected)" },
+                    { value: "Collected", label: "Collected (Cash Received)" },
+                  ]}
+                  size="sm"
+                  className="w-48 sm:w-52"
+                />
               </div>
             </div>
 
-            {/* CUSTOMER & CONTACT INFORMATION */}
-            <div className="border-b border-[#8B7A6C]/15 px-6 py-5 bg-[#F8F6F2]/50">
+            {/* 2-COLUMN SECTION: CUSTOMER DOSSIER & COURIER DISPATCH */}
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
 
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B7A6C]">
-                  Customer Dossier
-                </p>
-                <a
-                  href={`tel:${selectedOrder.phone}`}
-                  className="inline-flex items-center gap-1 rounded bg-[#080808] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#A06E31]"
-                >
-                  <PhoneIcon />
-                  <span>Call {selectedOrder.phone}</span>
-                </a>
-              </div>
-
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#D5C1A9] font-bold text-sm">
-                  {selectedOrder.customer
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")}
-                </div>
-
-                <div className="min-w-0 flex-1">
-
-                  <p className="font-semibold text-sm">
-                    {selectedOrder.customer}
-                  </p>
-
-                  <p className="text-xs text-[#8B7A6C]">
-                    {selectedOrder.email}
-                  </p>
-
-                  <p className="text-xs text-[#080808] mt-1 font-medium">
-                    Address: {selectedOrder.address}, {selectedOrder.city}
-                  </p>
-
-                </div>
-
-              </div>
-
-              {selectedOrder.notes && (
-                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-900">
-                  <span className="font-semibold">Customer Note:</span> {selectedOrder.notes}
-                </div>
-              )}
-
-            </div>
-
-            {/* COURIER DISPATCH CONTROL */}
-            <div className="border-b border-[#8B7A6C]/15 px-6 py-5">
-
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B7A6C] mb-3">
-                Courier Service & Tracking
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              {/* CUSTOMER & CONTACT INFORMATION */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-[#FAF7F2]/50 p-4.5 flex flex-col justify-between">
                 <div>
-                  <label className="text-[#8B7A6C] block mb-1 font-medium">Select Courier</label>
-                  <select
-                    value={courierName}
-                    onChange={(e) => setCourierName(e.target.value)}
-                    className="w-full rounded-lg border border-[#8B7A6C]/30 bg-white p-2 text-xs outline-none focus:border-[#A06E31]"
-                  >
-                    <option value="TCS Express">TCS Express</option>
-                    <option value="Leopards Courier">Leopards Courier</option>
-                    <option value="Trax Logistics">Trax Logistics</option>
-                    <option value="Call Courier">Call Courier</option>
-                    <option value="M&P Express">M&P Express</option>
-                  </select>
-                </div>
+                  <div className="flex items-center justify-between mb-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A06E31]">
+                      Customer Dossier
+                    </p>
+                    <a
+                      href={`tel:${selectedOrder.phone}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#080808] px-3 py-1.5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-[#A06E31]"
+                    >
+                      <PhoneIcon />
+                      <span>Call {selectedOrder.phone}</span>
+                    </a>
+                  </div>
 
-                <div>
-                  <label className="text-[#8B7A6C] block mb-1 font-medium">Tracking Number</label>
-                  <input
-                    type="text"
-                    value={trackingNumberInput}
-                    onChange={(e) => setTrackingNumberInput(e.target.value)}
-                    placeholder="e.g. TCS-982104"
-                    className="w-full rounded-lg border border-[#8B7A6C]/30 bg-white p-2 text-xs font-mono outline-none focus:border-[#A06E31]"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-3 flex justify-end">
-                <button
-                  onClick={() => handleUpdateStatus(selectedOrder.status, { courier: courierName, trackingNumber: trackingNumberInput })}
-                  className="rounded-lg bg-[#080808] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A06E31] transition"
-                >
-                  Save Courier & Tracking
-                </button>
-              </div>
-
-            </div>
-
-            {/* ORDER ITEMS & DETAILS */}
-            <div className="px-6 py-4 border-b border-[#8B7A6C]/15">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8B7A6C] mb-2">
-                Order Items
-              </p>
-              <div className="space-y-2">
-                {selectedOrder.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-xs p-2 rounded-lg bg-[#F8F6F2]">
-                    <div>
-                      <p className="font-semibold text-[#080808]">{item.name}</p>
-                      <p className="text-[10px] text-[#8B7A6C]">Size: {item.size} · SKU: {item.sku}</p>
+                  <div className="flex items-start gap-3.5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#D5C1A9] font-bold text-sm text-[#080808] border border-black/10 shadow-xs">
+                      {selectedOrder.customer
+                        .split(" ")
+                        .map((word) => word[0])
+                        .join("")}
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{item.price}</p>
-                      <p className="text-[10px] text-[#8B7A6C]">Qty: {item.quantity}</p>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm text-[#080808]">
+                        {selectedOrder.customer}
+                      </p>
+
+                      <p className="text-xs text-[#8B7A6C] mt-0.5">
+                        {selectedOrder.email}
+                      </p>
+
+                      <div className="mt-2.5 rounded-lg bg-white border border-[#D5C1A9]/40 p-2.5 text-xs text-[#080808]">
+                        <span className="font-semibold text-[#8B7A6C] block text-[10px] uppercase tracking-wider mb-0.5">
+                          Delivery Destination · {selectedOrder.city}
+                        </span>
+                        <p className="font-medium leading-relaxed">
+                          {selectedOrder.address}, {selectedOrder.city}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {selectedOrder.notes && (
+                  <div className="mt-3.5 rounded-lg border border-amber-200 bg-amber-50/90 p-2.5 text-xs text-amber-900">
+                    <span className="font-bold text-amber-800">Customer Note:</span> {selectedOrder.notes}
+                  </div>
+                )}
+              </div>
+
+              {/* COURIER DISPATCH CONTROL */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-[#FAF7F2]/50 p-4.5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A06E31]">
+                      Courier Service & Tracking
+                    </p>
+                    <span className="text-[11px] font-medium text-[#8B7A6C]">
+                      Carrier: <span className="font-semibold text-[#080808]">{courierName}</span>
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-[#080808]/70 block mb-1.5 font-semibold text-[11px]">
+                        Select Delivery Partner
+                      </label>
+                      <AdminDropdown
+                        value={courierName}
+                        onChange={setCourierName}
+                        options={[
+                          { value: "TCS Express", label: "TCS Express" },
+                          { value: "Leopards Courier", label: "Leopards Courier" },
+                          { value: "Trax Logistics", label: "Trax Logistics" },
+                          { value: "Call Courier", label: "Call Courier" },
+                          { value: "M&P Express", label: "M&P Express" },
+                        ]}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[#080808]/70 block mb-1.5 font-semibold text-[11px]">
+                        Consignment / Tracking Number
+                      </label>
+                      <input
+                        type="text"
+                        value={trackingNumberInput}
+                        onChange={(e) => setTrackingNumberInput(e.target.value)}
+                        placeholder="e.g. TCS-9028148 or LCS-882194"
+                        className="w-full rounded-lg border border-[#D5C1A9] bg-white px-3 py-2 text-xs font-mono outline-none transition focus:border-[#A06E31] focus:ring-1 focus:ring-[#A06E31]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => handleUpdateStatus(selectedOrder.status, { courier: courierName, trackingNumber: trackingNumberInput })}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#080808] px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#A06E31]"
+                  >
+                    <span>Save Courier & Tracking</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* ORDER ITEMS */}
+            <div className="px-6 py-2">
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-4 shadow-xs">
+                <div className="flex items-center justify-between mb-3 border-b border-[#D5C1A9]/40 pb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A06E31]">
+                    Order Items ({selectedOrder.items.length})
+                  </p>
+                  <p className="text-xs text-[#8B7A6C]">
+                    Total Units: {selectedOrder.items.reduce((sum, item) => sum + item.quantity, 0)}
+                  </p>
+                </div>
+
+                <div className="space-y-2.5">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#FAF7F2] p-3 border border-[#D5C1A9]/30 text-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-[#080808] text-sm">{item.name}</p>
+                        <div className="flex items-center gap-2 mt-1 text-[#8B7A6C]">
+                          <span className="rounded bg-white px-2 py-0.5 font-semibold text-[#080808] border border-[#D5C1A9]/40">
+                            Size: {item.size}
+                          </span>
+                          <span className="font-mono text-[11px]">
+                            SKU: {item.sku}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-bold text-sm text-[#080808]">{item.price}</p>
+                        <p className="text-[11px] text-[#8B7A6C]">Qty: {item.quantity}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* TOTAL & COD PAYMENT */}
-            <div className="mx-6 my-4 flex items-center justify-between rounded-xl bg-[#D5C1A9]/35 px-5 py-3">
-
+            {/* TOTAL & COD PAYMENT SUMMARY */}
+            <div className="mx-6 my-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#FAF7F2] border border-[#D5C1A9]/70 px-5 py-4 shadow-xs">
               <div>
-                <span className="text-xs text-[#8B7A6C] block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8B7A6C] block">
                   Total Payable on Delivery (COD)
                 </span>
-                <span className="text-sm font-bold text-[#5d4634]">
-                  Payment Status: {selectedOrder.paymentStatus === "Collected" ? "Cash Collected" : "Cash Pending"}
-                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-semibold text-[#5d4634]">
+                    Payment Status:
+                  </span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
+                      selectedOrder.paymentStatus === "Collected"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-amber-50 text-amber-800 border-amber-200"
+                    }`}
+                  >
+                    {selectedOrder.paymentStatus === "Collected" ? "Cash Collected" : "Cash Pending (Due at Doorstep)"}
+                  </span>
+                </div>
               </div>
 
-              <span className="text-lg font-bold text-[#080808]">
-                {selectedOrder.total}
-              </span>
-
+              <div className="text-right">
+                <span className="text-[10px] text-[#8B7A6C] block uppercase tracking-wider">
+                  Net Amount
+                </span>
+                <span className="text-2xl font-extrabold tracking-tight text-[#080808]">
+                  {selectedOrder.total}
+                </span>
+              </div>
             </div>
 
-            {/* MANUAL STATUS ACTION BUTTONS */}
-            <div className="px-6 pb-6 pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#8B7A6C]/15">
-
+            {/* STATUS ACTION BUTTONS FOOTER */}
+            <div className="px-6 py-4 bg-white border-t border-[#D5C1A9]/60 flex flex-wrap items-center justify-between gap-3 sticky bottom-0 z-20 shadow-xs">
               <button
                 onClick={() => handleUpdateStatus("Cancelled")}
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
+                className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100"
               >
                 Cancel Order
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 {selectedOrder.status === "Pending" && (
                   <button
                     onClick={() => handleUpdateStatus("Confirmed")}
-                    className="rounded-lg bg-[#080808] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#A06E31]"
+                    className="rounded-lg bg-[#080808] px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#A06E31]"
                   >
                     Confirm Order
                   </button>
@@ -1081,7 +1094,7 @@ export default function OrdersPage() {
                         trackingNumber: trackingNumberInput || `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`,
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#A06E31] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#080808]"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#A06E31] px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#080808]"
                   >
                     <TruckIcon />
                     <span>Dispatch via {courierName.split(" ")[0]}</span>
@@ -1091,13 +1104,19 @@ export default function OrdersPage() {
                 {selectedOrder.status !== "Delivered" && (
                   <button
                     onClick={() => handleUpdateStatus("Delivered")}
-                    className="rounded-lg bg-green-700 px-4 py-2 text-xs font-semibold text-white hover:bg-green-800 shadow-sm"
+                    className="rounded-lg bg-green-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-green-800"
                   >
                     ✓ Mark Delivered & Paid
                   </button>
                 )}
-              </div>
 
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="rounded-lg border border-[#D5C1A9] bg-white px-4 py-2 text-xs font-semibold text-[#080808] transition hover:bg-[#F8F6F2]"
+                >
+                  Close
+                </button>
+              </div>
             </div>
 
           </div>

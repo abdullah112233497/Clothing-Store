@@ -232,6 +232,7 @@ export default function ProfilePage() {
   ) => {
     setActiveTab(tab);
     if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
       const url = new URL(window.location.href);
       if (tab === "details") {
         url.searchParams.delete("tab");
@@ -896,7 +897,7 @@ export default function ProfilePage() {
       )}
 
       {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8 w-full max-w-full overflow-hidden">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8 w-full max-w-full">
         
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-xs text-gray-400 uppercase tracking-widest">
@@ -1160,11 +1161,11 @@ export default function ProfilePage() {
             </div>
 
             {/* ================= MAIN DESKTOP 2-COLUMN LUXURY DASHBOARD (≥ lg screens) ================= */}
-            <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+            <div className="grid gap-8 lg:grid-cols-[280px_1fr] items-start">
               
               {/* DESKTOP SIDEBAR (Hidden on Mobile < lg) - Clean Seamless Column */}
               <aside
-                className="hidden lg:flex flex-col justify-between border-r border-gray-100 pr-8 sticky top-28"
+                className="hidden lg:flex flex-col justify-between border-r border-gray-100 pr-8 sticky top-28 self-start"
                 style={{ height: "calc(100vh - 140px)", minHeight: "calc(100vh - 140px)" }}
               >
                 <div>
@@ -1213,6 +1214,7 @@ export default function ProfilePage() {
                   {/* Sidebar Navigation */}
                   <nav className="mt-6 flex flex-col gap-1">
                     <button
+                      type="button"
                       onClick={() => switchTab("details")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "details"
@@ -1225,6 +1227,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => switchTab("orders")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "orders"
@@ -1237,6 +1240,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => switchTab("addresses")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "addresses"
@@ -1249,6 +1253,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => switchTab("wishlist")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "wishlist"
@@ -1261,6 +1266,7 @@ export default function ProfilePage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => switchTab("security")}
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-xs font-semibold uppercase tracking-wider transition ${
                         activeTab === "security"
@@ -1293,7 +1299,7 @@ export default function ProfilePage() {
                 {activeTab === "details" && (
                   <section className="space-y-6">
                     {/* Single Clean Section Header */}
-                    <div className="border-b border-gray-100 pb-5 mb-8">
+                    <div className="border-b border-gray-100 pb-5 mb-6">
                       <div className="flex items-center justify-between gap-4">
                         <h1 className="text-base sm:text-xl font-bold uppercase tracking-wider text-gray-900">
                           My Details
@@ -1819,9 +1825,14 @@ export default function ProfilePage() {
                 {/* ================= TAB 5: SECURITY & SETTINGS ================= */}
                 {activeTab === "security" && (
                   <section className="space-y-6">
-                    <h1 className="text-lg sm:text-xl font-bold uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-6">
-                      Security & Settings
-                    </h1>
+                    <div className="border-b border-gray-100 pb-5 mb-6">
+                      <h1 className="text-base sm:text-xl font-bold uppercase tracking-wider text-gray-900">
+                        Security & Settings
+                      </h1>
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Manage your password and account security preferences.
+                      </p>
+                    </div>
 
                     <form onSubmit={handlePasswordSubmit} className="mt-6 max-w-md space-y-4">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">

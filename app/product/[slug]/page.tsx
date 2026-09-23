@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import ProductDetailSkeleton from "@/components/ProductDetailSkeleton";
 
 type Product = {
 id?: number;
@@ -564,18 +565,25 @@ item.name.toLowerCase().replace(/\s+/g, "-") === slug
 const [databaseProduct, setDatabaseProduct] = useState<Product | null>(null);
 const product = databaseProduct || staticProduct;
 
+const [isLoading, setIsLoading] = useState(!staticProduct);
 const [selectedSize, setSelectedSize] = useState("M");
 const [selectedColor, setSelectedColor] = useState("Black");
 const [quantity, setQuantity] = useState(1);
 const [selectedImage, setSelectedImage] = useState(
 product?.image || ""
 );
+const [isMainImageLoaded, setIsMainImageLoaded] = useState(false);
 
 const { isLoggedIn } = useAuth();
 const [isWishlisted, setIsWishlisted] = useState(false);
 
 useEffect(() => {
+  setIsMainImageLoaded(false);
+}, [selectedImage]);
+
+useEffect(() => {
   let active = true;
+  setIsLoading(true);
   fetch(`/api/products?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
     .then((response) => response.ok ? response.json() : null)
     .then((data) => {
@@ -594,7 +602,10 @@ useEffect(() => {
       if (sizeOption?.value) setSelectedSize(sizeOption.value);
       if (options.color?.value) setSelectedColor(options.color.value);
     })
-    .catch(() => undefined);
+    .catch(() => undefined)
+    .finally(() => {
+      if (active) setIsLoading(false);
+    });
   return () => { active = false; };
 }, [slug, staticProduct]);
 
@@ -770,6 +781,34 @@ const handleBuyNow = () => {
 if (addToCart()) router.push("/checkout");
 };
 
+if (isLoading && !product) {
+  return <ProductDetailSkeleton />;
+}
+
+if (!product) {
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen bg-[#F8F6F2] py-28 text-center px-4">
+        <div className="mx-auto max-w-md">
+          <div className="text-5xl">🛍️</div>
+          <h1 className="mt-6 text-2xl font-bold text-gray-900">Product Not Found</h1>
+          <p className="mt-3 text-sm text-gray-500">
+            The product you are looking for does not exist or has been removed.
+          </p>
+          <Link
+            href="/shop"
+            className="mt-8 inline-block rounded-xl bg-black px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+          >
+            Explore All Products
+          </Link>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
 const availableVariants = product.variants?.filter((variant) => variant.available && variant.stock > 0);
 const colorOptions = availableVariants
   ? Array.from(new Map(availableVariants.flatMap((variant) => variant.options.color ? [[variant.options.color.value, variant.options.color]] : [])).values())
@@ -826,11 +865,18 @@ return (
             ))}
           </div>
 
-          <div className="relative order-1 overflow-hidden bg-[#EAE4DC] sm:order-2 rounded-2xl">
+          <div className="skeleton-shimmer relative order-1 overflow-hidden bg-[#EAE4DC] sm:order-2 rounded-2xl">
+            {!isMainImageLoaded && (
+              <div className="skeleton-shimmer absolute inset-0 z-0 h-full w-full" />
+            )}
             <img
               src={selectedImage}
               alt={product.name}
-              className="aspect-[3/4] w-full object-cover transition duration-700 hover:scale-[1.02]"
+              onLoad={() => setIsMainImageLoaded(true)}
+              onError={() => setIsMainImageLoaded(true)}
+              className={`aspect-[3/4] w-full object-cover transition-all duration-700 hover:scale-[1.02] ${
+                isMainImageLoaded ? "opacity-100" : "opacity-0"
+              }`}
             />
             {/* Floating Wishlist Heart */}
             <button

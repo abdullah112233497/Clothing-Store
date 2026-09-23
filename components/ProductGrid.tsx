@@ -1,15 +1,32 @@
+"use client";
 
+import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
+import { ProductGridSkeleton } from "./ProductCardSkeleton";
 
-const products = [
+type Product = {
+  id: number | string;
+  name: string;
+  price: string;
+  category: string;
+  image: string;
+  variants?: Array<{
+    id: number;
+    stock: number;
+    available: boolean;
+    price: number;
+    options: Record<string, { value: string; displayValue?: string; colorHex?: string }>;
+  }>;
+};
+
+const fallbackProducts: Product[] = [
   {
     id: 1,
     name: "Relaxed Fit Coat",
-    price: "Rs. 4500",
+    price: "Rs. 4,500",
     category: "Women",
     image: "/images/product-1.png",
   },
-  
   {
     id: 2,
     name: "Classic Oversized Black Dress",
@@ -62,12 +79,61 @@ const products = [
 ];
 
 export default function ProductGrid() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+
+    fetch("/api/products", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active) return;
+        if (Array.isArray(data?.products) && data.products.length > 0) {
+          const mapped = data.products.slice(0, 8).map(
+            (p: {
+              id: number;
+              name: string;
+              category_slug: string;
+              base_price: number;
+              sale_price: number | null;
+              images: Array<{ url: string }>;
+              variants: Product["variants"];
+            }) => ({
+              id: p.id,
+              name: p.name,
+              price: `Rs. ${Number(p.sale_price ?? p.base_price).toLocaleString()}`,
+              category: p.category_slug?.startsWith("ladies-")
+                ? "Women"
+                : p.category_slug?.startsWith("men-")
+                ? "Men"
+                : "Accessories",
+              image: p.images?.[0]?.url || "/images/product-1.png",
+              variants: p.variants,
+            })
+          );
+          setProducts(mapped);
+        } else {
+          setProducts(fallbackProducts);
+        }
+      })
+      .catch(() => {
+        if (active) setProducts(fallbackProducts);
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <section className="w-full">
-
       {/* Product Heading */}
       <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-
         <div>
           <p className="mb-3 text-xs font-medium uppercase tracking-[0.3em] text-[#A06E31]">
             New Season
@@ -84,26 +150,25 @@ export default function ProductGrid() {
         >
           View All Products
         </a>
-
       </div>
 
-
-      {/* Products - 2 Columns on small devices */}
-      <div className="grid grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            name={product.name}
-            price={product.price}
-            category={product.category}
-            image={product.image}
-          />
-        ))}
-
-      </div>
-
+      {/* Skeletons while loading or live products grid */}
+      {isLoading ? (
+        <ProductGridSkeleton count={8} />
+      ) : (
+        <div className="grid grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              name={product.name}
+              price={product.price}
+              category={product.category}
+              image={product.image}
+              variants={product.variants}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
-

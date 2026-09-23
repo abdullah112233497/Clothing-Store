@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
+import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
 
 /* =========================
    ICONS
@@ -303,120 +306,32 @@ function statusStyle(status: string) {
 ========================= */
 
 export default function AdminDashboard() {
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    startDate: "",
+    endDate: "",
+    preset: "all",
+    label: "All Dates",
+  });
+
   return (
     <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
-
-      {/* ================= SIDEBAR ================= */}
-
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-[#111111] text-white lg:flex border-r border-white/10">
-
-        {/* Logo */}
-        <div className="flex h-20 items-center border-b border-white/10 px-7">
-          <div>
-            <h1 className="text-xl font-bold tracking-[0.18em]">
-              WEARWELL
-            </h1>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/40">
-              Admin Portal
-            </p>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 space-y-2 px-4 py-6">
-
-          <Link
-            href="/admin"
-            className="group flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition-all duration-300"
-          >
-            <DashboardIcon />
-            <span>Dashboard</span>
-          </Link>
-
-          <Link
-            href="/admin/orders"
-            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
-          >
-            <OrdersIcon />
-            <span>Orders</span>
-          </Link>
-
-          <Link
-            href="/admin/products"
-            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
-          >
-            <ProductsIcon />
-            <span>Products</span>
-          </Link>
-
-          <Link
-            href="/admin/customers"
-            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
-          >
-            <UsersIcon />
-            <span>Customers</span>
-          </Link>
-
-          <Link
-            href="/admin/inventory"
-            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
-          >
-            <InventoryIcon />
-            <span>Inventory</span>
-          </Link>
-
-          <Link
-            href="/admin/payments"
-            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
-          >
-            <PaymentIcon />
-            <span>Payments</span>
-          </Link>
-
-          <Link
-            href="/admin/settings"
-            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
-          >
-            <SettingsIcon />
-            <span>Settings</span>
-          </Link>
-
-        </nav>
-
-        {/* Logout */}
-        <div className="border-t border-white/10 p-4">
-          <Link
-            href="/account/login"
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/60 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300"
-          >
-            <LogoutIcon />
-            <span>Logout</span>
-          </Link>
-        </div>
-      </aside>
+      <AdminSidebar currentTab="dashboard" />
 
       {/* ================= MAIN ================= */}
 
       <section className="lg:ml-64">
 
         {/* TOP BAR */}
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-black/5 bg-[#F8F6F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
 
           <div className="flex items-center gap-4">
 
-            <button
-              className="rounded-xl border border-black/10 p-2 lg:hidden"
-              aria-label="Open menu"
-            >
-              <MenuIcon />
-            </button>
-
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-black/40">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31] font-semibold">
                 Admin Panel
               </p>
 
-              <h2 className="text-lg font-semibold tracking-tight text-[#080808] sm:text-xl">
+              <h2 className="text-lg font-semibold tracking-tight text-[#1D1612] sm:text-xl">
                 Dashboard
               </h2>
             </div>
@@ -424,17 +339,21 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <AdminDateRangeFilter
+              value={dateRange}
+              onChange={setDateRange}
+            />
 
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium text-[#1D1612]">
                 Admin
               </p>
-              <p className="text-xs text-black/45">
+              <p className="text-xs text-[#8B7A6C]">
                 Administrator
               </p>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#111111] text-sm font-semibold text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1D1612] text-sm font-semibold text-[#D5C1A9] border border-[#A06E31]/40">
               A
             </div>
 
@@ -446,7 +365,7 @@ export default function AdminDashboard() {
         <div className="px-5 py-7 sm:px-8 lg:px-10">
 
           {/* WELCOME BANNER */}
-          <section className="relative overflow-hidden rounded-3xl bg-[#D5C1A9] p-6 sm:p-8 lg:p-10 border border-black/5">
+          <section className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#D5C1A9] to-[#C9B195] p-6 sm:p-8 lg:p-10 border border-[#A06E31]/30">
 
             <div className="relative z-10 max-w-2xl">
 
@@ -465,7 +384,7 @@ export default function AdminDashboard() {
 
               <Link
                 href="/admin/orders"
-                className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-1 hover:bg-black/80"
+                className="mt-6 inline-flex rounded-full bg-[#1D1612] px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-1 hover:bg-[#A06E31] shadow-xs"
               >
                 View Orders
               </Link>
@@ -483,26 +402,26 @@ export default function AdminDashboard() {
             {stats.map((stat) => (
               <div
                 key={stat.title}
-                className="group rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group rounded-2xl border border-[#D5C1A9]/60 bg-white p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
               >
 
                 <div className="flex items-start justify-between">
 
                   <div>
-                    <p className="text-sm text-black/45">
+                    <p className="text-xs uppercase tracking-wider text-[#8B7A6C] font-semibold">
                       {stat.title}
                     </p>
 
-                    <h3 className="mt-3 text-2xl font-semibold">
+                    <h3 className="mt-3 text-2xl font-bold text-[#1D1612]">
                       {stat.value}
                     </h3>
 
-                    <p className="mt-2 text-xs font-medium text-green-600">
+                    <p className="mt-2 text-xs font-semibold text-emerald-700">
                       {stat.change} this month
                     </p>
                   </div>
 
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F8F6F2] text-stone-800 transition-transform duration-300 group-hover:scale-110">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF7F2] text-[#A06E31] border border-[#D5C1A9]/50 transition-transform duration-300 group-hover:scale-110">
                     {stat.icon}
                   </div>
 
@@ -517,21 +436,21 @@ export default function AdminDashboard() {
           <section className="mt-7 grid grid-cols-1 gap-6 xl:grid-cols-[1.7fr_1fr]">
 
             {/* SALES CHART */}
-            <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-xs">
 
               <div className="flex items-center justify-between">
 
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#A06E31] font-semibold">
                     Performance
                   </p>
 
-                  <h2 className="mt-1 text-xl font-semibold">
+                  <h2 className="mt-1 text-xl font-bold text-[#1D1612]">
                     Monthly Sales (PKR)
                   </h2>
                 </div>
 
-                <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700">
+                <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
                   +18.4%
                 </span>
 
@@ -548,19 +467,19 @@ export default function AdminDashboard() {
                     <div className="relative flex w-full flex-1 items-end">
 
                       <div
-                        className="w-full rounded-t-lg bg-[#111111] opacity-80 transition-all duration-300 group-hover:opacity-100"
+                        className="w-full rounded-t-lg bg-[#1D1612] opacity-85 transition-all duration-300 group-hover:bg-[#A06E31] group-hover:opacity-100"
                         style={{
                           height: `${(item.value / 108) * 100}%`,
                         }}
                       />
 
-                      <span className="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[10px] text-white group-hover:block whitespace-nowrap">
+                      <span className="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-[#1D1612] px-2 py-1 text-[10px] text-white group-hover:block whitespace-nowrap shadow-xs">
                         {item.value}k
                       </span>
 
                     </div>
 
-                    <span className="mt-3 text-[10px] text-black/40 sm:text-xs">
+                    <span className="mt-3 text-[10px] text-[#8B7A6C] sm:text-xs">
                       {item.month}
                     </span>
 
@@ -572,13 +491,13 @@ export default function AdminDashboard() {
             </div>
 
             {/* ORDER STATUS */}
-            <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-xs">
 
-              <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#A06E31] font-semibold">
                 Overview
               </p>
 
-              <h2 className="mt-1 text-xl font-semibold">
+              <h2 className="mt-1 text-xl font-bold text-[#1D1612]">
                 Order Status Breakdown
               </h2>
 
@@ -586,45 +505,45 @@ export default function AdminDashboard() {
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Delivered & Paid (COD)</span>
-                    <span className="font-medium">68%</span>
+                    <span className="text-[#1D1612] font-medium">Delivered & Paid (COD)</span>
+                    <span className="font-bold text-[#1D1612]">68%</span>
                   </div>
 
-                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
-                    <div className="h-full w-[68%] rounded-full bg-green-600" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span>Shipped (In Transit)</span>
-                    <span className="font-medium">18%</span>
-                  </div>
-
-                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
-                    <div className="h-full w-[18%] rounded-full bg-blue-600" />
+                  <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
+                    <div className="h-full w-[68%] rounded-full bg-[#A06E31]" />
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Pending Verification</span>
-                    <span className="font-medium">9%</span>
+                    <span className="text-[#1D1612] font-medium">Shipped (In Transit)</span>
+                    <span className="font-bold text-[#1D1612]">18%</span>
                   </div>
 
-                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
-                    <div className="h-full w-[9%] rounded-full bg-yellow-500" />
+                  <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
+                    <div className="h-full w-[18%] rounded-full bg-[#1D1612]" />
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Cancelled / Returned</span>
-                    <span className="font-medium">5%</span>
+                    <span className="text-[#1D1612] font-medium">Pending Verification</span>
+                    <span className="font-bold text-[#1D1612]">9%</span>
                   </div>
 
-                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
-                    <div className="h-full w-[5%] rounded-full bg-red-500" />
+                  <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
+                    <div className="h-full w-[9%] rounded-full bg-[#8B7A6C]" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex justify-between text-sm">
+                    <span className="text-[#1D1612] font-medium">Cancelled / Returned</span>
+                    <span className="font-bold text-[#1D1612]">5%</span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
+                    <div className="h-full w-[5%] rounded-full bg-rose-500" />
                   </div>
                 </div>
 
@@ -635,23 +554,23 @@ export default function AdminDashboard() {
           </section>
 
           {/* RECENT ORDERS */}
-          <section className="mt-7 rounded-2xl border border-black/5 bg-white shadow-sm overflow-hidden">
+          <section className="mt-7 rounded-2xl border border-[#D5C1A9]/60 bg-white shadow-xs overflow-hidden">
 
-            <div className="flex flex-col gap-3 border-b border-black/5 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-b border-[#D5C1A9]/60 p-6 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                <p className="text-xs uppercase tracking-[0.18em] text-[#A06E31] font-semibold">
                   Store Activity
                 </p>
 
-                <h2 className="mt-1 text-xl font-semibold">
+                <h2 className="mt-1 text-xl font-bold text-[#1D1612]">
                   Recent Orders
                 </h2>
               </div>
 
               <Link
                 href="/admin/orders"
-                className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-50"
+                className="text-sm font-semibold text-[#A06E31] underline underline-offset-4 transition-opacity hover:opacity-75"
               >
                 View all orders
               </Link>
