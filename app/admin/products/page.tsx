@@ -917,18 +917,18 @@ export default function ProductsPage() {
             {/* PRODUCTS TABLE */}
             <div className="overflow-hidden rounded-2xl border border-[#D5C1A9]/60 bg-white shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-[#1D1612]">
-                  <thead className="border-b border-[#D5C1A9]/60 bg-[#FAF7F2] text-[11px] uppercase tracking-wider text-[#8B7A6C]">
+                <table className="w-full min-w-[1100px] text-left text-sm text-[#1D1612]">
+                  <thead className="border-b border-[#D5C1A9]/60 bg-[#FAF7F2] text-[11px] uppercase tracking-wider text-[#8B7A6C] whitespace-nowrap">
                     <tr>
-                      <th className="px-5 py-4">Product & Visual</th>
-                      <th className="px-5 py-4">Classification & Fit</th>
-                      <th className="px-5 py-4">Fabric Details</th>
-                      <th className="px-5 py-4">Available Sizes</th>
-                      <th className="px-5 py-4">Colors</th>
-                      <th className="px-5 py-4">Price</th>
-                      <th className="px-5 py-4">Stock</th>
-                      <th className="px-5 py-4">Status</th>
-                      <th className="px-5 py-4 text-right">Actions</th>
+                      <th className="px-5 py-4 min-w-[240px]">Product & Visual</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Classification & Fit</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Fabric Details</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Available Sizes</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Colors</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Price</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Stock</th>
+                      <th className="px-5 py-4 whitespace-nowrap">Status</th>
+                      <th className="px-5 py-4 text-right whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
 
@@ -983,12 +983,12 @@ export default function ProductsPage() {
                           </td>
 
                           {/* CLASSIFICATION & FIT */}
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-4 whitespace-nowrap">
                             <div className="space-y-1">
-                              <span className="inline-block rounded-md bg-[#080808] px-2 py-0.5 text-[10px] font-bold text-white">
+                              <span className="inline-flex items-center whitespace-nowrap rounded-md bg-[#080808] px-2.5 py-1 text-[10px] font-bold text-white tracking-wide shadow-2xs">
                                 {product.productType}
                               </span>
-                              <p className="text-[11px] text-[#8B7A6C]">
+                              <p className="text-[11px] text-[#8B7A6C] whitespace-nowrap">
                                 {product.fitType || "Standard Fit"}
                               </p>
                             </div>

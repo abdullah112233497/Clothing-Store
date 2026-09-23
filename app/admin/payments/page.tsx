@@ -854,9 +854,9 @@ export default function PaymentsPage() {
 
               {/* TABLE */}
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left border-collapse">
+                <table className="w-full min-w-[1100px] text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#D5C1A9]/60 bg-[#FAF7F2] text-[10px] font-bold uppercase tracking-wider text-[#8B7A6C]">
+                    <tr className="border-b border-[#D5C1A9]/60 bg-[#FAF7F2] text-[10px] font-bold uppercase tracking-wider text-[#8B7A6C] whitespace-nowrap">
                       <th className="px-6 py-4">Transaction / Order</th>
                       <th className="px-6 py-4">Customer</th>
                       <th className="px-6 py-4">Method & Channel</th>
@@ -885,7 +885,7 @@ export default function PaymentsPage() {
                             className="cursor-pointer transition hover:bg-[#FAF7F2]/80 group"
                           >
                             {/* Transaction ID & Order */}
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <p className="font-bold text-[#1D1612] group-hover:text-[#A06E31] transition">
                                 {payment.id}
                               </p>
@@ -895,7 +895,7 @@ export default function PaymentsPage() {
                             </td>
 
                             {/* Customer */}
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <p className="font-semibold text-[#1D1612]">{payment.customer}</p>
                               <p className="text-[11px] text-[#8B7A6C]">
                                 {payment.city} · {payment.phone}
@@ -903,49 +903,48 @@ export default function PaymentsPage() {
                             </td>
 
                             {/* Method */}
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <span
-                                className={`inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold ${getMethodBadge(
+                                className={`inline-flex items-center whitespace-nowrap rounded-md px-2.5 py-1 text-[10px] font-semibold tracking-wide shadow-2xs ${getMethodBadge(
                                   payment.method
                                 )}`}
                               >
                                 {payment.method}
                               </span>
                               {payment.courier && (
-                                <p className="mt-1 text-[10px] text-[#8B7A6C]">
+                                <p className="mt-1 text-[10px] text-[#8B7A6C] whitespace-nowrap">
                                   Via {payment.courier}
                                 </p>
                               )}
                               {payment.cardBrand && (
-                                <p className="mt-1 text-[10px] text-[#8B7A6C]">
+                                <p className="mt-1 text-[10px] text-[#8B7A6C] whitespace-nowrap">
                                   {payment.cardBrand} •••• {payment.cardLast4}
                                 </p>
                               )}
                             </td>
 
                             {/* Date */}
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <p className="font-medium text-[#1D1612]">{payment.date}</p>
                               <p className="text-[11px] text-[#8B7A6C]">{payment.time}</p>
                             </td>
 
                             {/* Amount */}
-                            <td className="px-6 py-4 font-bold text-[#1D1612] text-sm">
+                            <td className="px-6 py-4 font-bold text-[#1D1612] text-sm whitespace-nowrap">
                               {formatPKR(payment.amount)}
                             </td>
 
                             {/* Status */}
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <span
-                                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold ${badge.bg}`}
+                                className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold whitespace-nowrap ${badge.bg}`}
                               >
-                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
                                 {badge.label}
                               </span>
                             </td>
 
                             {/* Actions */}
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-6 py-4 text-right whitespace-nowrap">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
