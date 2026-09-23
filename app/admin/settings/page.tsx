@@ -1,74 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
-type Payment = {
-  id: string;
-  customer: string;
-  method: string;
-  amount: string;
-  date: string;
-  status: "Paid" | "Pending" | "Refunded";
-};
+export default function SettingsPage() {
+  const [storeStatus, setStoreStatus] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [orderNotifications, setOrderNotifications] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-const payments: Payment[] = [
-  {
-    id: "#PAY-1024",
-    customer: "Ayesha Khan",
-    method: "Cash on Delivery",
-    amount: "Rs. 8,499",
-    date: "18 Sep 2026",
-    status: "Paid",
-  },
-  {
-    id: "#PAY-1023",
-    customer: "Sara Ahmed",
-    method: "Credit Card",
-    amount: "Rs. 12,999",
-    date: "18 Sep 2026",
-    status: "Paid",
-  },
-  {
-    id: "#PAY-1022",
-    customer: "Hina Malik",
-    method: "JazzCash",
-    amount: "Rs. 5,499",
-    date: "17 Sep 2026",
-    status: "Pending",
-  },
-  {
-    id: "#PAY-1021",
-    customer: "Maham Ali",
-    method: "Cash on Delivery",
-    amount: "Rs. 7,999",
-    date: "17 Sep 2026",
-    status: "Paid",
-  },
-  {
-    id: "#PAY-1020",
-    customer: "Zainab Noor",
-    method: "Credit Card",
-    amount: "Rs. 15,499",
-    date: "16 Sep 2026",
-    status: "Refunded",
-  },
-  {
-    id: "#PAY-1019",
-    customer: "Fatima Raza",
-    method: "EasyPaisa",
-    amount: "Rs. 4,999",
-    date: "16 Sep 2026",
-    status: "Paid",
-  },
-];
+  const handleSave = () => {
+    setSaved(true);
 
-export default function PaymentsPage() {
+    setTimeout(() => {
+      setSaved(false);
+    }, 3000);
+  };
+
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-[#111827]">
+    <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
       <div className="flex min-h-screen">
 
-        {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#07111d] text-white lg:flex">
+        {/* ================= DESKTOP SIDEBAR ================= */}
+        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex">
 
           <div className="border-b border-white/10 px-6 py-7">
             <Link
@@ -78,7 +33,7 @@ export default function PaymentsPage() {
               WEARWELL
             </Link>
 
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-gray-400">
+            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
               Admin Panel
             </p>
           </div>
@@ -87,343 +42,556 @@ export default function PaymentsPage() {
 
             <Link
               href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ▦ Dashboard
+              <span>▦</span>
+              Dashboard
             </Link>
 
             <Link
               href="/admin/orders"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ▤ Orders
+              <span>▤</span>
+              Orders
             </Link>
 
             <Link
               href="/admin/products"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              □ Products
+              <span>□</span>
+              Products
             </Link>
 
             <Link
               href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ◫ Inventory
+              <span>◫</span>
+              Inventory
             </Link>
 
             <Link
               href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ♙ Customers
+              <span>♙</span>
+              Customers
             </Link>
 
             <Link
               href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3 text-sm font-medium text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ◈ Payments
+              <span>◈</span>
+              Payments
             </Link>
 
             <Link
               href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-semibold text-white"
             >
-              ⚙ Settings
+              <span>⚙</span>
+              Settings
             </Link>
 
           </nav>
 
           <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-gray-400">Signed in as</p>
-            <p className="mt-1 text-sm font-medium">Khizra Malik</p>
+            <p className="text-xs text-[#8B7A6C]">
+              Signed in as
+            </p>
+
+            <p className="mt-1 text-sm font-medium">
+              Khizra Malik
+            </p>
           </div>
 
         </aside>
 
-        {/* MAIN */}
+        {/* ================= MAIN ================= */}
         <section className="min-w-0 flex-1">
 
-          {/* HEADER */}
-          <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 lg:px-8">
+          {/* ================= HEADER ================= */}
+          <header className="sticky top-0 z-40 border-b border-[#D5C1A9]/50 bg-white">
 
-            <div>
-              <p className="text-xs text-gray-400">
-                Admin / Payments
-              </p>
+            <div className="flex min-h-20 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 
-              <h1 className="mt-1 text-xl font-semibold">
-                Payments
-              </h1>
+              <div className="min-w-0">
+                <p className="truncate text-[11px] text-[#8B7A6C] sm:text-xs">
+                  Admin / Settings
+                </p>
+
+                <h1 className="mt-1 text-lg font-semibold sm:text-xl">
+                  Settings
+                </h1>
+              </div>
+
+              <div className="flex items-center gap-2">
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSave}
+                  className="rounded-lg bg-[#080808] px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-[#A06E31] sm:px-5 sm:py-2.5 sm:text-xs"
+                >
+                  <span className="hidden sm:inline">
+                    Save Changes
+                  </span>
+
+                  <span className="sm:hidden">
+                    Save
+                  </span>
+                </button>
+
+                {/* Mobile Menu */}
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#D5C1A9] bg-[#F8F6F2] text-lg lg:hidden"
+                  aria-label="Open menu"
+                >
+                  {menuOpen ? "×" : "☰"}
+                </button>
+
+              </div>
+
             </div>
 
-            <button className="rounded-lg bg-[#07111d] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black">
-              Export Payments
-            </button>
+            {/* ================= MOBILE MENU ================= */}
+            {menuOpen && (
+              <div className="border-t border-[#D5C1A9]/50 bg-[#080808] px-4 py-4 lg:hidden">
+
+                <nav className="grid grid-cols-2 gap-2">
+
+                  <Link
+                    href="/admin"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    ▦ Dashboard
+                  </Link>
+
+                  <Link
+                    href="/admin/orders"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    ▤ Orders
+                  </Link>
+
+                  <Link
+                    href="/admin/products"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    □ Products
+                  </Link>
+
+                  <Link
+                    href="/admin/inventory"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    ◫ Inventory
+                  </Link>
+
+                  <Link
+                    href="/admin/customers"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    ♙ Customers
+                  </Link>
+
+                  <Link
+                    href="/admin/payments"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-3 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    ◈ Payments
+                  </Link>
+
+                  <Link
+                    href="/admin/settings"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg bg-[#A06E31] px-3 py-3 text-xs font-semibold text-white"
+                  >
+                    ⚙ Settings
+                  </Link>
+
+                </nav>
+
+              </div>
+            )}
 
           </header>
 
-          {/* CONTENT */}
-          <div className="p-5 sm:p-7 lg:p-8">
+          {/* ================= CONTENT ================= */}
+          <div className="p-4 sm:p-6 lg:p-8">
 
             {/* INTRO */}
-            <div className="mb-7">
-              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
-                Financial management
+            <div className="mb-6 sm:mb-7">
+
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#A06E31] sm:text-xs">
+                Store configuration
               </p>
 
-              <h2 className="mt-2 text-2xl font-semibold">
-                Payment Overview
+              <h2 className="mt-2 text-xl font-semibold sm:text-2xl">
+                Store Settings
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Monitor transactions, payment methods and refunds.
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-[#8B7A6C] sm:text-sm">
+                Manage your store information, notifications and account
+                preferences.
               </p>
-            </div>
-
-            {/* STATS */}
-            <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Total Revenue
-                </p>
-
-                <p className="mt-2 text-2xl font-semibold">
-                  Rs. 1.84M
-                </p>
-
-                <p className="mt-1 text-xs text-emerald-600">
-                  +14.8% this month
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Successful
-                </p>
-
-                <p className="mt-2 text-2xl font-semibold text-emerald-600">
-                  236
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  Completed payments
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Pending
-                </p>
-
-                <p className="mt-2 text-2xl font-semibold text-amber-600">
-                  8
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  Awaiting confirmation
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Refunds
-                </p>
-
-                <p className="mt-2 text-2xl font-semibold text-red-600">
-                  Rs. 24,500
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  This month
-                </p>
-              </div>
 
             </div>
 
-            {/* PAYMENT METHODS */}
-            <div className="mb-7 grid gap-4 md:grid-cols-3">
+            {/* SUCCESS MESSAGE */}
+            {saved && (
+              <div className="mb-6 rounded-xl border border-[#A06E31]/30 bg-[#D5C1A9]/30 p-4">
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">
-                    Cash on Delivery
-                  </p>
+                <div className="flex items-start gap-3">
 
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-medium">
-                    COD
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A06E31] text-sm text-white">
+                    ✓
                   </span>
+
+                  <div>
+                    <p className="text-sm font-semibold">
+                      Settings saved successfully
+                    </p>
+
+                    <p className="mt-0.5 text-xs text-[#8B7A6C]">
+                      Your latest changes have been saved.
+                    </p>
+                  </div>
+
                 </div>
 
-                <p className="mt-5 text-2xl font-semibold">
-                  42%
-                </p>
-
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-                  <div className="h-full w-[42%] rounded-full bg-[#07111d]" />
-                </div>
               </div>
+            )}
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">
-                    Credit Card
-                  </p>
+            {/* ================= RESPONSIVE GRID ================= */}
+            <div className="grid gap-5 xl:grid-cols-3 xl:gap-6">
 
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-medium">
-                    CARD
-                  </span>
+              {/* ================= LEFT ================= */}
+              <div className="space-y-5 xl:col-span-2 xl:space-y-6">
+
+                {/* STORE INFORMATION */}
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white">
+
+                  <div className="border-b border-[#D5C1A9]/50 px-4 py-4 sm:px-5 sm:py-5">
+
+                    <h3 className="font-semibold">
+                      Store Information
+                    </h3>
+
+                    <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                      Basic information about your WEARWELL store.
+                    </p>
+
+                  </div>
+
+                  <div className="grid gap-4 p-4 sm:grid-cols-2 sm:gap-5 sm:p-5">
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold">
+                        Store Name
+                      </label>
+
+                      <input
+                        type="text"
+                        defaultValue="WEARWELL"
+                        className="w-full rounded-lg border border-[#D5C1A9] bg-[#F8F6F2] px-3 py-3 text-sm outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold">
+                        Store Email
+                      </label>
+
+                      <input
+                        type="email"
+                        defaultValue="hello@wearwell.com"
+                        className="w-full rounded-lg border border-[#D5C1A9] bg-[#F8F6F2] px-3 py-3 text-sm outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold">
+                        Phone Number
+                      </label>
+
+                      <input
+                        type="text"
+                        defaultValue="+92 300 1234567"
+                        className="w-full rounded-lg border border-[#D5C1A9] bg-[#F8F6F2] px-3 py-3 text-sm outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-xs font-semibold">
+                        Website
+                      </label>
+
+                      <input
+                        type="text"
+                        defaultValue="www.wearwell.com"
+                        className="w-full rounded-lg border border-[#D5C1A9] bg-[#F8F6F2] px-3 py-3 text-sm outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+
+                      <label className="mb-2 block text-xs font-semibold">
+                        Store Address
+                      </label>
+
+                      <textarea
+                        rows={3}
+                        defaultValue="Faisalabad, Punjab, Pakistan"
+                        className="w-full resize-none rounded-lg border border-[#D5C1A9] bg-[#F8F6F2] px-3 py-3 text-sm outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                      />
+
+                    </div>
+
+                  </div>
+
                 </div>
 
-                <p className="mt-5 text-2xl font-semibold">
-                  35%
-                </p>
+                {/* NOTIFICATIONS */}
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white">
 
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-                  <div className="h-full w-[35%] rounded-full bg-[#07111d]" />
-                </div>
-              </div>
+                  <div className="border-b border-[#D5C1A9]/50 px-4 py-4 sm:px-5 sm:py-5">
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">
-                    Wallet Payments
-                  </p>
+                    <h3 className="font-semibold">
+                      Notifications
+                    </h3>
 
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-medium">
-                    WALLET
-                  </span>
-                </div>
+                    <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                      Choose which notifications you want to receive.
+                    </p>
 
-                <p className="mt-5 text-2xl font-semibold">
-                  23%
-                </p>
+                  </div>
 
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-                  <div className="h-full w-[23%] rounded-full bg-[#07111d]" />
-                </div>
-              </div>
+                  <div className="divide-y divide-[#D5C1A9]/40">
 
-            </div>
+                    <div className="flex items-center justify-between gap-4 px-4 py-5 sm:px-5">
 
-            {/* TRANSACTIONS */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                      <div className="min-w-0">
 
-              <div className="border-b border-gray-200 px-5 py-5">
-                <h3 className="font-semibold">
-                  Recent Transactions
-                </h3>
+                        <p className="text-sm font-semibold">
+                          Email Notifications
+                        </p>
 
-                <p className="mt-1 text-xs text-gray-400">
-                  Latest payment activity
-                </p>
-              </div>
+                        <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                          Receive important store updates by email.
+                        </p>
 
-              <div className="overflow-x-auto">
+                      </div>
 
-                <table className="w-full min-w-[850px] text-left">
-
-                  <thead className="border-b border-gray-200 bg-gray-50">
-
-                    <tr>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Transaction
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Customer
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Method
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Amount
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Date
-                      </th>
-
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Status
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody className="divide-y divide-gray-100">
-
-                    {payments.map((payment) => (
-
-                      <tr
-                        key={payment.id}
-                        className="transition hover:bg-gray-50"
+                      <button
+                        onClick={() =>
+                          setEmailNotifications(!emailNotifications)
+                        }
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                          emailNotifications
+                            ? "bg-[#A06E31]"
+                            : "bg-[#D5C1A9]"
+                        }`}
                       >
 
-                        <td className="px-5 py-5 text-sm font-semibold">
-                          {payment.id}
-                        </td>
+                        <span
+                          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
+                            emailNotifications
+                              ? "left-6"
+                              : "left-1"
+                          }`}
+                        />
 
-                        <td className="px-5 py-5">
+                      </button>
 
-                          <p className="text-sm font-medium">
-                            {payment.customer}
-                          </p>
+                    </div>
 
-                          <p className="mt-1 text-xs text-gray-400">
-                            WEARWELL customer
-                          </p>
+                    <div className="flex items-center justify-between gap-4 px-4 py-5 sm:px-5">
 
-                        </td>
+                      <div className="min-w-0">
 
-                        <td className="px-5 py-5 text-sm text-gray-600">
-                          {payment.method}
-                        </td>
+                        <p className="text-sm font-semibold">
+                          New Order Notifications
+                        </p>
 
-                        <td className="px-5 py-5 text-sm font-semibold">
-                          {payment.amount}
-                        </td>
+                        <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                          Get notified whenever a new order is placed.
+                        </p>
 
-                        <td className="px-5 py-5 text-sm text-gray-500">
-                          {payment.date}
-                        </td>
+                      </div>
 
-                        <td className="px-5 py-5">
+                      <button
+                        onClick={() =>
+                          setOrderNotifications(!orderNotifications)
+                        }
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                          orderNotifications
+                            ? "bg-[#A06E31]"
+                            : "bg-[#D5C1A9]"
+                        }`}
+                      >
 
-                          <span
-                            className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ${
-                              payment.status === "Paid"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : payment.status === "Pending"
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-red-50 text-red-700"
-                            }`}
-                          >
-                            {payment.status}
-                          </span>
+                        <span
+                          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
+                            orderNotifications
+                              ? "left-6"
+                              : "left-1"
+                          }`}
+                        />
 
-                        </td>
+                      </button>
 
-                      </tr>
+                    </div>
 
-                    ))}
+                  </div>
 
-                  </tbody>
+                </div>
 
-                </table>
+              </div>
+
+              {/* ================= RIGHT ================= */}
+              <div className="grid gap-5 sm:grid-cols-2 xl:block xl:space-y-6">
+
+                {/* STORE STATUS */}
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-4 sm:p-5">
+
+                  <div className="flex items-start justify-between gap-3">
+
+                    <div className="min-w-0">
+
+                      <h3 className="font-semibold">
+                        Store Status
+                      </h3>
+
+                      <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                        Control your online store availability.
+                      </p>
+
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-semibold ${
+                        storeStatus
+                          ? "bg-[#D5C1A9]/50 text-[#A06E31]"
+                          : "bg-black/5 text-[#8B7A6C]"
+                      }`}
+                    >
+                      {storeStatus ? "ONLINE" : "OFFLINE"}
+                    </span>
+
+                  </div>
+
+                  <div className="mt-5 rounded-lg bg-[#F8F6F2] p-3 sm:p-4">
+
+                    <div className="flex items-center justify-between gap-3">
+
+                      <div className="min-w-0">
+
+                        <p className="text-sm font-medium">
+                          Online Store
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                          Customers can browse and place orders.
+                        </p>
+
+                      </div>
+
+                      <button
+                        onClick={() => setStoreStatus(!storeStatus)}
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                          storeStatus
+                            ? "bg-[#A06E31]"
+                            : "bg-[#D5C1A9]"
+                        }`}
+                      >
+
+                        <span
+                          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
+                            storeStatus
+                              ? "left-6"
+                              : "left-1"
+                          }`}
+                        />
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* ADMIN PROFILE */}
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-4 sm:p-5">
+
+                  <h3 className="font-semibold">
+                    Admin Profile
+                  </h3>
+
+                  <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
+                    Account currently managing the store.
+                  </p>
+
+                  <div className="mt-5 flex items-center gap-3">
+
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#D5C1A9] text-sm font-bold">
+                      KM
+                    </div>
+
+                    <div className="min-w-0">
+
+                      <p className="truncate text-sm font-semibold">
+                        Khizra Malik
+                      </p>
+
+                      <p className="mt-1 text-xs text-[#8B7A6C]">
+                        Store Administrator
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  <button className="mt-5 w-full rounded-lg border border-[#D5C1A9] px-4 py-2.5 text-xs font-semibold transition hover:border-[#A06E31] hover:bg-[#F8F6F2]">
+                    Edit Profile
+                  </button>
+
+                </div>
+
+                {/* BRAND CARD */}
+                <div className="rounded-xl bg-[#D5C1A9] p-5 sm:col-span-2 xl:col-span-1">
+
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
+                    Brand Identity
+                  </p>
+
+                  <h3 className="mt-2 text-xl font-black tracking-[0.12em]">
+                    WEARWELL
+                  </h3>
+
+                  <p className="mt-3 text-xs leading-5 text-[#080808]/70">
+                    Modern everyday fashion with timeless style and
+                    effortless elegance.
+                  </p>
+
+                </div>
 
               </div>
 
             </div>
 
           </div>
+
         </section>
 
       </div>

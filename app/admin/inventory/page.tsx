@@ -93,11 +93,12 @@ export default function InventoryPage() {
   ).length;
 
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-[#111827]">
+    <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
       <div className="flex min-h-screen">
 
         {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#07111d] text-white lg:flex">
+        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex">
+
           <div className="border-b border-white/10 px-6 py-7">
             <Link
               href="/admin"
@@ -106,67 +107,86 @@ export default function InventoryPage() {
               WEARWELL
             </Link>
 
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-gray-400">
+            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
               Admin Panel
             </p>
           </div>
 
           <nav className="flex-1 px-4 py-6">
 
+            {/* Dashboard */}
             <Link
               href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ▦ Dashboard
+              <span className="text-base">▦</span>
+              Dashboard
             </Link>
 
+            {/* Orders */}
             <Link
               href="/admin/orders"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ▤ Orders
+              <span className="text-base">▤</span>
+              Orders
             </Link>
 
+            {/* Products */}
             <Link
               href="/admin/products"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              □ Products
+              <span className="text-base">□</span>
+              Products
             </Link>
 
+            {/* Inventory - ACTIVE */}
             <Link
               href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3 text-sm font-medium text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-semibold text-white shadow-sm"
             >
-              ◫ Inventory
+              <span className="text-base">◫</span>
+              Inventory
             </Link>
 
+            {/* Customers */}
             <Link
               href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ♙ Customers
+              <span className="text-base">♙</span>
+              Customers
             </Link>
 
+            {/* Payments */}
             <Link
               href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ◈ Payments
+              <span className="text-base">◈</span>
+              Payments
             </Link>
 
+            {/* Settings */}
             <Link
               href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ⚙ Settings
+              <span className="text-base">⚙</span>
+              Settings
             </Link>
 
           </nav>
 
           <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-gray-400">Signed in as</p>
-            <p className="mt-1 text-sm font-medium">Khizra Malik</p>
+            <p className="text-xs text-[#8B7A6C]">
+              Signed in as
+            </p>
+
+            <p className="mt-1 text-sm font-medium">
+              Khizra Malik
+            </p>
           </div>
         </aside>
 
@@ -174,9 +194,10 @@ export default function InventoryPage() {
         <section className="min-w-0 flex-1">
 
           {/* HEADER */}
-          <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 lg:px-8">
+          <header className="flex h-20 items-center justify-between border-b border-[#D5C1A9]/50 bg-white px-6 lg:px-8">
+
             <div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#8B7A6C]">
                 Admin / Inventory
               </p>
 
@@ -185,16 +206,21 @@ export default function InventoryPage() {
               </h1>
             </div>
 
-            <button className="rounded-lg bg-[#07111d] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black">
+            <button
+              className="rounded-lg bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31]"
+            >
               Update Stock
             </button>
+
           </header>
 
           {/* CONTENT */}
           <div className="p-5 sm:p-7 lg:p-8">
 
+            {/* PAGE INTRO */}
             <div className="mb-7">
-              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+
+              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31]">
                 Stock management
               </p>
 
@@ -202,188 +228,253 @@ export default function InventoryPage() {
                 Inventory Overview
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#8B7A6C]">
                 Monitor product stock and identify items that need attention.
               </p>
+
             </div>
 
             {/* STATS */}
             <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Total Stock
-                </p>
+              {/* Total Stock */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
 
-                <p className="mt-2 text-2xl font-semibold">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-[#8B7A6C]">
+                    Total Stock
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
+                    ◫
+                  </span>
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold">
                   {totalStock}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#8B7A6C]">
                   Units available
                 </p>
+
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Products
-                </p>
+              {/* Products */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
 
-                <p className="mt-2 text-2xl font-semibold">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-[#8B7A6C]">
+                    Products
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
+                    □
+                  </span>
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold">
                   {inventory.length}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#8B7A6C]">
                   Total SKUs
                 </p>
+
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Low Stock
-                </p>
+              {/* Low Stock */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
 
-                <p className="mt-2 text-2xl font-semibold text-amber-600">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-[#8B7A6C]">
+                    Low Stock
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
+                    !
+                  </span>
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold text-[#A06E31]">
                   {lowStock}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#8B7A6C]">
                   Need attention
                 </p>
+
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Out of Stock
-                </p>
+              {/* Out of Stock */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
 
-                <p className="mt-2 text-2xl font-semibold text-red-600">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-[#8B7A6C]">
+                    Out of Stock
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-[#080808]">
+                    ×
+                  </span>
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold">
                   {outOfStock}
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#8B7A6C]">
                   Currently unavailable
                 </p>
+
               </div>
 
             </div>
 
             {/* ALERT */}
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+            <div className="mb-6 rounded-xl border border-[#D5C1A9] bg-[#D5C1A9]/30 p-5">
+
               <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg">
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#A06E31] text-lg font-bold text-white">
                   !
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-amber-900">
+
+                  <h3 className="text-sm font-semibold text-[#080808]">
                     Inventory attention required
                   </h3>
 
-                  <p className="mt-1 text-xs leading-5 text-amber-800">
+                  <p className="mt-1 text-xs leading-5 text-[#8B7A6C]">
                     {lowStock} products are running low and{" "}
                     {outOfStock} product is currently out of stock.
                   </p>
+
                 </div>
+
               </div>
+
             </div>
 
             {/* TABLE */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-[#D5C1A9]/60 bg-white shadow-sm">
 
-              <div className="border-b border-gray-200 px-5 py-5">
+              <div className="border-b border-[#D5C1A9]/50 px-5 py-5">
+
                 <h3 className="font-semibold">
                   Stock Levels
                 </h3>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#8B7A6C]">
                   Current inventory by product
                 </p>
+
               </div>
 
               <div className="overflow-x-auto">
 
                 <table className="w-full min-w-[800px] text-left">
 
-                  <thead className="border-b border-gray-200 bg-gray-50">
+                  <thead className="border-b border-[#D5C1A9]/50 bg-[#F8F6F2]">
+
                     <tr>
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Product
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         SKU
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Category
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Stock
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Sold
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Status
                       </th>
+
                     </tr>
+
                   </thead>
 
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[#D5C1A9]/30">
 
                     {inventory.map((item) => (
+
                       <tr
                         key={item.sku}
-                        className="transition hover:bg-gray-50"
+                        className="transition hover:bg-[#F8F6F2]"
                       >
 
                         <td className="px-5 py-5">
+
                           <p className="text-sm font-semibold">
                             {item.name}
                           </p>
 
-                          <p className="mt-1 text-xs text-gray-400">
+                          <p className="mt-1 text-xs text-[#8B7A6C]">
                             WEARWELL Collection
                           </p>
+
                         </td>
 
-                        <td className="px-5 py-5 text-xs font-medium text-gray-500">
+                        <td className="px-5 py-5 text-xs font-medium text-[#8B7A6C]">
                           {item.sku}
                         </td>
 
-                        <td className="px-5 py-5 text-sm text-gray-600">
+                        <td className="px-5 py-5 text-sm text-[#8B7A6C]">
                           {item.category}
                         </td>
 
                         <td className="px-5 py-5">
-                          <span className="text-sm font-semibold">
+
+                          <span
+                            className={`text-sm font-semibold ${
+                              item.stock === 0
+                                ? "text-red-600"
+                                : item.stock <= 7
+                                ? "text-[#A06E31]"
+                                : "text-[#080808]"
+                            }`}
+                          >
                             {item.stock}
                           </span>
+
                         </td>
 
-                        <td className="px-5 py-5 text-sm text-gray-600">
+                        <td className="px-5 py-5 text-sm text-[#8B7A6C]">
                           {item.sold}
                         </td>
 
                         <td className="px-5 py-5">
+
                           <span
                             className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ${
                               item.status === "In Stock"
-                                ? "bg-emerald-50 text-emerald-700"
+                                ? "bg-[#F8F6F2] text-[#080808]"
                                 : item.status === "Low Stock"
-                                ? "bg-amber-50 text-amber-700"
+                                ? "bg-[#D5C1A9]/50 text-[#A06E31]"
                                 : "bg-red-50 text-red-700"
                             }`}
                           >
                             {item.status}
                           </span>
+
                         </td>
 
                       </tr>
+
                     ))}
 
                   </tbody>
@@ -391,6 +482,7 @@ export default function InventoryPage() {
                 </table>
 
               </div>
+
             </div>
 
           </div>

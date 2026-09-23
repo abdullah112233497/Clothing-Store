@@ -2,66 +2,85 @@
 
 import Link from "next/link";
 
-type Customer = {
-  name: string;
-  email: string;
-  orders: number;
-  spent: string;
-  status: "Active" | "New";
+type Payment = {
+  id: string;
+  customer: string;
+  method: "Cash on Delivery" | "Card" | "Bank Transfer";
+  amount: string;
+  date: string;
+  status: "Paid" | "Pending" | "Failed";
 };
 
-const customers: Customer[] = [
+const payments: Payment[] = [
   {
-    name: "Ayesha Khan",
-    email: "ayesha@example.com",
-    orders: 12,
-    spent: "Rs. 48,500",
-    status: "Active",
+    id: "#PAY-001",
+    customer: "Ayesha Khan",
+    method: "Cash on Delivery",
+    amount: "Rs. 8,499",
+    date: "18 Sep 2026",
+    status: "Paid",
   },
   {
-    name: "Sara Ahmed",
-    email: "sara@example.com",
-    orders: 8,
-    spent: "Rs. 32,800",
-    status: "Active",
+    id: "#PAY-002",
+    customer: "Sara Ahmed",
+    method: "Card",
+    amount: "Rs. 12,800",
+    date: "17 Sep 2026",
+    status: "Paid",
   },
   {
-    name: "Hina Malik",
-    email: "hina@example.com",
-    orders: 5,
-    spent: "Rs. 21,400",
-    status: "Active",
+    id: "#PAY-003",
+    customer: "Hina Malik",
+    method: "Bank Transfer",
+    amount: "Rs. 6,450",
+    date: "17 Sep 2026",
+    status: "Pending",
   },
   {
-    name: "Maham Ali",
-    email: "maham@example.com",
-    orders: 3,
-    spent: "Rs. 14,700",
-    status: "New",
+    id: "#PAY-004",
+    customer: "Maham Ali",
+    method: "Card",
+    amount: "Rs. 14,700",
+    date: "16 Sep 2026",
+    status: "Paid",
   },
   {
-    name: "Zainab Noor",
-    email: "zainab@example.com",
-    orders: 9,
-    spent: "Rs. 39,900",
-    status: "Active",
+    id: "#PAY-005",
+    customer: "Zainab Noor",
+    method: "Cash on Delivery",
+    amount: "Rs. 9,900",
+    date: "15 Sep 2026",
+    status: "Paid",
   },
   {
-    name: "Fatima Raza",
-    email: "fatima@example.com",
-    orders: 2,
-    spent: "Rs. 8,999",
-    status: "New",
+    id: "#PAY-006",
+    customer: "Fatima Raza",
+    method: "Card",
+    amount: "Rs. 8,999",
+    date: "14 Sep 2026",
+    status: "Failed",
   },
 ];
 
-export default function CustomersPage() {
+export default function PaymentsPage() {
+  const paidPayments = payments.filter(
+    (payment) => payment.status === "Paid"
+  ).length;
+
+  const pendingPayments = payments.filter(
+    (payment) => payment.status === "Pending"
+  ).length;
+
+  const failedPayments = payments.filter(
+    (payment) => payment.status === "Failed"
+  ).length;
+
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-[#111827]">
+    <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
       <div className="flex min-h-screen">
 
         {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#07111d] text-white lg:flex">
+        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex">
 
           <div className="border-b border-white/10 px-6 py-7">
             <Link
@@ -71,67 +90,86 @@ export default function CustomersPage() {
               WEARWELL
             </Link>
 
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-gray-400">
+            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
               Admin Panel
             </p>
           </div>
 
           <nav className="flex-1 px-4 py-6">
 
+            {/* Dashboard */}
             <Link
               href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ▦ Dashboard
+              <span>▦</span>
+              Dashboard
             </Link>
 
+            {/* Orders */}
             <Link
               href="/admin/orders"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ▤ Orders
+              <span>▤</span>
+              Orders
             </Link>
 
+            {/* Products */}
             <Link
               href="/admin/products"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              □ Products
+              <span>□</span>
+              Products
             </Link>
 
+            {/* Inventory */}
             <Link
               href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ◫ Inventory
+              <span>◫</span>
+              Inventory
             </Link>
 
+            {/* Customers */}
             <Link
               href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3 text-sm font-medium text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ♙ Customers
+              <span>♙</span>
+              Customers
             </Link>
 
+            {/* Payments - ACTIVE */}
             <Link
               href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-semibold text-white shadow-sm"
             >
-              ◈ Payments
+              <span>◈</span>
+              Payments
             </Link>
 
+            {/* Settings */}
             <Link
               href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              ⚙ Settings
+              <span>⚙</span>
+              Settings
             </Link>
 
           </nav>
 
           <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-gray-400">Signed in as</p>
-            <p className="mt-1 text-sm font-medium">Khizra Malik</p>
+            <p className="text-xs text-[#8B7A6C]">
+              Signed in as
+            </p>
+
+            <p className="mt-1 text-sm font-medium">
+              Khizra Malik
+            </p>
           </div>
 
         </aside>
@@ -140,20 +178,20 @@ export default function CustomersPage() {
         <section className="min-w-0 flex-1">
 
           {/* HEADER */}
-          <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 lg:px-8">
+          <header className="flex h-20 items-center justify-between border-b border-[#D5C1A9]/50 bg-white px-6 lg:px-8">
 
             <div>
-              <p className="text-xs text-gray-400">
-                Admin / Customers
+              <p className="text-xs text-[#8B7A6C]">
+                Admin / Payments
               </p>
 
               <h1 className="mt-1 text-xl font-semibold">
-                Customers
+                Payments
               </h1>
             </div>
 
-            <button className="rounded-lg bg-[#07111d] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black">
-              Export Customers
+            <button className="rounded-lg bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31]">
+              Export Payments
             </button>
 
           </header>
@@ -163,195 +201,344 @@ export default function CustomersPage() {
 
             {/* INTRO */}
             <div className="mb-7">
-              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
-                Customer management
+
+              <p className="text-xs uppercase tracking-[0.2em] text-[#A06E31]">
+                Payment management
               </p>
 
               <h2 className="mt-2 text-2xl font-semibold">
-                Customer Overview
+                Payment Overview
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                View your customers, orders and total spending.
+              <p className="mt-1 text-sm text-[#8B7A6C]">
+                Monitor transactions, payment methods and payment status.
               </p>
+
             </div>
 
             {/* STATS */}
             <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Total Customers
+              {/* Total Revenue */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+
+                <div className="flex items-center justify-between">
+
+                  <p className="text-xs text-[#8B7A6C]">
+                    Total Revenue
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
+                    ₨
+                  </span>
+
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold">
+                  Rs. 61,348
                 </p>
 
-                <p className="mt-2 text-2xl font-semibold">
-                  248
+                <p className="mt-1 text-xs text-[#A06E31]">
+                  From completed payments
                 </p>
 
-                <p className="mt-1 text-xs text-emerald-600">
-                  +12% this month
-                </p>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Active Customers
+              {/* Paid */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+
+                <div className="flex items-center justify-between">
+
+                  <p className="text-xs text-[#8B7A6C]">
+                    Paid
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
+                    ✓
+                  </span>
+
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold">
+                  {paidPayments}
                 </p>
 
-                <p className="mt-2 text-2xl font-semibold">
-                  214
+                <p className="mt-1 text-xs text-[#8B7A6C]">
+                  Successful transactions
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
-                  Regular shoppers
-                </p>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  New Customers
+              {/* Pending */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+
+                <div className="flex items-center justify-between">
+
+                  <p className="text-xs text-[#8B7A6C]">
+                    Pending
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-[#A06E31]">
+                    !
+                  </span>
+
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold text-[#A06E31]">
+                  {pendingPayments}
                 </p>
 
-                <p className="mt-2 text-2xl font-semibold">
-                  34
+                <p className="mt-1 text-xs text-[#8B7A6C]">
+                  Awaiting confirmation
                 </p>
 
-                <p className="mt-1 text-xs text-emerald-600">
-                  This month
-                </p>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
-                  Average Spend
+              {/* Failed */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+
+                <div className="flex items-center justify-between">
+
+                  <p className="text-xs text-[#8B7A6C]">
+                    Failed
+                  </p>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-[#080808]">
+                    ×
+                  </span>
+
+                </div>
+
+                <p className="mt-3 text-2xl font-semibold">
+                  {failedPayments}
                 </p>
 
-                <p className="mt-2 text-2xl font-semibold">
-                  Rs. 18,450
+                <p className="mt-1 text-xs text-[#8B7A6C]">
+                  Unsuccessful transactions
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
-                  Per customer
-                </p>
               </div>
 
             </div>
 
-            {/* SEARCH */}
-            <div className="mb-5 rounded-xl border border-gray-200 bg-white p-4">
+            {/* PAYMENT METHODS */}
+            <div className="mb-6 rounded-xl border border-[#D5C1A9]/60 bg-white p-5">
 
-              <input
-                type="text"
-                placeholder="Search customers by name or email..."
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-gray-400 focus:bg-white"
-              />
+              <div className="mb-5">
 
-            </div>
-
-            {/* CUSTOMER TABLE */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-
-              <div className="border-b border-gray-200 px-5 py-5">
                 <h3 className="font-semibold">
-                  Recent Customers
+                  Payment Methods
                 </h3>
 
-                <p className="mt-1 text-xs text-gray-400">
-                  Customer activity and purchase history
+                <p className="mt-1 text-xs text-[#8B7A6C]">
+                  Payment methods used by customers
                 </p>
+
+              </div>
+
+              <div className="space-y-5">
+
+                {/* Cash */}
+                <div>
+
+                  <div className="mb-2 flex items-center justify-between">
+
+                    <div className="flex items-center gap-3">
+
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-sm text-[#A06E31]">
+                        ₨
+                      </span>
+
+                      <span className="text-sm font-medium">
+                        Cash on Delivery
+                      </span>
+
+                    </div>
+
+                    <span className="text-xs text-[#8B7A6C]">
+                      45%
+                    </span>
+
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-[#F8F6F2]">
+                    <div
+                      className="h-full rounded-full bg-[#A06E31]"
+                      style={{ width: "45%" }}
+                    />
+                  </div>
+
+                </div>
+
+                {/* Card */}
+                <div>
+
+                  <div className="mb-2 flex items-center justify-between">
+
+                    <div className="flex items-center gap-3">
+
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-sm text-[#A06E31]">
+                        ◈
+                      </span>
+
+                      <span className="text-sm font-medium">
+                        Card
+                      </span>
+
+                    </div>
+
+                    <span className="text-xs text-[#8B7A6C]">
+                      35%
+                    </span>
+
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-[#F8F6F2]">
+                    <div
+                      className="h-full rounded-full bg-[#080808]"
+                      style={{ width: "35%" }}
+                    />
+                  </div>
+
+                </div>
+
+                {/* Bank Transfer */}
+                <div>
+
+                  <div className="mb-2 flex items-center justify-between">
+
+                    <div className="flex items-center gap-3">
+
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D5C1A9]/40 text-sm text-[#A06E31]">
+                        ⇄
+                      </span>
+
+                      <span className="text-sm font-medium">
+                        Bank Transfer
+                      </span>
+
+                    </div>
+
+                    <span className="text-xs text-[#8B7A6C]">
+                      20%
+                    </span>
+
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-[#F8F6F2]">
+                    <div
+                      className="h-full rounded-full bg-[#D5C1A9]"
+                      style={{ width: "20%" }}
+                    />
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* TRANSACTIONS */}
+            <div className="overflow-hidden rounded-xl border border-[#D5C1A9]/60 bg-white shadow-sm">
+
+              <div className="border-b border-[#D5C1A9]/50 px-5 py-5">
+
+                <h3 className="font-semibold">
+                  Recent Transactions
+                </h3>
+
+                <p className="mt-1 text-xs text-[#8B7A6C]">
+                  Latest customer payment activity
+                </p>
+
               </div>
 
               <div className="overflow-x-auto">
 
-                <table className="w-full min-w-[800px] text-left">
+                <table className="w-full min-w-[850px] text-left">
 
-                  <thead className="border-b border-gray-200 bg-gray-50">
+                  <thead className="border-b border-[#D5C1A9]/50 bg-[#F8F6F2]">
 
                     <tr>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
+                        Payment ID
+                      </th>
+
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Customer
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Orders
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
+                        Method
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
-                        Total Spent
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
+                        Amount
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
+                        Date
+                      </th>
+
+                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-[#8B7A6C]">
                         Status
                       </th>
-
-                      <th className="px-5 py-4"></th>
 
                     </tr>
 
                   </thead>
 
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[#D5C1A9]/30">
 
-                    {customers.map((customer) => (
+                    {payments.map((payment) => (
 
                       <tr
-                        key={customer.email}
-                        className="transition hover:bg-gray-50"
+                        key={payment.id}
+                        className="transition hover:bg-[#F8F6F2]"
                       >
+
+                        <td className="px-5 py-5 text-xs font-semibold">
+                          {payment.id}
+                        </td>
 
                         <td className="px-5 py-5">
 
-                          <div className="flex items-center gap-4">
+                          <p className="text-sm font-semibold">
+                            {payment.customer}
+                          </p>
 
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#07111d] text-xs font-semibold text-white">
-                              {customer.name
-                                .split(" ")
-                                .map((word) => word[0])
-                                .join("")}
-                            </div>
-
-                            <div>
-                              <p className="text-sm font-semibold">
-                                {customer.name}
-                              </p>
-
-                              <p className="mt-1 text-xs text-gray-400">
-                                {customer.email}
-                              </p>
-                            </div>
-
-                          </div>
+                          <p className="mt-1 text-xs text-[#8B7A6C]">
+                            WEARWELL Customer
+                          </p>
 
                         </td>
 
-                        <td className="px-5 py-5 text-sm font-medium">
-                          {customer.orders}
+                        <td className="px-5 py-5 text-sm text-[#8B7A6C]">
+                          {payment.method}
                         </td>
 
                         <td className="px-5 py-5 text-sm font-semibold">
-                          {customer.spent}
+                          {payment.amount}
+                        </td>
+
+                        <td className="px-5 py-5 text-sm text-[#8B7A6C]">
+                          {payment.date}
                         </td>
 
                         <td className="px-5 py-5">
 
                           <span
                             className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ${
-                              customer.status === "Active"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-blue-50 text-blue-700"
+                              payment.status === "Paid"
+                                ? "bg-[#F8F6F2] text-[#080808]"
+                                : payment.status === "Pending"
+                                ? "bg-[#D5C1A9]/50 text-[#A06E31]"
+                                : "bg-red-50 text-red-700"
                             }`}
                           >
-                            {customer.status}
+                            {payment.status}
                           </span>
-
-                        </td>
-
-                        <td className="px-5 py-5">
-
-                          <button className="rounded-lg px-3 py-2 text-lg text-gray-400 hover:bg-gray-100 hover:text-black">
-                            ⋯
-                          </button>
 
                         </td>
 

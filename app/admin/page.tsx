@@ -2,30 +2,34 @@
 
 import Link from "next/link";
 
+/* =========================
+   DATA
+========================= */
+
 const stats = [
   {
     title: "Total Revenue",
     value: "Rs. 245,890",
     change: "+12.5%",
-    icon: "₨",
+    icon: "💰",
   },
   {
     title: "Total Orders",
     value: "128",
     change: "+8.2%",
-    icon: "O",
+    icon: "🛍️",
   },
   {
     title: "Customers",
     value: "86",
-    change: "+5.4%",
-    icon: "C",
+    change: "+14.8%",
+    icon: "👥",
   },
   {
     title: "Products",
     value: "42",
-    change: "+3 new",
-    icon: "P",
+    change: "+5.4%",
+    icon: "📦",
   },
 ];
 
@@ -82,19 +86,24 @@ const salesData = [
   { month: "Dec", value: 108 },
 ];
 
+/* =========================
+   ICONS
+========================= */
+
 function DashboardIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
-      <rect x="4" y="4" width="6" height="6" rx="1" />
-      <rect x="14" y="4" width="6" height="6" rx="1" />
-      <rect x="4" y="14" width="6" height="6" rx="1" />
-      <rect x="14" y="14" width="6" height="6" rx="1" />
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
     </svg>
   );
 }
@@ -102,11 +111,12 @@ function DashboardIcon() {
 function OrdersIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
       <path d="M6 3h12v18H6z" />
       <path d="M9 7h6M9 11h6M9 15h4" />
@@ -117,14 +127,15 @@ function OrdersIcon() {
 function ProductsIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
-      <path d="m4 7 8-4 8 4-8 4-8-4Z" />
-      <path d="m4 12 8 4 8-4M4 17l8 4 8-4" />
+      <path d="M4 7h16v13H4z" />
+      <path d="M8 7a4 4 0 0 1 8 0" />
     </svg>
   );
 }
@@ -132,16 +143,15 @@ function ProductsIcon() {
 function UsersIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
-      <circle cx="9" cy="8" r="3" />
-      <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
-      <circle cx="17" cy="9" r="2.3" />
-      <path d="M15.5 14.5a4.5 4.5 0 0 1 5 4.5" />
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
     </svg>
   );
 }
@@ -149,14 +159,16 @@ function UsersIcon() {
 function InventoryIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
-      <path d="M4 7h16v13H4z" />
-      <path d="M8 7V4h8v3M8 12h8M8 16h5" />
+      <path d="M3 7l9-4 9 4-9 4-9-4Z" />
+      <path d="M3 7v10l9 4 9-4V7" />
+      <path d="M12 11v10" />
     </svg>
   );
 }
@@ -164,14 +176,16 @@ function InventoryIcon() {
 function PaymentIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
       <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 10h18M7 15h4" />
+      <path d="M3 10h18" />
+      <path d="M7 15h4" />
     </svg>
   );
 }
@@ -179,14 +193,15 @@ function PaymentIcon() {
 function SettingsIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
       <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.5v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H4.5v-2.5h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V4h2.5v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2v2.5h-.2a1.7 1.7 0 0 0-1.5 1Z" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-2.8v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-2-2 .1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H5V11h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2-2 .1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3h2.8v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v2.8h-.2a1.7 1.7 0 0 0-1.6 1Z" />
     </svg>
   );
 }
@@ -194,14 +209,16 @@ function SettingsIcon() {
 function LogoutIcon() {
   return (
     <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-5 w-5"
+      strokeWidth="1.8"
     >
-      <path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" />
-      <path d="m14 8 4 4-4 4M18 12H9" />
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
     </svg>
   );
 }
@@ -209,554 +226,676 @@ function LogoutIcon() {
 function MenuIcon() {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-6 w-6"
+      strokeWidth="2"
     >
-      <path d="M4 7h16M4 12h16M4 17h16" />
+      <path d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   );
 }
 
+/* =========================
+   STATUS STYLE
+========================= */
+
+function statusStyle(status: string) {
+  if (status === "Paid") {
+    return "bg-green-50 text-green-700 border-green-200";
+  }
+
+  if (status === "Pending") {
+    return "bg-yellow-50 text-yellow-700 border-yellow-200";
+  }
+
+  if (status === "Shipped") {
+    return "bg-blue-50 text-blue-700 border-blue-200";
+  }
+
+  return "bg-orange-50 text-orange-700 border-orange-200";
+}
+
+/* =========================
+   ADMIN DASHBOARD
+========================= */
+
 export default function AdminDashboard() {
   return (
-    <main className="min-h-screen bg-[#F5F3EF] text-[#111111]">
-      <div className="flex min-h-screen">
+    <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
 
-        {/* Sidebar */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#111111] text-white lg:flex">
+      {/* ================= SIDEBAR ================= */}
 
-          {/* Brand */}
-          <div className="border-b border-white/10 px-7 py-7">
-            <Link href="/" className="block">
-              <p className="text-lg font-black tracking-[0.25em]">
-                WEARWELL
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-[#111111] text-white lg:flex">
+
+        {/* Logo */}
+        <div className="flex h-20 items-center border-b border-white/10 px-7">
+          <div>
+            <h1 className="text-xl font-bold tracking-[0.18em]">
+              WEARWELL
+            </h1>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/40">
+              Admin Portal
+            </p>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-2 px-4 py-6">
+
+          <Link
+            href="/admin"
+            className="group flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition-all duration-300"
+          >
+            <DashboardIcon />
+            <span>Dashboard</span>
+          </Link>
+
+          <Link
+            href="/admin/orders"
+            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
+          >
+            <OrdersIcon />
+            <span>Orders</span>
+          </Link>
+
+          <Link
+            href="/admin/products"
+            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
+          >
+            <ProductsIcon />
+            <span>Products</span>
+          </Link>
+
+          <Link
+            href="/admin/customers"
+            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
+          >
+            <UsersIcon />
+            <span>Customers</span>
+          </Link>
+
+          <Link
+            href="/admin/inventory"
+            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
+          >
+            <InventoryIcon />
+            <span>Inventory</span>
+          </Link>
+
+          <Link
+            href="/admin/payments"
+            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
+          >
+            <PaymentIcon />
+            <span>Payments</span>
+          </Link>
+
+          <Link
+            href="/admin/settings"
+            className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/65 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 hover:text-white"
+          >
+            <SettingsIcon />
+            <span>Settings</span>
+          </Link>
+
+        </nav>
+
+        {/* Logout */}
+        <div className="border-t border-white/10 p-4">
+          <Link
+            href="/account/login"
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/60 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300"
+          >
+            <LogoutIcon />
+            <span>Logout</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* ================= MAIN ================= */}
+
+      <section className="lg:ml-64">
+
+        {/* TOP BAR */}
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-black/5 bg-[#F8F6F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
+
+          <div className="flex items-center gap-4">
+
+            <button
+              className="rounded-xl border border-black/10 p-2 lg:hidden"
+              aria-label="Open menu"
+            >
+              <MenuIcon />
+            </button>
+
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-black/40">
+                Admin Panel
               </p>
 
-              <p className="mt-1 text-[9px] uppercase tracking-[0.3em] text-white/40">
-                Admin Portal
-              </p>
-            </Link>
+              <h2 className="mt-1 text-lg font-semibold sm:text-xl">
+                Dashboard
+              </h2>
+            </div>
+
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-7">
+          <div className="flex items-center gap-3">
 
-            <p className="mb-4 px-3 text-[9px] font-semibold uppercase tracking-[0.25em] text-white/30">
-              Management
-            </p>
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-medium">
+                Admin
+              </p>
+              <p className="text-xs text-black/45">
+                Administrator
+              </p>
+            </div>
 
-            <div className="space-y-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#111111] text-sm font-semibold text-white">
+              A
+            </div>
 
-              <Link
-                href="/admin"
-                className="flex items-center gap-3 rounded-lg bg-white/10 px-3 py-3 text-sm font-medium text-white"
-              >
-                <DashboardIcon />
-                Dashboard
-              </Link>
+          </div>
+
+        </header>
+
+        {/* CONTENT */}
+        <div className="px-5 py-7 sm:px-8 lg:px-10">
+
+          {/* WELCOME BANNER */}
+          <section className="relative overflow-hidden rounded-3xl bg-[#D5C1A9] p-6 sm:p-8 lg:p-10">
+
+            <div className="relative z-10 max-w-2xl">
+
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-black/50">
+                Welcome Back
+              </p>
+
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+                Manage your store
+              </h1>
+
+              <p className="mt-4 max-w-xl text-sm leading-6 text-black/65 sm:text-base">
+                Keep track of your orders, customers, products and sales
+                from one simple dashboard.
+              </p>
 
               <Link
                 href="/admin/orders"
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
+                className="mt-6 inline-flex rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-1 hover:bg-black/80"
               >
-                <OrdersIcon />
-                Orders
+                View Orders
               </Link>
 
-              <Link
-                href="/admin/products"
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
-              >
-                <ProductsIcon />
-                Products
-              </Link>
-
-              <Link
-                href="/admin/customers"
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
-              >
-                <UsersIcon />
-                Customers
-              </Link>
-
-              <Link
-                href="/admin/inventory"
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
-              >
-                <InventoryIcon />
-                Inventory
-              </Link>
-
-              <Link
-                href="/admin/payments"
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
-              >
-                <PaymentIcon />
-                Payments
-              </Link>
             </div>
 
-            <p className="mb-4 mt-10 px-3 text-[9px] font-semibold uppercase tracking-[0.25em] text-white/30">
-              System
-            </p>
+            <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/20" />
+            <div className="absolute -bottom-24 right-20 h-48 w-48 rounded-full bg-black/5" />
 
-            <Link
-              href="/admin/settings"
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/60 transition hover:bg-white/5 hover:text-white"
-            >
-              <SettingsIcon />
-              Settings
-            </Link>
-          </nav>
+          </section>
 
-          {/* Admin Profile */}
-          <div className="border-t border-white/10 p-4">
+          {/* STATS */}
+          <section className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-            <div className="flex items-center gap-3 rounded-lg px-3 py-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-xs font-bold text-black">
-                K
+            {stats.map((stat) => (
+              <div
+                key={stat.title}
+                className="group rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+
+                <div className="flex items-start justify-between">
+
+                  <div>
+                    <p className="text-sm text-black/45">
+                      {stat.title}
+                    </p>
+
+                    <h3 className="mt-3 text-2xl font-semibold">
+                      {stat.value}
+                    </h3>
+
+                    <p className="mt-2 text-xs font-medium text-green-600">
+                      {stat.change} this month
+                    </p>
+                  </div>
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F8F6F2] text-xl transition-transform duration-300 group-hover:scale-110">
+                    {stat.icon}
+                  </div>
+
+                </div>
+
               </div>
+            ))}
 
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
-                  Khizra Malik
-                </p>
+          </section>
 
-                <p className="truncate text-[10px] text-white/40">
-                  Administrator
-                </p>
-              </div>
-            </div>
+          {/* CHART + ORDER STATUS */}
+          <section className="mt-7 grid grid-cols-1 gap-6 xl:grid-cols-[1.7fr_1fr]">
 
-            <Link
-              href="/account/login"
-              className="mt-2 flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/50 transition hover:bg-white/5 hover:text-white"
-            >
-              <LogoutIcon />
-              Logout
-            </Link>
-          </div>
-        </aside>
+            {/* SALES CHART */}
+            <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
 
-        {/* Main Content */}
-        <section className="min-w-0 flex-1">
-
-          {/* Top Bar */}
-          <header className="border-b border-black/10 bg-white px-5 py-5 sm:px-7 lg:px-10">
-
-            <div className="flex items-center justify-between gap-4">
-
-              <div className="flex items-center gap-4">
-                <button
-                  className="rounded-lg border border-black/10 p-2 lg:hidden"
-                  aria-label="Open menu"
-                >
-                  <MenuIcon />
-                </button>
+              <div className="flex items-center justify-between">
 
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#A06E31]">
-                    WEARWELL ADMIN
+                  <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                    Performance
                   </p>
 
-                  <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
-                    Dashboard
-                  </h1>
+                  <h2 className="mt-1 text-xl font-semibold">
+                    Monthly Sales
+                  </h2>
                 </div>
+
+                <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700">
+                  +18.4%
+                </span>
+
               </div>
 
-              <div className="hidden text-right sm:block">
-                <p className="text-xs font-medium">
-                  Welcome back, Khizra
-                </p>
+              <div className="mt-8 flex h-64 items-end gap-2 sm:gap-3">
 
-                <p className="mt-1 text-[10px] text-gray-400">
-                  Manage your store from one place
-                </p>
+                {salesData.map((item) => (
+                  <div
+                    key={item.month}
+                    className="group flex h-full flex-1 flex-col items-center justify-end"
+                  >
+
+                    <div className="relative flex w-full flex-1 items-end">
+
+                      <div
+                        className="w-full rounded-t-lg bg-[#111111] opacity-80 transition-all duration-300 group-hover:opacity-100"
+                        style={{
+                          height: `${(item.value / 108) * 100}%`,
+                        }}
+                      />
+
+                      <span className="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[10px] text-white group-hover:block">
+                        {item.value}k
+                      </span>
+
+                    </div>
+
+                    <span className="mt-3 text-[10px] text-black/40 sm:text-xs">
+                      {item.month}
+                    </span>
+
+                  </div>
+                ))}
+
               </div>
+
             </div>
-          </header>
 
-          {/* Dashboard Content */}
-          <div className="p-5 sm:p-7 lg:p-10">
+            {/* ORDER STATUS */}
+            <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
 
-            {/* Welcome */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Welcome back, Khizra.
+              <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                Overview
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold">
+                Order Status
               </h2>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Here&apos;s what&apos;s happening with your store today.
-              </p>
+              <div className="mt-7 space-y-6">
+
+                <div>
+                  <div className="mb-2 flex justify-between text-sm">
+                    <span>Completed</span>
+                    <span className="font-medium">68%</span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
+                    <div className="h-full w-[68%] rounded-full bg-green-600" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex justify-between text-sm">
+                    <span>Processing</span>
+                    <span className="font-medium">18%</span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
+                    <div className="h-full w-[18%] rounded-full bg-orange-500" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex justify-between text-sm">
+                    <span>Pending</span>
+                    <span className="font-medium">9%</span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
+                    <div className="h-full w-[9%] rounded-full bg-yellow-500" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-2 flex justify-between text-sm">
+                    <span>Cancelled</span>
+                    <span className="font-medium">5%</span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5">
+                    <div className="h-full w-[5%] rounded-full bg-red-500" />
+                  </div>
+                </div>
+
+              </div>
+
             </div>
 
-            {/* Stats */}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          </section>
 
-              {stats.map((stat) => (
+          {/* RECENT ORDERS */}
+          <section className="mt-7 rounded-2xl border border-black/5 bg-white shadow-sm">
+
+            <div className="flex flex-col gap-3 border-b border-black/5 p-6 sm:flex-row sm:items-center sm:justify-between">
+
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                  Store Activity
+                </p>
+
+                <h2 className="mt-1 text-xl font-semibold">
+                  Recent Orders
+                </h2>
+              </div>
+
+              <Link
+                href="/admin/orders"
+                className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-50"
+              >
+                View all
+              </Link>
+
+            </div>
+
+            {/* DESKTOP TABLE */}
+            <div className="hidden overflow-x-auto md:block">
+
+              <table className="w-full min-w-[700px]">
+
+                <thead>
+                  <tr className="border-b border-black/5 text-left text-xs uppercase tracking-wider text-black/40">
+                    <th className="px-6 py-4 font-medium">
+                      Order
+                    </th>
+
+                    <th className="px-6 py-4 font-medium">
+                      Customer
+                    </th>
+
+                    <th className="px-6 py-4 font-medium">
+                      Product
+                    </th>
+
+                    <th className="px-6 py-4 font-medium">
+                      Amount
+                    </th>
+
+                    <th className="px-6 py-4 font-medium">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  {recentOrders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="border-b border-black/5 last:border-0 transition-colors hover:bg-[#F8F6F2]"
+                    >
+
+                      <td className="px-6 py-5 text-sm font-semibold">
+                        {order.id}
+                      </td>
+
+                      <td className="px-6 py-5 text-sm">
+                        {order.customer}
+                      </td>
+
+                      <td className="px-6 py-5 text-sm text-black/60">
+                        {order.product}
+                      </td>
+
+                      <td className="px-6 py-5 text-sm font-medium">
+                        {order.amount}
+                      </td>
+
+                      <td className="px-6 py-5">
+
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusStyle(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+
+                      </td>
+
+                    </tr>
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+            {/* MOBILE ORDERS */}
+            <div className="divide-y divide-black/5 md:hidden">
+
+              {recentOrders.map((order) => (
                 <div
-                  key={stat.title}
-                  className="rounded-2xl border border-black/10 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                  key={order.id}
+                  className="p-5 transition-colors hover:bg-[#F8F6F2]"
                 >
-                  <div className="flex items-start justify-between">
+
+                  <div className="flex items-start justify-between gap-3">
 
                     <div>
-                      <p className="text-xs text-gray-500">
-                        {stat.title}
+                      <p className="text-sm font-semibold">
+                        {order.id}
                       </p>
 
-                      <p className="mt-3 text-2xl font-semibold tracking-tight">
-                        {stat.value}
-                      </p>
-
-                      <p className="mt-2 text-[11px] font-medium text-emerald-600">
-                        {stat.change}
+                      <p className="mt-1 text-sm">
+                        {order.customer}
                       </p>
                     </div>
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3EEE7] text-sm font-bold">
-                      {stat.icon}
-                    </div>
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${statusStyle(
+                        order.status
+                      )}`}
+                    >
+                      {order.status}
+                    </span>
+
                   </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+
+                    <p className="text-xs text-black/45">
+                      {order.product}
+                    </p>
+
+                    <p className="text-sm font-semibold">
+                      {order.amount}
+                    </p>
+
+                  </div>
+
                 </div>
               ))}
 
             </div>
 
-            {/* Chart + Orders */}
-            <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+          </section>
 
-              {/* Sales Chart */}
-              <div className="rounded-2xl border border-black/10 bg-white p-5 sm:p-7">
+          {/* BOTTOM CARDS */}
+          <section className="mt-7 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                      Store performance
-                    </p>
+            {/* TOP PRODUCT */}
+            <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
 
-                    <h3 className="mt-2 text-lg font-semibold">
-                      Sales Overview
-                    </h3>
-                  </div>
-
-                  <button className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-medium">
-                    This Year
-                  </button>
-                </div>
-
-                <div className="mt-8 flex h-64 items-end gap-2 sm:gap-4">
-
-                  {salesData.map((item) => (
-                    <div
-                      key={item.month}
-                      className="flex h-full flex-1 flex-col justify-end"
-                    >
-                      <div
-                        className="w-full rounded-t-md bg-[#171717] transition hover:bg-[#A06E31]"
-                        style={{
-                          height: `${item.value * 2}px`,
-                        }}
-                        title={`${item.month}: ${item.value}`}
-                      />
-
-                      <p className="mt-3 text-center text-[9px] text-gray-400">
-                        {item.month}
-                      </p>
-                    </div>
-                  ))}
-
-                </div>
-              </div>
-
-              {/* Order Status */}
-              <div className="rounded-2xl border border-black/10 bg-white p-5 sm:p-7">
-
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                      Order activity
-                    </p>
-
-                    <h3 className="mt-2 text-lg font-semibold">
-                      Order Status
-                    </h3>
-                  </div>
-
-                  <Link
-                    href="/admin/orders"
-                    className="text-xs font-medium underline underline-offset-4"
-                  >
-                    View all
-                  </Link>
-                </div>
-
-                <div className="mt-8 space-y-6">
-
-                  <div>
-                    <div className="mb-2 flex justify-between text-xs">
-                      <span>Paid</span>
-                      <span className="font-medium">72%</span>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div className="h-2 w-[72%] rounded-full bg-black" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex justify-between text-xs">
-                      <span>Shipped</span>
-                      <span className="font-medium">18%</span>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div className="h-2 w-[18%] rounded-full bg-[#A06E31]" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex justify-between text-xs">
-                      <span>Pending</span>
-                      <span className="font-medium">7%</span>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div className="h-2 w-[7%] rounded-full bg-gray-500" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex justify-between text-xs">
-                      <span>Cancelled</span>
-                      <span className="font-medium">3%</span>
-                    </div>
-
-                    <div className="h-2 rounded-full bg-gray-100">
-                      <div className="h-2 w-[3%] rounded-full bg-red-400" />
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Orders */}
-            <div className="mt-6 rounded-2xl border border-black/10 bg-white">
-
-              <div className="flex flex-col gap-4 border-b border-black/10 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+              <div className="flex items-center justify-between">
 
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                    Latest activity
+                  <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                    Best Seller
                   </p>
 
-                  <h3 className="mt-2 text-lg font-semibold">
-                    Recent Orders
-                  </h3>
+                  <h2 className="mt-1 text-xl font-semibold">
+                    Top Product
+                  </h2>
                 </div>
+
+                <span className="text-2xl">
+                  ⭐
+                </span>
+
+              </div>
+
+              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-[#F8F6F2] p-4">
+
+                <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#D5C1A9] text-3xl">
+                  👕
+                </div>
+
+                <div className="flex-1">
+
+                  <h3 className="font-semibold">
+                    Essential Oversized Tee
+                  </h3>
+
+                  <p className="mt-1 text-sm text-black/45">
+                    Women · Clothing
+                  </p>
+
+                  <div className="mt-3 flex items-center gap-3">
+
+                    <span className="text-sm font-semibold">
+                      Rs. 3,499
+                    </span>
+
+                    <span className="text-xs text-green-600">
+                      42 sold
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* QUICK ACTIONS */}
+            <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
+
+              <p className="text-xs uppercase tracking-[0.18em] text-black/40">
+                Shortcuts
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold">
+                Quick Actions
+              </h2>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+
+                <Link
+                  href="/admin/products"
+                  className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
+                >
+                  <div className="text-xl">
+                    ➕
+                  </div>
+
+                  <p className="mt-3 text-sm font-medium">
+                    Add Product
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/40">
+                    Create new item
+                  </p>
+                </Link>
 
                 <Link
                   href="/admin/orders"
-                  className="text-xs font-semibold underline underline-offset-4"
+                  className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
                 >
-                  View all orders →
+                  <div className="text-xl">
+                    📋
+                  </div>
+
+                  <p className="mt-3 text-sm font-medium">
+                    Manage Orders
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/40">
+                    Check order list
+                  </p>
                 </Link>
+
+                <Link
+                  href="/admin/customers"
+                  className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
+                >
+                  <div className="text-xl">
+                    👤
+                  </div>
+
+                  <p className="mt-3 text-sm font-medium">
+                    Customers
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/40">
+                    View customers
+                  </p>
+                </Link>
+
+                <Link
+                  href="/admin/settings"
+                  className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
+                >
+                  <div className="text-xl">
+                    ⚙️
+                  </div>
+
+                  <p className="mt-3 text-sm font-medium">
+                    Settings
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/40">
+                    Store settings
+                  </p>
+                </Link>
+
               </div>
 
-              <div className="overflow-x-auto">
-
-                <table className="w-full min-w-[700px] text-left">
-
-                  <thead>
-                    <tr className="border-b border-black/10 text-[10px] uppercase tracking-wider text-gray-400">
-                      <th className="px-5 py-4 font-medium sm:px-7">
-                        Order
-                      </th>
-
-                      <th className="px-5 py-4 font-medium">
-                        Customer
-                      </th>
-
-                      <th className="px-5 py-4 font-medium">
-                        Product
-                      </th>
-
-                      <th className="px-5 py-4 font-medium">
-                        Total
-                      </th>
-
-                      <th className="px-5 py-4 font-medium">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {recentOrders.map((order) => (
-                      <tr
-                        key={order.id}
-                        className="border-b border-black/5 last:border-0 transition hover:bg-gray-50"
-                      >
-                        <td className="px-5 py-5 text-sm font-semibold sm:px-7">
-                          {order.id}
-                        </td>
-
-                        <td className="px-5 py-5 text-sm text-gray-600">
-                          {order.customer}
-                        </td>
-
-                        <td className="px-5 py-5 text-sm text-gray-600">
-                          {order.product}
-                        </td>
-
-                        <td className="px-5 py-5 text-sm font-medium">
-                          {order.amount}
-                        </td>
-
-                        <td className="px-5 py-5">
-                          <span
-                            className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ${
-                              order.status === "Paid"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : order.status === "Pending"
-                                ? "bg-amber-50 text-amber-700"
-                                : order.status === "Shipped"
-                                ? "bg-blue-50 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {order.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-
-                </table>
-              </div>
             </div>
 
-            {/* Bottom Cards */}
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
+          </section>
 
-              {/* Top Products */}
-              <div className="rounded-2xl border border-black/10 bg-white p-5 sm:p-7">
+          {/* FOOTER */}
+          <footer className="py-8 text-center text-xs text-black/35">
+            © 2026 WEARWELL Admin Portal. All rights reserved.
+          </footer>
 
-                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
-                  Best performers
-                </p>
+        </div>
 
-                <h3 className="mt-2 text-lg font-semibold">
-                  Top Products
-                </h3>
+      </section>
 
-                <div className="mt-6 space-y-4">
-
-                  {[
-                    ["Essential Oversized Tee", "128 sold"],
-                    ["Urban Denim Jacket", "94 sold"],
-                    ["Minimal Shoulder Bag", "81 sold"],
-                  ].map(([name, sold], index) => (
-                    <div
-                      key={name}
-                      className="flex items-center gap-4"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3EEE7] text-xs font-bold">
-                        0{index + 1}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {name}
-                        </p>
-
-                        <p className="mt-1 text-[11px] text-gray-400">
-                          {sold}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="rounded-2xl border border-black/10 bg-[#111111] p-5 text-white sm:p-7">
-
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">
-                  Quick actions
-                </p>
-
-                <h3 className="mt-2 text-lg font-semibold">
-                  Manage your store
-                </h3>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-
-                  <Link
-                    href="/admin/products"
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <p className="text-sm font-medium">
-                      Add Product
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-white/40">
-                      Create new item
-                    </p>
-                  </Link>
-
-                  <Link
-                    href="/admin/orders"
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <p className="text-sm font-medium">
-                      View Orders
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-white/40">
-                      Manage orders
-                    </p>
-                  </Link>
-
-                  <Link
-                    href="/admin/inventory"
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <p className="text-sm font-medium">
-                      Inventory
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-white/40">
-                      Check stock
-                    </p>
-                  </Link>
-
-                  <Link
-                    href="/admin/customers"
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10"
-                  >
-                    <p className="text-sm font-medium">
-                      Customers
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-white/40">
-                      Customer list
-                    </p>
-                  </Link>
-
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </section>
-      </div>
     </main>
   );
 }

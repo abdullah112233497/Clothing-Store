@@ -84,8 +84,9 @@ export default function ProductsPage() {
   const [category, setCategory] = useState("All");
 
   const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
 
     const matchesCategory =
       category === "All" || product.category === category;
@@ -94,12 +95,13 @@ export default function ProductsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-[#111827]">
+    <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
       <div className="flex min-h-screen">
 
         {/* SIDEBAR */}
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#07111d] text-white lg:flex">
+        <aside className="hidden w-64 shrink-0 flex-col bg-[#080808] text-white lg:flex">
 
+          {/* LOGO */}
           <div className="border-b border-white/10 px-6 py-7">
             <Link
               href="/admin"
@@ -108,85 +110,93 @@ export default function ProductsPage() {
               WEARWELL
             </Link>
 
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-gray-400">
+            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-[#8B7A6C]">
               Admin Panel
             </p>
           </div>
 
+          {/* NAVIGATION */}
           <nav className="flex-1 px-4 py-6">
 
             <Link
               href="/admin"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
             >
-              ▦
+              <span>▦</span>
               Dashboard
             </Link>
 
             <Link
               href="/admin/orders"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
             >
-              ▤
+              <span>▤</span>
               Orders
             </Link>
 
             <Link
               href="/admin/products"
-              className="mb-2 flex items-center gap-3 rounded-lg bg-white/10 px-4 py-3 text-sm font-medium text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg bg-[#A06E31] px-4 py-3 text-sm font-medium text-white shadow-sm"
             >
-              □
+              <span>□</span>
               Products
             </Link>
 
             <Link
               href="/admin/inventory"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
             >
-              ◫
+              <span>◫</span>
               Inventory
             </Link>
 
             <Link
               href="/admin/customers"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
             >
-              ♙
+              <span>♙</span>
               Customers
             </Link>
 
             <Link
               href="/admin/payments"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
             >
-              ◈
+              <span>◈</span>
               Payments
             </Link>
 
             <Link
               href="/admin/settings"
-              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-gray-400 hover:bg-white/10 hover:text-white"
+              className="mb-2 flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-[#8B7A6C] transition hover:bg-white/10 hover:text-white"
             >
-              ⚙
+              <span>⚙</span>
               Settings
             </Link>
 
           </nav>
 
+          {/* ADMIN INFO */}
           <div className="border-t border-white/10 p-5">
-            <p className="text-xs text-gray-400">Signed in as</p>
-            <p className="mt-1 text-sm font-medium">Khizra Malik</p>
+            <p className="text-xs text-[#8B7A6C]">
+              Signed in as
+            </p>
+
+            <p className="mt-1 text-sm font-medium">
+              Khizra Malik
+            </p>
           </div>
+
         </aside>
 
         {/* MAIN */}
         <section className="min-w-0 flex-1">
 
           {/* HEADER */}
-          <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 lg:px-8">
+          <header className="flex h-20 items-center justify-between border-b border-[#8B7A6C]/20 bg-white px-6 lg:px-8">
 
             <div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#8B7A6C]">
                 Admin / Products
               </p>
 
@@ -197,15 +207,16 @@ export default function ProductsPage() {
 
             <div className="flex items-center gap-3">
 
-              <button className="hidden rounded-lg border border-gray-200 px-4 py-2.5 text-xs font-medium hover:bg-gray-50 sm:block">
+              <button className="hidden rounded-lg border border-[#8B7A6C]/25 px-4 py-2.5 text-xs font-medium transition hover:bg-[#F8F6F2] sm:block">
                 Export
               </button>
 
-              <button className="rounded-lg bg-[#07111d] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-black">
+              <button className="rounded-lg bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#A06E31]">
                 + Add Product
               </button>
 
             </div>
+
           </header>
 
           {/* CONTENT */}
@@ -213,7 +224,8 @@ export default function ProductsPage() {
 
             {/* TITLE */}
             <div className="mb-7">
-              <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8B7A6C]">
                 Store management
               </p>
 
@@ -221,40 +233,49 @@ export default function ProductsPage() {
                 Product Catalog
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#8B7A6C]">
                 Manage your products, prices and stock levels.
               </p>
+
             </div>
 
             {/* STATS */}
             <div className="mb-6 grid gap-4 sm:grid-cols-3">
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
+              {/* TOTAL */}
+              <div className="rounded-xl border border-[#8B7A6C]/20 bg-white p-5 shadow-sm">
+
+                <p className="text-xs text-[#8B7A6C]">
                   Total Products
                 </p>
 
                 <p className="mt-2 text-2xl font-semibold">
                   {products.length}
                 </p>
+
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
+              {/* ACTIVE */}
+              <div className="rounded-xl border border-[#8B7A6C]/20 bg-white p-5 shadow-sm">
+
+                <p className="text-xs text-[#8B7A6C]">
                   Active Products
                 </p>
 
-                <p className="mt-2 text-2xl font-semibold text-emerald-600">
+                <p className="mt-2 text-2xl font-semibold text-[#A06E31]">
                   {products.filter((p) => p.status === "Active").length}
                 </p>
+
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-xs text-gray-400">
+              {/* LOW STOCK */}
+              <div className="rounded-xl border border-[#8B7A6C]/20 bg-white p-5 shadow-sm">
+
+                <p className="text-xs text-[#8B7A6C]">
                   Low / Out of Stock
                 </p>
 
-                <p className="mt-2 text-2xl font-semibold text-amber-600">
+                <p className="mt-2 text-2xl font-semibold text-[#8B7A6C]">
                   {
                     products.filter(
                       (p) =>
@@ -263,25 +284,34 @@ export default function ProductsPage() {
                     ).length
                   }
                 </p>
+
               </div>
 
             </div>
 
             {/* SEARCH + FILTER */}
-            <div className="mb-5 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 md:flex-row">
+            <div className="mb-5 flex flex-col gap-3 rounded-xl border border-[#8B7A6C]/20 bg-white p-4 shadow-sm md:flex-row">
 
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-gray-400 focus:bg-white"
-              />
+              <div className="relative flex-1">
+
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8B7A6C]">
+                  ⌕
+                </span>
+
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-lg border border-[#8B7A6C]/25 bg-[#F8F6F2] px-4 py-3 pl-10 text-sm outline-none transition focus:border-[#A06E31] focus:bg-white"
+                />
+
+              </div>
 
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm outline-none"
+                className="rounded-lg border border-[#8B7A6C]/25 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#A06E31]"
               >
                 <option value="All">All Categories</option>
                 <option value="Women">Women</option>
@@ -292,49 +322,52 @@ export default function ProductsPage() {
             </div>
 
             {/* PRODUCT TABLE */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-[#8B7A6C]/20 bg-white shadow-sm">
 
               <div className="overflow-x-auto">
 
                 <table className="w-full min-w-[850px] text-left">
 
-                  <thead className="border-b border-gray-200 bg-gray-50">
+                  <thead className="border-b border-[#8B7A6C]/20 bg-[#F8F6F2]">
 
                     <tr>
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+
+                      <th className="px-5 py-4 text-[10px] font-semibold uppercase tracking-wider text-[#8B7A6C]">
                         Product
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] font-semibold uppercase tracking-wider text-[#8B7A6C]">
                         Category
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] font-semibold uppercase tracking-wider text-[#8B7A6C]">
                         Price
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] font-semibold uppercase tracking-wider text-[#8B7A6C]">
                         Stock
                       </th>
 
-                      <th className="px-5 py-4 text-[10px] uppercase tracking-wider text-gray-400">
+                      <th className="px-5 py-4 text-[10px] font-semibold uppercase tracking-wider text-[#8B7A6C]">
                         Status
                       </th>
 
                       <th className="px-5 py-4"></th>
+
                     </tr>
 
                   </thead>
 
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[#8B7A6C]/10">
 
                     {filteredProducts.map((product) => (
 
                       <tr
                         key={product.name}
-                        className="transition hover:bg-gray-50"
+                        className="transition hover:bg-[#F8F6F2]"
                       >
 
+                        {/* PRODUCT */}
                         <td className="px-5 py-4">
 
                           <div className="flex items-center gap-4">
@@ -346,40 +379,46 @@ export default function ProductsPage() {
                             />
 
                             <div>
+
                               <p className="text-sm font-semibold">
                                 {product.name}
                               </p>
 
-                              <p className="mt-1 text-xs text-gray-400">
+                              <p className="mt-1 text-xs text-[#8B7A6C]">
                                 WEARWELL Collection
                               </p>
+
                             </div>
 
                           </div>
 
                         </td>
 
-                        <td className="px-5 py-4 text-sm text-gray-600">
+                        {/* CATEGORY */}
+                        <td className="px-5 py-4 text-sm text-[#8B7A6C]">
                           {product.category}
                         </td>
 
+                        {/* PRICE */}
                         <td className="px-5 py-4 text-sm font-semibold">
                           {product.price}
                         </td>
 
+                        {/* STOCK */}
                         <td className="px-5 py-4 text-sm">
                           {product.stock}
                         </td>
 
+                        {/* STATUS */}
                         <td className="px-5 py-4">
 
                           <span
                             className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ${
                               product.status === "Active"
-                                ? "bg-emerald-50 text-emerald-700"
+                                ? "bg-[#eee6dc] text-[#6f4b2d]"
                                 : product.status === "Low Stock"
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-red-50 text-red-700"
+                                ? "bg-[#D5C1A9] text-[#5d4634]"
+                                : "bg-[#f1dfdc] text-[#8a3f35]"
                             }`}
                           >
                             {product.status}
@@ -387,10 +426,13 @@ export default function ProductsPage() {
 
                         </td>
 
+                        {/* ACTION */}
                         <td className="px-5 py-4">
-                          <button className="rounded-lg px-3 py-2 text-lg text-gray-400 hover:bg-gray-100 hover:text-black">
+
+                          <button className="rounded-lg px-3 py-2 text-lg text-[#8B7A6C] transition hover:bg-[#D5C1A9]/40 hover:text-[#080808]">
                             ⋯
                           </button>
+
                         </td>
 
                       </tr>
@@ -403,16 +445,19 @@ export default function ProductsPage() {
 
               </div>
 
+              {/* EMPTY STATE */}
               {filteredProducts.length === 0 && (
                 <div className="py-20 text-center">
 
-                  <p className="text-3xl">⌕</p>
+                  <p className="text-3xl text-[#8B7A6C]">
+                    ⌕
+                  </p>
 
                   <h3 className="mt-3 font-semibold">
                     No products found
                   </h3>
 
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-[#8B7A6C]">
                     Try another search or category.
                   </p>
 
@@ -422,6 +467,7 @@ export default function ProductsPage() {
             </div>
 
           </div>
+
         </section>
 
       </div>
