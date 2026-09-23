@@ -3,90 +3,6 @@
 import Link from "next/link";
 
 /* =========================
-   DATA
-========================= */
-
-const stats = [
-  {
-    title: "Total Revenue",
-    value: "Rs. 245,890",
-    change: "+12.5%",
-    icon: "💰",
-  },
-  {
-    title: "Total Orders",
-    value: "128",
-    change: "+8.2%",
-    icon: "🛍️",
-  },
-  {
-    title: "Customers",
-    value: "86",
-    change: "+14.8%",
-    icon: "👥",
-  },
-  {
-    title: "Products",
-    value: "42",
-    change: "+5.4%",
-    icon: "📦",
-  },
-];
-
-const recentOrders = [
-  {
-    id: "#1001",
-    customer: "Ayesha Khan",
-    product: "Essential Oversized Tee",
-    amount: "Rs. 3,499",
-    status: "Paid",
-  },
-  {
-    id: "#1002",
-    customer: "Sara Ahmed",
-    product: "Urban Denim Jacket",
-    amount: "Rs. 7,999",
-    status: "Pending",
-  },
-  {
-    id: "#1003",
-    customer: "Ali Raza",
-    product: "Minimal Shoulder Bag",
-    amount: "Rs. 5,499",
-    status: "Shipped",
-  },
-  {
-    id: "#1004",
-    customer: "Hina Malik",
-    product: "Premium Basic Hoodie",
-    amount: "Rs. 5,999",
-    status: "Paid",
-  },
-  {
-    id: "#1005",
-    customer: "Hamza Ali",
-    product: "Modern Cargo Pants",
-    amount: "Rs. 6,999",
-    status: "Processing",
-  },
-];
-
-const salesData = [
-  { month: "Jan", value: 45 },
-  { month: "Feb", value: 58 },
-  { month: "Mar", value: 52 },
-  { month: "Apr", value: 70 },
-  { month: "May", value: 64 },
-  { month: "Jun", value: 82 },
-  { month: "Jul", value: 76 },
-  { month: "Aug", value: 94 },
-  { month: "Sep", value: 88 },
-  { month: "Oct", value: 100 },
-  { month: "Nov", value: 91 },
-  { month: "Dec", value: 108 },
-];
-
-/* =========================
    ICONS
 ========================= */
 
@@ -238,12 +154,132 @@ function MenuIcon() {
   );
 }
 
+function RevenueIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <line x1="2" y1="10" x2="22" y2="10" />
+      <circle cx="12" cy="15" r="2" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-[#A06E31]">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+function ClipboardIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+    </svg>
+  );
+}
+
+/* =========================
+   DATA
+========================= */
+
+const stats = [
+  {
+    title: "Total Revenue (COD)",
+    value: "Rs. 245,890",
+    change: "+12.5%",
+    icon: <RevenueIcon />,
+  },
+  {
+    title: "Total Orders",
+    value: "128",
+    change: "+8.2%",
+    icon: <OrdersIcon />,
+  },
+  {
+    title: "Customers",
+    value: "86",
+    change: "+14.8%",
+    icon: <UsersIcon />,
+  },
+  {
+    title: "Products",
+    value: "42",
+    change: "+5.4%",
+    icon: <ProductsIcon />,
+  },
+];
+
+const recentOrders = [
+  {
+    id: "#1001",
+    customer: "Ayesha Khan (Lahore)",
+    product: "Essential Oversized Tee (M)",
+    amount: "Rs. 3,499",
+    status: "Delivered",
+  },
+  {
+    id: "#1002",
+    customer: "Sara Ahmed (Karachi)",
+    product: "Urban Denim Jacket (L)",
+    amount: "Rs. 7,999",
+    status: "Shipped",
+  },
+  {
+    id: "#1003",
+    customer: "Ali Raza (Islamabad)",
+    product: "Minimal Shoulder Bag",
+    amount: "Rs. 5,499",
+    status: "Confirmed",
+  },
+  {
+    id: "#1004",
+    customer: "Hina Malik (Rawalpindi)",
+    product: "Premium Basic Hoodie (S)",
+    amount: "Rs. 5,999",
+    status: "Delivered",
+  },
+  {
+    id: "#1005",
+    customer: "Hamza Ali (Faisalabad)",
+    product: "Modern Cargo Pants (32)",
+    amount: "Rs. 6,999",
+    status: "Pending",
+  },
+];
+
+const salesData = [
+  { month: "Jan", value: 45 },
+  { month: "Feb", value: 58 },
+  { month: "Mar", value: 52 },
+  { month: "Apr", value: 70 },
+  { month: "May", value: 64 },
+  { month: "Jun", value: 82 },
+  { month: "Jul", value: 76 },
+  { month: "Aug", value: 94 },
+  { month: "Sep", value: 88 },
+  { month: "Oct", value: 100 },
+  { month: "Nov", value: 91 },
+  { month: "Dec", value: 108 },
+];
+
 /* =========================
    STATUS STYLE
 ========================= */
 
 function statusStyle(status: string) {
-  if (status === "Paid") {
+  if (status === "Delivered" || status === "Paid") {
     return "bg-green-50 text-green-700 border-green-200";
   }
 
@@ -253,6 +289,10 @@ function statusStyle(status: string) {
 
   if (status === "Shipped") {
     return "bg-blue-50 text-blue-700 border-blue-200";
+  }
+
+  if (status === "Confirmed" || status === "Processing") {
+    return "bg-amber-50 text-amber-700 border-amber-200";
   }
 
   return "bg-orange-50 text-orange-700 border-orange-200";
@@ -268,7 +308,7 @@ export default function AdminDashboard() {
 
       {/* ================= SIDEBAR ================= */}
 
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-[#111111] text-white lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-[#111111] text-white lg:flex border-r border-white/10">
 
         {/* Logo */}
         <div className="flex h-20 items-center border-b border-white/10 px-7">
@@ -376,7 +416,7 @@ export default function AdminDashboard() {
                 Admin Panel
               </p>
 
-              <h2 className="mt-1 text-lg font-semibold sm:text-xl">
+              <h2 className="text-lg font-semibold tracking-tight text-[#080808] sm:text-xl">
                 Dashboard
               </h2>
             </div>
@@ -406,7 +446,7 @@ export default function AdminDashboard() {
         <div className="px-5 py-7 sm:px-8 lg:px-10">
 
           {/* WELCOME BANNER */}
-          <section className="relative overflow-hidden rounded-3xl bg-[#D5C1A9] p-6 sm:p-8 lg:p-10">
+          <section className="relative overflow-hidden rounded-3xl bg-[#D5C1A9] p-6 sm:p-8 lg:p-10 border border-black/5">
 
             <div className="relative z-10 max-w-2xl">
 
@@ -419,7 +459,7 @@ export default function AdminDashboard() {
               </h1>
 
               <p className="mt-4 max-w-xl text-sm leading-6 text-black/65 sm:text-base">
-                Keep track of your orders, customers, products and sales
+                Keep track of your orders, customers, products and cash on delivery sales
                 from one simple dashboard.
               </p>
 
@@ -462,7 +502,7 @@ export default function AdminDashboard() {
                     </p>
                   </div>
 
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F8F6F2] text-xl transition-transform duration-300 group-hover:scale-110">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F8F6F2] text-stone-800 transition-transform duration-300 group-hover:scale-110">
                     {stat.icon}
                   </div>
 
@@ -487,7 +527,7 @@ export default function AdminDashboard() {
                   </p>
 
                   <h2 className="mt-1 text-xl font-semibold">
-                    Monthly Sales
+                    Monthly Sales (PKR)
                   </h2>
                 </div>
 
@@ -514,7 +554,7 @@ export default function AdminDashboard() {
                         }}
                       />
 
-                      <span className="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[10px] text-white group-hover:block">
+                      <span className="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[10px] text-white group-hover:block whitespace-nowrap">
                         {item.value}k
                       </span>
 
@@ -539,14 +579,14 @@ export default function AdminDashboard() {
               </p>
 
               <h2 className="mt-1 text-xl font-semibold">
-                Order Status
+                Order Status Breakdown
               </h2>
 
               <div className="mt-7 space-y-6">
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Completed</span>
+                    <span>Delivered & Paid (COD)</span>
                     <span className="font-medium">68%</span>
                   </div>
 
@@ -557,18 +597,18 @@ export default function AdminDashboard() {
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Processing</span>
+                    <span>Shipped (In Transit)</span>
                     <span className="font-medium">18%</span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-black/5">
-                    <div className="h-full w-[18%] rounded-full bg-orange-500" />
+                    <div className="h-full w-[18%] rounded-full bg-blue-600" />
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Pending</span>
+                    <span>Pending Verification</span>
                     <span className="font-medium">9%</span>
                   </div>
 
@@ -579,7 +619,7 @@ export default function AdminDashboard() {
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
-                    <span>Cancelled</span>
+                    <span>Cancelled / Returned</span>
                     <span className="font-medium">5%</span>
                   </div>
 
@@ -595,7 +635,7 @@ export default function AdminDashboard() {
           </section>
 
           {/* RECENT ORDERS */}
-          <section className="mt-7 rounded-2xl border border-black/5 bg-white shadow-sm">
+          <section className="mt-7 rounded-2xl border border-black/5 bg-white shadow-sm overflow-hidden">
 
             <div className="flex flex-col gap-3 border-b border-black/5 p-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -613,7 +653,7 @@ export default function AdminDashboard() {
                 href="/admin/orders"
                 className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-50"
               >
-                View all
+                View all orders
               </Link>
 
             </div>
@@ -638,7 +678,7 @@ export default function AdminDashboard() {
                     </th>
 
                     <th className="px-6 py-4 font-medium">
-                      Amount
+                      Amount (COD)
                     </th>
 
                     <th className="px-6 py-4 font-medium">
@@ -656,7 +696,9 @@ export default function AdminDashboard() {
                     >
 
                       <td className="px-6 py-5 text-sm font-semibold">
-                        {order.id}
+                        <Link href="/admin/orders" className="hover:underline">
+                          {order.id}
+                        </Link>
                       </td>
 
                       <td className="px-6 py-5 text-sm">
@@ -760,16 +802,16 @@ export default function AdminDashboard() {
                   </h2>
                 </div>
 
-                <span className="text-2xl">
-                  ⭐
-                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8F6F2] border border-black/5">
+                  <StarIcon />
+                </div>
 
               </div>
 
-              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-[#F8F6F2] p-4">
+              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-[#F8F6F2] p-4 border border-black/5">
 
-                <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#D5C1A9] text-3xl">
-                  👕
+                <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-[#D5C1A9] text-[#080808]">
+                  <ProductsIcon />
                 </div>
 
                 <div className="flex-1">
@@ -788,7 +830,7 @@ export default function AdminDashboard() {
                       Rs. 3,499
                     </span>
 
-                    <span className="text-xs text-green-600">
+                    <span className="text-xs text-green-600 font-medium">
                       42 sold
                     </span>
 
@@ -817,8 +859,8 @@ export default function AdminDashboard() {
                   href="/admin/products"
                   className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
                 >
-                  <div className="text-xl">
-                    ➕
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8F6F2] text-[#080808]">
+                    <PlusIcon />
                   </div>
 
                   <p className="mt-3 text-sm font-medium">
@@ -834,8 +876,8 @@ export default function AdminDashboard() {
                   href="/admin/orders"
                   className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
                 >
-                  <div className="text-xl">
-                    📋
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8F6F2] text-[#080808]">
+                    <ClipboardIcon />
                   </div>
 
                   <p className="mt-3 text-sm font-medium">
@@ -851,8 +893,8 @@ export default function AdminDashboard() {
                   href="/admin/customers"
                   className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
                 >
-                  <div className="text-xl">
-                    👤
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8F6F2] text-[#080808]">
+                    <UsersIcon />
                   </div>
 
                   <p className="mt-3 text-sm font-medium">
@@ -868,8 +910,8 @@ export default function AdminDashboard() {
                   href="/admin/settings"
                   className="rounded-xl border border-black/10 p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-[#F8F6F2] hover:shadow-md"
                 >
-                  <div className="text-xl">
-                    ⚙️
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8F6F2] text-[#080808]">
+                    <SettingsIcon />
                   </div>
 
                   <p className="mt-3 text-sm font-medium">
