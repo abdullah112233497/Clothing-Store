@@ -938,13 +938,16 @@ export default function ProductsPage() {
                       return (
                         <tr
                           key={product.id}
-                          onClick={() => openEditModal(product)}
-                          className="hover:bg-[#F8F6F2]/70 cursor-pointer transition"
+                          className="hover:bg-[#F8F6F2]/50 transition"
                         >
                           {/* PRODUCT & VISUAL */}
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="relative h-14 w-12 shrink-0 rounded-lg overflow-hidden border border-[#8B7A6C]/25 bg-[#F8F6F2]">
+                              <div
+                                onClick={() => openEditModal(product)}
+                                className="relative h-14 w-12 shrink-0 rounded-lg overflow-hidden border border-[#8B7A6C]/25 bg-[#F8F6F2] cursor-pointer hover:opacity-90 transition"
+                                title="Click to view/edit media"
+                              >
                                 <img
                                   src={product.image || (product.images && product.images[0]) || "/images/product-1.png"}
                                   alt={product.name}
@@ -961,9 +964,14 @@ export default function ProductsPage() {
                               </div>
 
                               <div className="min-w-0">
-                                <p className="font-semibold text-[#080808] hover:text-[#A06E31] transition">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditModal(product)}
+                                  className="text-left font-semibold text-[#080808] hover:text-[#A06E31] hover:underline transition"
+                                  title="Edit product"
+                                >
                                   {product.name}
-                                </p>
+                                </button>
                                 <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[#8B7A6C]">
                                   <span className="font-mono bg-[#F8F6F2] px-1.5 py-0.5 rounded border border-[#8B7A6C]/20">
                                     {product.sku}
@@ -1140,7 +1148,7 @@ export default function ProductsPage() {
             </div>
 
             {/* STUDIO WORKSPACE (FORM ON LEFT + LIVE PREVIEW ON RIGHT) */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar-thin p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
               {/* LEFT COLUMN: FORM SECTIONS (7 Cols) */}
               <div className="lg:col-span-7 space-y-5">

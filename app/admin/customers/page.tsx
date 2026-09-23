@@ -124,6 +124,15 @@ function PhoneIcon() {
   );
 }
 
+function EyeIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 /* ==========================================================================
    CUSTOMER TYPES & DATA
    ========================================================================== */
@@ -434,12 +443,11 @@ export default function CustomersPage() {
                     {filteredCustomers.map((cust) => (
                       <tr
                         key={cust.id}
-                        onClick={() => setSelectedCustomer(cust)}
-                        className="cursor-pointer transition hover:bg-[#FAF7F2]/80 group"
+                        className="transition hover:bg-[#FAF7F2]/60"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1D1612] text-xs font-bold text-[#D5C1A9] border border-[#A06E31]/30 group-hover:bg-[#A06E31] group-hover:text-white transition">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1D1612] text-xs font-bold text-[#D5C1A9] border border-[#A06E31]/30 transition">
                               {cust.name
                                 .split(" ")
                                 .map((n) => n[0])
@@ -482,13 +490,13 @@ export default function CustomersPage() {
 
                         <td className="px-6 py-4 text-right">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCustomer(cust);
-                            }}
-                            className="rounded-lg border border-[#D5C1A9] bg-white px-3 py-1.5 text-xs font-semibold text-[#1D1612] hover:bg-[#1D1612] hover:text-white transition"
+                            type="button"
+                            onClick={() => setSelectedCustomer(cust)}
+                            className="inline-flex items-center justify-center p-1.5 text-[#8B7A6C] hover:text-[#A06E31] transition-colors focus:outline-none"
+                            title={`View ${cust.name} details`}
+                            aria-label={`View ${cust.name} details`}
                           >
-                            View
+                            <EyeIcon className="h-5 w-5" />
                           </button>
                         </td>
                       </tr>

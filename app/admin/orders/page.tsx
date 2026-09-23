@@ -308,9 +308,9 @@ function DotsIcon() {
   );
 }
 
-function EyeIcon({ className = "w-4 h-4" }: { className?: string }) {
+function EyeIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -345,6 +345,16 @@ function getStatusClass(status: Order["status"]) {
     default:
       return "bg-[#ebe8e4] text-[#6f665f]";
   }
+}
+
+function formatOrderPrice(val: string | number) {
+  if (!val && val !== 0) return "Rs. 0";
+  const str = String(val).trim();
+  const digitsOnly = str.replace(/[^\d]/g, "");
+  if (digitsOnly) {
+    return `Rs. ${Number(digitsOnly).toLocaleString()}`;
+  }
+  return str.startsWith("Rs.") ? str : `Rs. ${str}`;
 }
 
 /* =========================
@@ -711,15 +721,15 @@ export default function OrdersPage() {
                           )}
                         </td>
 
-                        <td className="px-5 py-4">
-                          <p className="text-sm font-bold text-[#080808]">
-                            {order.total}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <p className="text-sm font-bold text-[#1D1612]">
+                            {formatOrderPrice(order.total)}
                           </p>
                           <span
-                            className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold border ${
+                            className={`inline-block mt-0.5 rounded-full px-2 py-0.5 text-[9px] font-semibold border ${
                               order.paymentStatus === "Collected"
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-stone-100 text-stone-600 border-stone-200"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border-amber-200"
                             }`}
                           >
                             COD: {order.paymentStatus}
@@ -738,21 +748,20 @@ export default function OrdersPage() {
 
                         </td>
 
-                        <td className="px-5 py-4 text-right">
-
+                        <td className="px-6 py-4 text-right">
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedOrder(order);
                               setCourierName(order.courier !== "Unassigned" ? order.courier : "TCS Express");
                               setTrackingNumberInput(order.trackingNumber || "");
                             }}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5C1A9]/70 bg-white px-3 py-1.5 text-xs font-semibold text-[#080808] shadow-sm transition hover:border-[#A06E31] hover:bg-[#FAF7F2] hover:text-[#A06E31]"
-                            title="View Order Details"
+                            className="inline-flex items-center justify-center p-1.5 text-[#8B7A6C] hover:text-[#A06E31] transition-colors focus:outline-none"
+                            title={`View order ${order.id} details`}
+                            aria-label={`View order ${order.id} details`}
                           >
-                            <EyeIcon className="h-4 w-4 text-[#A06E31]" />
-                            <span>View</span>
+                            <EyeIcon className="h-5 w-5" />
                           </button>
-
                         </td>
 
                       </tr>
@@ -1026,7 +1035,7 @@ export default function OrdersPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="font-bold text-sm text-[#080808]">{item.price}</p>
+                        <p className="font-bold text-sm text-[#1D1612]">{formatOrderPrice(item.price)}</p>
                         <p className="text-[11px] text-[#8B7A6C]">Qty: {item.quantity}</p>
                       </div>
                     </div>
@@ -1061,8 +1070,8 @@ export default function OrdersPage() {
                 <span className="text-[10px] text-[#8B7A6C] block uppercase tracking-wider">
                   Net Amount
                 </span>
-                <span className="text-2xl font-extrabold tracking-tight text-[#080808]">
-                  {selectedOrder.total}
+                <span className="text-2xl font-extrabold tracking-tight text-[#1D1612]">
+                  {formatOrderPrice(selectedOrder.total)}
                 </span>
               </div>
             </div>
