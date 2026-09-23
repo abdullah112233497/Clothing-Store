@@ -804,7 +804,7 @@ export default function OrdersPage() {
       {/* ORDER DETAILS & DELIVERY MODAL */}
       {selectedOrder && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/65 p-3 sm:p-5 backdrop-blur-sm overscroll-contain overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/70 p-3 sm:p-5 backdrop-blur-md overscroll-contain overflow-y-auto animate-fade-in"
           onClick={() => setSelectedOrder(null)}
         >
 

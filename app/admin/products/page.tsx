@@ -508,13 +508,16 @@ export default function ProductsPage() {
   const [newColorName, setNewColorName] = useState("");
   const [newColorHex, setNewColorHex] = useState("#8B5A2B");
 
-  // Prevent background scrolling when modal is open
+  // Prevent background scrolling and interaction when modal is open
   useEffect(() => {
     if (modalOpen) {
-      const originalOverflow = document.body.style.overflow;
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = originalOverflow || "unset";
+        document.body.style.overflow = originalBodyOverflow || "unset";
+        document.documentElement.style.overflow = originalHtmlOverflow || "unset";
       };
     }
   }, [modalOpen]);
@@ -783,7 +786,10 @@ export default function ProductsPage() {
       <AdminSidebar currentTab="products" />
 
       {/* MAIN BODY */}
-      <section className="lg:ml-64">
+      <section
+        className={`lg:ml-64 ${modalOpen ? "pointer-events-none select-none" : ""}`}
+        aria-hidden={modalOpen}
+      >
         {/* TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -1088,11 +1094,11 @@ export default function ProductsPage() {
           ========================================================================== */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/75 p-3 sm:p-5 backdrop-blur-sm overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/70 p-3 sm:p-5 backdrop-blur-md overscroll-contain overflow-y-auto animate-fade-in"
           onClick={() => setModalOpen(false)}
         >
           <div
-            className="w-full max-w-5xl my-4 rounded-2xl bg-white shadow-2xl border border-[#8B7A6C]/20 overflow-hidden text-[#080808] flex flex-col max-h-[92vh]"
+            className="w-full max-w-5xl my-4 max-h-[92vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-[#D5C1A9]/60 text-[#080808] flex flex-col transition-all"
             onClick={(e) => e.stopPropagation()}
           >
             {/* HIDDEN NATIVE FILE INPUT FOR LOCAL IMAGES */}
@@ -1106,29 +1112,31 @@ export default function ProductsPage() {
             />
 
             {/* MODAL HEADER */}
-            <div className="flex items-center justify-between border-b border-[#8B7A6C]/15 px-6 py-4 bg-[#F8F6F2]">
+            <div className="sticky top-0 z-20 flex items-center justify-between border-b border-[#D5C1A9]/60 px-6 py-4 bg-white shadow-xs">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded bg-[#A06E31] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#A06E31]">
+                  Product Atelier & Catalog Studio
+                </p>
+                <div className="flex items-center gap-2.5 mt-1">
+                  <h3 className="text-xl font-bold tracking-tight text-[#1D1612]">
+                    {isNewProduct ? "Create New Product" : formName || "Edit Product"}
+                  </h3>
+                  <span className="rounded-full bg-[#FAF7F2] border border-[#D5C1A9]/70 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#A06E31]">
                     {isNewProduct ? "Create Mode" : "Edit Mode"}
                   </span>
-                  <p className="text-xs font-mono text-[#8B7A6C]">
-                    SKU: {formSku || "Auto-Generated"}
-                  </p>
+                  <span className="text-xs font-mono text-[#8B7A6C] hidden sm:inline">
+                    · SKU: {formSku || "Auto-Generated"}
+                  </span>
                 </div>
-                <h3 className="text-lg font-bold text-[#080808] mt-0.5">
-                  {isNewProduct ? "Create New Product" : formName || "Edit Product"}
-                </h3>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setModalOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#8B7A6C] hover:text-black transition border border-[#8B7A6C]/20"
-                >
-                  <CloseIcon />
-                </button>
-              </div>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FAF7F2] text-[#8B7A6C] border border-[#D5C1A9]/40 transition hover:bg-[#D5C1A9]/50 hover:text-[#080808]"
+                title="Close studio"
+              >
+                <CloseIcon />
+              </button>
             </div>
 
             {/* STUDIO WORKSPACE (FORM ON LEFT + LIVE PREVIEW ON RIGHT) */}
@@ -1788,41 +1796,41 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                {/* MODAL ACTION BAR */}
-                <div className="mt-6 pt-4 border-t border-[#8B7A6C]/20 flex items-center justify-between gap-3">
-                  {!isNewProduct && editingId ? (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteProduct(editingId)}
-                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 flex items-center gap-1.5"
-                    >
-                      <TrashIcon />
-                      <span>Delete Product</span>
-                    </button>
-                  ) : (
-                    <div />
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setModalOpen(false)}
-                      className="rounded-lg border border-[#8B7A6C]/30 bg-white px-4 py-2 text-xs font-semibold text-[#5f554e] hover:bg-[#F8F6F2]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveProduct}
-                      className="rounded-lg bg-[#1D1612] px-5 py-2 text-xs font-bold text-white hover:bg-[#A06E31] transition shadow-xs"
-                    >
-                      {isNewProduct ? "Create & Publish Product" : "Save Changes"}
-                    </button>
-                  </div>
-                </div>
-
               </div>
 
+            </div>
+
+            {/* STICKY BOTTOM MODAL ACTION BAR */}
+            <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 border-t border-[#D5C1A9]/60 bg-white px-6 py-4 shadow-xs">
+              {!isNewProduct && editingId ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteProduct(editingId)}
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 flex items-center gap-1.5 transition"
+                >
+                  <TrashIcon />
+                  <span>Delete Product</span>
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="rounded-xl border border-[#D5C1A9]/70 bg-white px-5 py-2 text-xs font-semibold text-[#8B7A6C] hover:bg-[#FAF7F2] hover:text-[#1D1612] transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveProduct}
+                  className="rounded-xl bg-[#1D1612] px-6 py-2 text-xs font-bold text-white hover:bg-[#A06E31] transition shadow-xs"
+                >
+                  {isNewProduct ? "Create & Publish Product" : "Save Changes"}
+                </button>
+              </div>
             </div>
 
           </div>

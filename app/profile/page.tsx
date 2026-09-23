@@ -407,10 +407,15 @@ export default function ProfilePage() {
     const savedAddrs = localStorage.getItem("savedAddresses");
     if (savedAddrs) {
       try {
-        setAddresses(JSON.parse(savedAddrs));
+        const parsed = JSON.parse(savedAddrs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAddresses(parsed);
+        }
       } catch (err) {
         console.error("Failed to parse savedAddresses", err);
       }
+    } else {
+      localStorage.setItem("savedAddresses", JSON.stringify(addresses));
     }
 
     // Load & sync wishlist from PostgreSQL database
@@ -630,13 +635,15 @@ export default function ProfilePage() {
     };
 
     let updatedList = [...addresses];
-    if (created.isDefault) {
+    if (created.isDefault || updatedList.length === 0) {
       updatedList = updatedList.map((a) => ({ ...a, isDefault: false }));
+      created.isDefault = true;
     }
     updatedList.push(created);
 
     setAddresses(updatedList);
     localStorage.setItem("savedAddresses", JSON.stringify(updatedList));
+    window.dispatchEvent(new Event("addressesUpdated"));
     setShowAddressModal(false);
     setNewAddress({
       label: "Home",
@@ -648,14 +655,18 @@ export default function ProfilePage() {
       postalCode: "",
       country: "Pakistan",
     });
-    showToast("New address added successfully!");
+    showToast("New address added and saved to profile!");
   };
 
   const handleDeleteAddress = (id: string) => {
     const filtered = addresses.filter((a) => a.id !== id);
+    if (filtered.length > 0 && !filtered.some((a) => a.isDefault)) {
+      filtered[0].isDefault = true;
+    }
     setAddresses(filtered);
     localStorage.setItem("savedAddresses", JSON.stringify(filtered));
-    showToast("Address removed.");
+    window.dispatchEvent(new Event("addressesUpdated"));
+    showToast("Address removed from profile.");
   };
 
   const handleSetDefaultAddress = (id: string) => {
@@ -665,7 +676,9 @@ export default function ProfilePage() {
     }));
     setAddresses(updated);
     localStorage.setItem("savedAddresses", JSON.stringify(updated));
-    showToast("Default address updated!");
+    window.dispatchEvent(new Event("addressesUpdated"));
+    const selected = updated.find((a) => a.id === id);
+    showToast(`"${selected?.label || "Address"}" set as default address for checkout!`);
   };
 
   const handleAddToCart = (item: WishlistItem) => {
@@ -1702,20 +1715,28 @@ export default function ProfilePage() {
                       {addresses.map((addr) => (
                         <div
                           key={addr.id}
-                          className={`flex flex-col justify-between rounded-2xl border p-6 transition ${
+                          onClick={() => handleSetDefaultAddress(addr.id)}
+                          className={`group flex flex-col justify-between rounded-2xl border p-6 transition cursor-pointer select-none ${
                             addr.isDefault
-                              ? "border-black bg-white shadow-sm"
-                              : "border-gray-200 bg-white"
+                              ? "border-black bg-white ring-2 ring-black shadow-md"
+                              : "border-gray-200 bg-white hover:border-black/60 hover:shadow-xs"
                           }`}
+                          title={addr.isDefault ? "Currently selected for checkout" : "Click to select this address for checkout"}
                         >
                           <div>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-700">
                                 {addr.label}
                               </span>
-                              {addr.isDefault && (
-                                <span className="rounded-full bg-black px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white">
-                                  Default
+
+                              {addr.isDefault ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-black px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white shadow-xs">
+                                  <CheckIcon />
+                                  <span>In Use (Default)</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-semibold text-gray-400 group-hover:text-black transition">
+                                  Click to use this
                                 </span>
                               )}
                             </div>
@@ -1733,29 +1754,56 @@ export default function ProfilePage() {
                           </div>
 
                           <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-                            {!addr.isDefault ? (
+                            {addr.isDefault ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#A06E31]">
+                                <span className="h-2 w-2 rounded-full bg-[#A06E31] animate-pulse" />
+                                <span>Active for Checkout</span>
+                              </span>
+                            ) : (
                               <button
-                                onClick={() => handleSetDefaultAddress(addr.id)}
-                                className="text-xs font-semibold text-gray-600 hover:text-black"
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSetDefaultAddress(addr.id);
+                                }}
+                                className="text-xs font-semibold text-gray-600 hover:text-black transition underline underline-offset-2"
                               >
                                 Make Default
                               </button>
-                            ) : (
-                              <span className="text-[11px] text-gray-400">
-                                Default Address
-                              </span>
                             )}
 
                             <button
-                              onClick={() => handleDeleteAddress(addr.id)}
-                              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                              title="Delete"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAddress(addr.id);
+                              }}
+                              className="rounded-lg p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                              title="Delete address"
                             >
                               <TrashIcon />
                             </button>
                           </div>
                         </div>
                       ))}
+
+                      {addresses.length === 0 && (
+                        <div className="col-span-full rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-3">
+                            <MapPinIcon />
+                          </div>
+                          <h3 className="text-sm font-bold text-gray-900">No saved addresses</h3>
+                          <p className="text-xs text-gray-500 mt-1 mb-4">Add your shipping addresses for seamless 1-click checkout.</p>
+                          <button
+                            type="button"
+                            onClick={() => setShowAddressModal(true)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-neutral-800"
+                          >
+                            <PlusIcon />
+                            <span>Add First Address</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </section>
                 )}

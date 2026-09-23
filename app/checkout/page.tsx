@@ -15,11 +15,27 @@ type CartItem = {
   image: string;
 };
 
+type SavedAddress = {
+  id: string;
+  label: "Home" | "Office" | "Other";
+  isDefault: boolean;
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+
+  // Saved Addresses from User Profile
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
 
   // Customer Contact & Delivery State
   const [name, setName] = useState("");
@@ -51,12 +67,51 @@ export default function CheckoutPage() {
         if (p.email) setEmail(p.email);
         if (p.phone) setPhone(p.phone);
       }
+
+      // Load Saved Addresses from Profile
+      const loadAddresses = () => {
+        const rawAddrs = localStorage.getItem("savedAddresses");
+        if (rawAddrs) {
+          try {
+            const list: SavedAddress[] = JSON.parse(rawAddrs);
+            if (Array.isArray(list) && list.length > 0) {
+              setSavedAddresses(list);
+              const active = list.find((a) => a.isDefault) || list[0];
+              setSelectedAddressId(active.id);
+              if (active.fullName) setName(active.fullName);
+              if (active.phone) setPhone(active.phone);
+              if (active.street) setAddress(active.street);
+              if (active.city) setCity(active.city);
+              if (active.postalCode) setPostalCode(active.postalCode);
+            }
+          } catch (err) {
+            console.error("Failed to parse saved addresses in checkout", err);
+          }
+        }
+      };
+
+      loadAddresses();
+      window.addEventListener("addressesUpdated", loadAddresses);
+      window.addEventListener("storage", loadAddresses);
+      return () => {
+        window.removeEventListener("addressesUpdated", loadAddresses);
+        window.removeEventListener("storage", loadAddresses);
+      };
     } catch (e) {
       console.error("Failed to load checkout state", e);
     } finally {
       setLoaded(true);
     }
   }, []);
+
+  const handleSelectSavedAddress = (addr: SavedAddress) => {
+    setSelectedAddressId(addr.id);
+    if (addr.fullName) setName(addr.fullName);
+    if (addr.phone) setPhone(addr.phone);
+    setAddress(addr.street);
+    setCity(addr.city);
+    setPostalCode(addr.postalCode || "");
+  };
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * (item.quantity || 1),
@@ -248,19 +303,91 @@ export default function CheckoutPage() {
 
               {/* Delivery Address Card */}
               <section className="rounded-2xl border border-black/5 bg-white p-6 sm:p-8 shadow-sm">
-                <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F6F2] text-gray-800 font-bold text-sm">
-                    2
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F6F2] text-gray-800 font-bold text-sm">
+                      2
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-gray-900">
+                        Shipping Address
+                      </h2>
+                      <p className="text-xs text-gray-500">
+                        Where should we deliver your WEARWELL package?
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold text-gray-900">
-                      Shipping Address
-                    </h2>
-                    <p className="text-xs text-gray-500">
-                      Where should we deliver your WEARWELL package?
-                    </p>
-                  </div>
+
+                  <Link
+                    href="/profile?tab=addresses"
+                    className="text-xs font-semibold text-[#A06E31] hover:underline"
+                  >
+                    Manage in Profile →
+                  </Link>
                 </div>
+
+                {/* SAVED ADDRESSES SELECTOR */}
+                {savedAddresses.length > 0 && (
+                  <div className="mt-6 border-b border-gray-100 pb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A06E31]">
+                        Select from your Profile Addresses
+                      </p>
+                      <span className="text-[11px] text-gray-400">
+                        {savedAddresses.length} saved
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {savedAddresses.map((addr) => {
+                        const isSelected = selectedAddressId === addr.id;
+                        return (
+                          <button
+                            key={addr.id}
+                            type="button"
+                            onClick={() => handleSelectSavedAddress(addr)}
+                            className={`group flex flex-col justify-between rounded-xl border p-4 text-left transition cursor-pointer ${
+                              isSelected
+                                ? "border-black bg-[#FAF7F2] ring-2 ring-black shadow-xs"
+                                : "border-gray-200 bg-white hover:border-black/50"
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-gray-700">
+                                  {addr.label}
+                                </span>
+                                {addr.isDefault && (
+                                  <span className="rounded-full bg-black px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-white">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-2 text-xs font-bold text-gray-900">
+                                {addr.fullName}
+                              </p>
+                              <p className="text-[11px] text-gray-500">{addr.phone}</p>
+                              <p className="mt-1.5 text-xs text-gray-700 line-clamp-2">
+                                {addr.street}, {addr.city} {addr.postalCode}
+                              </p>
+                            </div>
+                            <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2 text-[11px]">
+                              {isSelected ? (
+                                <span className="font-bold text-[#A06E31] flex items-center gap-1">
+                                  <span>✓ Active for this Order</span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 group-hover:text-black">
+                                  Click to use
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
