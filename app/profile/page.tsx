@@ -337,17 +337,33 @@ export default function ProfilePage() {
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Disable background scrolling when any modal is active
+  const isAnyModalOpen = Boolean(selectedOrder || showAddressModal || showLogoutModal);
+
+  // Disable background scrolling & interaction when any modal is active
   useEffect(() => {
-    if (selectedOrder || showAddressModal || showLogoutModal) {
+    if (isAnyModalOpen) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setSelectedOrder(null);
+          setShowAddressModal(false);
+          setShowLogoutModal(false);
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyDown);
+      };
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [selectedOrder, showAddressModal, showLogoutModal]);
+  }, [isAnyModalOpen]);
 
   // ================= LOAD STORED DATA & AUTH =================
   useEffect(() => {
@@ -878,9 +894,16 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#080808] overflow-x-hidden w-full max-w-full">
-      {/* Header */}
-      <Header />
+    <div className="min-h-screen bg-white text-[#080808] overflow-x-hidden w-full max-w-full relative">
+      {/* Background Page Content - Disabled, inert and visually dimmed when any modal is open */}
+      <div
+        className={`transition-[filter,opacity] duration-200 ${
+          isAnyModalOpen ? "pointer-events-none select-none filter blur-[1px] opacity-60" : ""
+        }`}
+        aria-hidden={isAnyModalOpen ? true : undefined}
+      >
+        {/* Header */}
+        <Header />
 
       {/* Sync URL ?tab= parameter to active tab (reacts to client-side navigation) */}
       <Suspense fallback={null}>
@@ -1900,7 +1923,21 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-      </main>
+        </main>
+
+        {/* ================= UNIFIED LUXURY FOOTER ================= */}
+        <Footer />
+      </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-black px-5 py-3.5 text-xs font-medium tracking-wide text-white shadow-2xl">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black border border-white/20 text-white">
+            <CheckIcon />
+          </span>
+          {toastMessage}
+        </div>
+      )}
 
       {/* ================= ORDER DETAILS MODAL ================= */}
       {selectedOrder && (
@@ -1908,7 +1945,7 @@ export default function ProfilePage() {
           onClick={(e) => {
             if (e.target === e.currentTarget) setSelectedOrder(null);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto"
         >
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center justify-between border-b pb-4">
@@ -2032,9 +2069,9 @@ export default function ProfilePage() {
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowAddressModal(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto"
         >
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 sm:p-8 shadow-2xl">
             <div className="flex items-center justify-between border-b pb-4">
               <h3 className="text-lg font-bold text-gray-900">
                 Add New Shipping Address
@@ -2184,9 +2221,9 @@ export default function ProfilePage() {
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowLogoutModal(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto"
         >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 text-center shadow-2xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 sm:p-8 text-center shadow-2xl">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600">
               <LogOutIcon />
             </div>
@@ -2217,9 +2254,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-      {/* ================= UNIFIED LUXURY FOOTER ================= */}
-      <Footer />
     </div>
   );
 }

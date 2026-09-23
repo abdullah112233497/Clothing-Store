@@ -116,6 +116,14 @@ function MenuIcon() {
   );
 }
 
+function PhoneIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
 /* ==========================================================================
    CUSTOMER TYPES & DATA
    ========================================================================== */
@@ -254,13 +262,16 @@ export default function CustomersPage() {
     return matchesSearch && matchesTab;
   });
 
-  // Prevent background scrolling when modal is open
+  // Prevent background scrolling and interaction when modal is open
   useEffect(() => {
     if (selectedCustomer) {
-      const orig = document.body.style.overflow;
+      const origBody = document.body.style.overflow;
+      const origHtml = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = orig || "unset";
+        document.body.style.overflow = origBody || "";
+        document.documentElement.style.overflow = origHtml || "";
       };
     }
   }, [selectedCustomer]);
@@ -270,7 +281,7 @@ export default function CustomersPage() {
       <AdminSidebar currentTab="customers" />
 
       {/* MAIN BODY */}
-      <section className="lg:ml-64">
+      <section className={`lg:ml-64 ${selectedCustomer ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedCustomer}>
         {/* TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -489,60 +500,165 @@ export default function CustomersPage() {
           </div>
         </section>
 
-      {/* CUSTOMER MODAL */}
+      {/* CUSTOMER DETAILS MODAL */}
       {selectedCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/70 p-3 sm:p-5 backdrop-blur-md overscroll-contain overflow-y-auto animate-fade-in"
+          onClick={() => setSelectedCustomer(null)}
+        >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setSelectedCustomer(null)}
-          />
-          <div className="relative w-full max-w-md rounded-2xl border border-[#D5C1A9]/60 bg-white p-6 shadow-2xl z-10 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#D5C1A9]/60 pb-4">
+            className="w-full max-w-xl max-h-[92vh] overflow-y-auto custom-scrollbar-thin rounded-2xl bg-white shadow-2xl border border-[#D5C1A9]/60 transition-all flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* MODAL HEADER */}
+            <div className="flex items-center justify-between border-b border-[#D5C1A9]/60 px-6 py-4 sticky top-0 bg-white z-20 shadow-xs">
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#A06E31]">
-                  Customer Details
-                </span>
-                <h3 className="text-xl font-bold text-[#1D1612]">{selectedCustomer.name}</h3>
+                <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#A06E31]">
+                  Customer Dossier & Profile
+                </p>
+                <div className="flex items-center gap-2.5 mt-1">
+                  <h3 className="text-xl font-bold tracking-tight text-[#080808]">
+                    {selectedCustomer.name}
+                  </h3>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                      selectedCustomer.status === "Active"
+                        ? "bg-[#F4EEE7] text-[#694F3D] border-[#D5C1A9]"
+                        : "bg-gray-100 text-gray-600 border-gray-200"
+                    }`}
+                  >
+                    {selectedCustomer.status}
+                  </span>
+                  <span className="text-xs font-mono text-[#8B7A6C] hidden sm:inline">
+                    · {selectedCustomer.id}
+                  </span>
+                </div>
               </div>
+
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="rounded-lg p-1.5 text-[#8B7A6C] hover:bg-[#FAF7F2] hover:text-[#1D1612] transition"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FAF7F2] text-[#8B7A6C] border border-[#D5C1A9]/40 transition hover:bg-[#D5C1A9]/50 hover:text-[#080808]"
+                title="Close modal"
               >
                 <CloseIcon />
               </button>
             </div>
 
-            <div className="space-y-2 text-xs text-[#1D1612]">
-              <div className="flex justify-between py-1 border-b border-[#D5C1A9]/30">
-                <span className="text-[#8B7A6C]">Customer ID:</span>
-                <span className="font-semibold">{selectedCustomer.id}</span>
+            {/* MODAL BODY */}
+            <div className="p-6 space-y-5">
+              {/* CUSTOMER IDENTITY & CONTACT CARD */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-[#FAF7F2]/50 p-4.5">
+                <div className="flex items-center justify-between mb-3.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A06E31]">
+                    Primary Contact
+                  </p>
+                  <a
+                    href={`tel:${selectedCustomer.phone}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#080808] px-3 py-1.5 text-[11px] font-semibold text-white shadow-xs transition hover:bg-[#A06E31]"
+                  >
+                    <PhoneIcon />
+                    <span>Call {selectedCustomer.phone}</span>
+                  </a>
+                </div>
+
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1D1612] text-[#D5C1A9] font-bold text-base border border-[#A06E31]/40 shadow-xs">
+                    {selectedCustomer.name
+                      .split(" ")
+                      .map((word) => word[0])
+                      .join("")}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-base text-[#080808]">
+                      {selectedCustomer.name}
+                    </p>
+                    <p className="text-xs text-[#8B7A6C] mt-0.5">
+                      {selectedCustomer.email}
+                    </p>
+
+                    <div className="mt-2.5 rounded-lg bg-white border border-[#D5C1A9]/40 p-2.5 text-xs text-[#080808]">
+                      <span className="font-semibold text-[#8B7A6C] block text-[10px] uppercase tracking-wider mb-0.5">
+                        Registered Location & Delivery City
+                      </span>
+                      <p className="font-medium leading-relaxed">
+                        {selectedCustomer.city}, Pakistan
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between py-1 border-b border-[#D5C1A9]/30">
-                <span className="text-[#8B7A6C]">Email Address:</span>
-                <span className="font-semibold">{selectedCustomer.email}</span>
+
+              {/* ACCOUNT METRICS GRID */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3.5 shadow-2xs">
+                  <p className="text-[10px] uppercase tracking-wider text-[#8B7A6C] font-semibold">
+                    Orders Placed
+                  </p>
+                  <p className="mt-1.5 text-lg font-bold text-[#080808]">
+                    {selectedCustomer.orders} orders
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-emerald-700 font-medium">Active purchaser</p>
+                </div>
+
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3.5 shadow-2xs">
+                  <p className="text-[10px] uppercase tracking-wider text-[#8B7A6C] font-semibold">
+                    Lifetime Spend
+                  </p>
+                  <p className="mt-1.5 text-lg font-bold text-[#080808]">
+                    {formatPKR(selectedCustomer.totalSpent)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[#8B7A6C]">Settled via COD & Card</p>
+                </div>
+
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3.5 shadow-2xs">
+                  <p className="text-[10px] uppercase tracking-wider text-[#8B7A6C] font-semibold">
+                    Customer ID
+                  </p>
+                  <p className="mt-1.5 font-mono text-xs font-bold text-[#080808]">
+                    {selectedCustomer.id}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[#8B7A6C]">Verified profile</p>
+                </div>
+
+                <div className="rounded-xl border border-[#D5C1A9]/60 bg-white p-3.5 shadow-2xs">
+                  <p className="text-[10px] uppercase tracking-wider text-[#8B7A6C] font-semibold">
+                    Last Order Date
+                  </p>
+                  <p className="mt-1.5 text-xs font-bold text-[#080808]">
+                    {selectedCustomer.lastOrderDate}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[#8B7A6C]">Recent transaction</p>
+                </div>
               </div>
-              <div className="flex justify-between py-1 border-b border-[#D5C1A9]/30">
-                <span className="text-[#8B7A6C]">Phone Number:</span>
-                <span className="font-semibold">{selectedCustomer.phone}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#D5C1A9]/30">
-                <span className="text-[#8B7A6C]">City / Region:</span>
-                <span className="font-semibold">{selectedCustomer.city}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#D5C1A9]/30">
-                <span className="text-[#8B7A6C]">Total Orders:</span>
-                <span className="font-semibold">{selectedCustomer.orders} orders</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-[#D5C1A9]/30">
-                <span className="text-[#8B7A6C]">Lifetime Spent:</span>
-                <span className="font-bold text-[#A06E31]">{formatPKR(selectedCustomer.totalSpent)}</span>
+
+              {/* LOYALTY & REWARDS SUMMARY */}
+              <div className="rounded-xl border border-[#D5C1A9]/60 bg-[#FAF7F2] p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-[#080808]">VIP Shopper Status</p>
+                  <p className="text-[11px] text-[#8B7A6C] mt-0.5">
+                    Eligible for priority dispatch & complimentary shipping across Pakistan.
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#1D1612] px-3 py-1 text-[10px] font-bold text-[#D5C1A9]">
+                  Tier 1
+                </span>
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            {/* MODAL FOOTER */}
+            <div className="px-6 py-4 bg-white border-t border-[#D5C1A9]/60 flex items-center justify-between gap-3 sticky bottom-0 z-20 shadow-xs">
+              <a
+                href={`tel:${selectedCustomer.phone}`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5C1A9] bg-white px-3.5 py-2 text-xs font-semibold text-[#080808] transition hover:bg-[#FAF7F2]"
+              >
+                <PhoneIcon />
+                <span>Call Client</span>
+              </a>
+
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="rounded-xl bg-[#1D1612] px-5 py-2 text-xs font-semibold text-white hover:bg-[#A06E31] transition shadow-xs"
+                className="rounded-lg bg-[#080808] px-5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-[#A06E31]"
               >
                 Close
               </button>

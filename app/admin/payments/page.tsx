@@ -370,13 +370,16 @@ export default function PaymentsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Prevent background scrolling when modal is open
+  // Prevent background scrolling and interaction when modal is open
   useEffect(() => {
     if (selectedPayment) {
-      const orig = document.body.style.overflow;
+      const origBody = document.body.style.overflow;
+      const origHtml = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = orig || "unset";
+        document.body.style.overflow = origBody || "";
+        document.documentElement.style.overflow = origHtml || "";
       };
     }
   }, [selectedPayment]);
@@ -519,7 +522,7 @@ export default function PaymentsPage() {
       {/* ==========================================================================
          MAIN CONTENT AREA
          ========================================================================== */}
-      <section className="lg:ml-64">
+      <section className={`lg:ml-64 ${selectedPayment ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedPayment}>
         {/* STICKY TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
