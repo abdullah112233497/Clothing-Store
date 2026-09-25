@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function AdminProfilePage() {
+export default function Page() {
   const [name, setName] = useState("Admin");
   const [email, setEmail] = useState("admin@outfitters.com");
   const [phone, setPhone] = useState("+92 300 1234567");
@@ -12,11 +12,15 @@ export default function AdminProfilePage() {
     const savedProfile = localStorage.getItem("adminProfile");
 
     if (savedProfile) {
-      const profile = JSON.parse(savedProfile);
+      try {
+        const profile = JSON.parse(savedProfile);
 
-      setName(profile.name || "Admin");
-      setEmail(profile.email || "admin@outfitters.com");
-      setPhone(profile.phone || "+92 300 1234567");
+        setName(profile.name || "Admin");
+        setEmail(profile.email || "admin@outfitters.com");
+        setPhone(profile.phone || "+92 300 1234567");
+      } catch {
+        console.log("Profile data could not be loaded");
+      }
     }
   }, []);
 
@@ -29,6 +33,8 @@ export default function AdminProfilePage() {
 
     localStorage.setItem("adminProfile", JSON.stringify(profile));
 
+    window.dispatchEvent(new Event("adminProfileUpdated"));
+
     setSaved(true);
 
     setTimeout(() => {
@@ -36,11 +42,13 @@ export default function AdminProfilePage() {
     }, 2500);
   };
 
+  const firstLetter =
+    name.trim().charAt(0).toUpperCase() || "A";
+
   return (
     <main className="min-h-screen bg-[#F8F6F2] px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-5xl">
 
-        {/* Header */}
         <div className="mb-8">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#A06E31]">
             Admin Panel
@@ -55,16 +63,13 @@ export default function AdminProfilePage() {
           </p>
         </div>
 
-        {/* Profile Card */}
         <div className="overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
 
-          {/* Profile Header */}
           <div className="border-b border-black/10 px-6 py-8 sm:px-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
 
-              {/* Avatar */}
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-[#1D1612] text-3xl font-semibold text-white">
-                {name.charAt(0).toUpperCase()}
+                {firstLetter}
               </div>
 
               <div>
@@ -80,10 +85,10 @@ export default function AdminProfilePage() {
                   {email}
                 </p>
               </div>
+
             </div>
           </div>
 
-          {/* Form */}
           <div className="px-6 py-8 sm:px-8">
 
             <h3 className="mb-6 text-lg font-semibold text-[#080808]">
@@ -92,7 +97,6 @@ export default function AdminProfilePage() {
 
             <div className="grid gap-6 md:grid-cols-2">
 
-              {/* Name */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Full Name
@@ -102,12 +106,11 @@ export default function AdminProfilePage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2] px-4 py-3 text-sm text-[#080808] outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                  className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2] px-4 py-3 text-sm text-[#080808] outline-none transition focus:border-[#A06E31]"
                   placeholder="Enter your name"
                 />
               </div>
 
-              {/* Email */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Email Address
@@ -117,12 +120,11 @@ export default function AdminProfilePage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2] px-4 py-3 text-sm text-[#080808] outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                  className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2] px-4 py-3 text-sm text-[#080808] outline-none transition focus:border-[#A06E31]"
                   placeholder="Enter your email"
                 />
               </div>
 
-              {/* Phone */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Phone Number
@@ -132,12 +134,11 @@ export default function AdminProfilePage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2] px-4 py-3 text-sm text-[#080808] outline-none transition focus:border-[#A06E31] focus:ring-2 focus:ring-[#A06E31]/10"
+                  className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2] px-4 py-3 text-sm text-[#080808] outline-none transition focus:border-[#A06E31]"
                   placeholder="Enter your phone"
                 />
               </div>
 
-              {/* Role */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Role
@@ -147,13 +148,13 @@ export default function AdminProfilePage() {
                   type="text"
                   value="Administrator"
                   disabled
-                  className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none"
+                  className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-500"
                 />
               </div>
+
             </div>
 
-            {/* Save Area */}
-            <div className="mt-8 flex flex-col items-end gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-8 flex items-center justify-end gap-4">
 
               {saved && (
                 <p className="text-sm font-medium text-green-600">
@@ -164,14 +165,16 @@ export default function AdminProfilePage() {
               <button
                 type="button"
                 onClick={handleSave}
-                className="rounded-xl bg-[#1D1612] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#A06E31] active:scale-[0.98]"
+                className="rounded-xl bg-[#1D1612] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#A06E31]"
               >
                 Save Changes
               </button>
 
             </div>
+
           </div>
         </div>
+
       </div>
     </main>
   );
