@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 
 type CartItem = {
   quantity: number;
@@ -158,47 +159,44 @@ export default function Header() {
       }
     };
 
-    const updateWishlist = async () => {
+    const updateWishlistFromCache = () => {
       if (!isLoggedIn) {
         setWishlistCount(0);
         return;
       }
+      setWishlistCount(readWishlistItems().length);
+    };
+
+    const refreshWishlist = async () => {
+      updateWishlistFromCache();
+      if (!isLoggedIn) return;
       try {
         const res = await fetch("/api/wishlist", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          setWishlistCount(data.count || 0);
+          const items = Array.isArray(data.items) ? data.items : [];
+          setWishlistCount(items.length);
+          writeWishlistItems(items);
           return;
         }
       } catch (e) {
         console.error("Failed to fetch wishlist count", e);
       }
-      const saved = localStorage.getItem("wishlistItems");
-      if (saved) {
-        try {
-          const items = JSON.parse(saved);
-          setWishlistCount(items.length);
-        } catch {
-          setWishlistCount(0);
-        }
-      } else {
-        setWishlistCount(0);
-      }
     };
 
     updateCartQuantity();
-    updateWishlist();
+    void refreshWishlist();
 
     window.addEventListener("storage", updateCartQuantity);
     window.addEventListener("cartUpdated", updateCartQuantity);
-    window.addEventListener("storage", updateWishlist);
-    window.addEventListener("wishlistUpdated", updateWishlist);
+    window.addEventListener("storage", updateWishlistFromCache);
+    window.addEventListener("wishlistUpdated", updateWishlistFromCache);
 
     return () => {
       window.removeEventListener("storage", updateCartQuantity);
       window.removeEventListener("cartUpdated", updateCartQuantity);
-      window.removeEventListener("storage", updateWishlist);
-      window.removeEventListener("wishlistUpdated", updateWishlist);
+      window.removeEventListener("storage", updateWishlistFromCache);
+      window.removeEventListener("wishlistUpdated", updateWishlistFromCache);
     };
   }, [isLoggedIn]);
 

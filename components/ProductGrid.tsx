@@ -6,6 +6,7 @@ import { ProductGridSkeleton } from "./ProductCardSkeleton";
 
 type Product = {
   id: number | string;
+  slug?: string;
   name: string;
   price: string;
   category: string;
@@ -93,6 +94,7 @@ export default function ProductGrid() {
           const mapped = data.products.slice(0, 8).map(
             (p: {
               id: number;
+              slug: string;
               name: string;
               category_slug: string;
               base_price: number;
@@ -101,6 +103,7 @@ export default function ProductGrid() {
               variants: Product["variants"];
             }) => ({
               id: p.id,
+              slug: p.slug,
               name: p.name,
               price: `Rs. ${Number(p.sale_price ?? p.base_price).toLocaleString()}`,
               category: p.category_slug?.startsWith("ladies-")
@@ -108,17 +111,19 @@ export default function ProductGrid() {
                 : p.category_slug?.startsWith("men-")
                 ? "Men"
                 : "Accessories",
-              image: p.images?.[0]?.url || "/images/product-1.png",
+              image: p.images?.[0]?.url || "",
               variants: p.variants,
             })
           );
           setProducts(mapped);
         } else {
-          setProducts(fallbackProducts);
+          setProducts([]);
         }
       })
       .catch(() => {
-        if (active) setProducts(fallbackProducts);
+        if (active) {
+          setProducts([]);
+        }
       })
       .finally(() => {
         if (active) setIsLoading(false);
@@ -159,6 +164,7 @@ export default function ProductGrid() {
           {products.map((product) => (
             <ProductCard
               key={product.id}
+              slug={product.slug}
               name={product.name}
               price={product.price}
               category={product.category}

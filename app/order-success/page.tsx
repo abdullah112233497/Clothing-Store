@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Header from "@/components/Header";
 import jsPDF from "jspdf";
 
 type CartItem = {
@@ -210,7 +209,6 @@ export default function OrderSuccessPage() {
   if (!order) {
     return (
       <>
-        <Header />
 
         <main className="flex min-h-[70vh] items-center justify-center px-6">
           <div className="text-center">
@@ -247,7 +245,6 @@ export default function OrderSuccessPage() {
 
   return (
     <>
-      <Header />
 
       <main className="min-h-screen bg-gray-50 px-6 py-12">
         <div className="mx-auto max-w-4xl">

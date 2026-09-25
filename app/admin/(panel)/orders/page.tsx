@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
@@ -486,6 +487,9 @@ export default function OrdersPage() {
     setOrders((prev) => prev.map((o) => (o.id === selectedOrder.id ? updated : o)));
     setSelectedOrder(updated);
     invalidateAdminCache("/api/admin/orders");
+    invalidateAdminCache("/api/admin/inventory");
+    invalidateAdminCache("/api/admin/payments");
+    invalidateAdminCache("/api/admin/dashboard");
     setIsUpdatingOrder(false);
   };
 
@@ -512,6 +516,7 @@ export default function OrdersPage() {
             <span className="hidden sm:inline-block rounded-xl border border-[#D5C1A9]/80 bg-white px-3.5 py-1.5 text-xs text-[#5d4634] font-medium shadow-2xs">
               Payment: Cash on Delivery (COD)
             </span>
+            <AdminNotificationBell />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-[#1D1612]">Admin</p>
               <p className="text-xs text-[#8B7A6C]">Administrator</p>

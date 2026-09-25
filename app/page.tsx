@@ -1,5 +1,4 @@
 
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductGrid from "@/components/ProductGrid";
 
@@ -8,7 +7,6 @@ export default function Home() {
     <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
 
       {/* ================= HEADER ================= */}
-      <Header />
 
 
       {/* ================= HERO SECTION ================= */}

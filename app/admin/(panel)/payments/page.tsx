@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
+import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
 
 /* ==========================================================================
    ICONS (Exact SVG Design System from Admin Panel)
@@ -374,7 +376,7 @@ export default function PaymentsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/payments", { cache: "no-store" })
+    adminFetch("/api/admin/payments")
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!data?.payments) return;
@@ -524,6 +526,9 @@ export default function PaymentsPage() {
     if (!payment) return;
     const response = await fetch("/api/admin/payments", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: payment.dbId, reconciled: true }) });
     if (!response.ok) return;
+    invalidateAdminCache("/api/admin/payments");
+    invalidateAdminCache("/api/admin/orders");
+    invalidateAdminCache("/api/admin/dashboard");
     setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: "Collected", reconciled: true } : p));
     if (selectedPayment && selectedPayment.id === paymentId) {
       setSelectedPayment((prev) => (prev ? { ...prev, status: "Collected", reconciled: true } : null));
@@ -570,6 +575,7 @@ export default function PaymentsPage() {
               <DownloadIcon />
               <span>Export Statement</span>
             </button>
+            <AdminNotificationBell />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
               <p className="text-xs text-[#8B7A6C]">Store Manager</p>

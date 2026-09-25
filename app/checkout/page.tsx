@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Header from "@/components/Header";
 
 type CartItem = {
   variantId?: number;
@@ -139,7 +138,11 @@ export default function CheckoutPage() {
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: cartItems, customer: { name, email, phone, address, city, postalCode, notes: orderNotes }, paymentMethod: "cod" }),
+        body: JSON.stringify({
+          items: cartItems.map((item) => item.variantId ? item : { ...item, size: "", color: "" }),
+          customer: { name, email, phone, address, city, postalCode, notes: orderNotes },
+          paymentMethod: "cod",
+        }),
       });
       const data = await response.json();
       if (response.status === 401) {
@@ -175,7 +178,6 @@ export default function CheckoutPage() {
   if (cartItems.length === 0) {
     return (
       <>
-        <Header />
         <main className="mx-auto flex min-h-[65vh] max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-gray-800 shadow-sm border border-black/5">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-8 w-8">
@@ -204,7 +206,6 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Header />
 
       <main className="min-h-screen bg-[#F8F6F2] text-[#080808] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <div className="mx-auto max-w-7xl">

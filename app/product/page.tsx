@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
 
 const sizes = ["S", "M", "L", "XL"];
 
@@ -64,7 +63,6 @@ export default function ProductPage() {
 
   return (
     <>
-      <Header />
 
       <main className="min-h-screen bg-white">
         {/* Breadcrumb */}

@@ -4,9 +4,9 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import jsPDF from "jspdf";
+import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 
 // ================= TYPES =================
 type UserProfile = {
@@ -449,8 +449,14 @@ export default function ProfilePage() {
 
     fetchUserWishlist();
 
-    const handleSyncWishlist = () => {
-      fetchUserWishlist();
+    const handleSyncWishlist = (event: Event) => {
+      const customEvent = event as CustomEvent<{ items?: WishlistItem[] }>;
+      if (Array.isArray(customEvent.detail?.items)) {
+        setWishlist(customEvent.detail.items);
+        return;
+      }
+
+      setWishlist(readWishlistItems<WishlistItem>());
     };
 
     window.addEventListener("wishlistUpdated", handleSyncWishlist);
@@ -689,7 +695,7 @@ export default function ProfilePage() {
     const newItem = {
       name: item.name,
       price: item.price,
-      size: "M",
+      size: "",
       quantity: 1,
       image: item.image,
     };
@@ -714,20 +720,29 @@ export default function ProfilePage() {
 
   const handleRemoveWishlist = async (id: number) => {
     const target = wishlist.find((w) => w.id === id);
+    const previous = wishlist;
     const updated = wishlist.filter((w) => w.id !== id);
     setWishlist(updated);
-    localStorage.setItem("wishlistItems", JSON.stringify(updated));
-    window.dispatchEvent(new Event("wishlistUpdated"));
+    writeWishlistItems(updated);
     showToast("Item removed from your wishlist.");
 
     try {
-      await fetch("/api/wishlist", {
+      const response = await fetch("/api/wishlist", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, name: target?.name }),
       });
+
+      if (!response.ok) {
+        setWishlist(previous);
+        writeWishlistItems(previous);
+        showToast("Could not remove this item. Please try again.");
+      }
     } catch (e) {
       console.error("Failed to delete wishlist item from DB", e);
+      setWishlist(previous);
+      writeWishlistItems(previous);
+      showToast("Could not remove this item. Please try again.");
     }
   };
 
@@ -919,9 +934,6 @@ export default function ProfilePage() {
         }`}
         aria-hidden={isAnyModalOpen ? true : undefined}
       >
-        {/* Header */}
-        <Header />
-
       {/* Sync URL ?tab= parameter to active tab (reacts to client-side navigation) */}
       <Suspense fallback={null}>
         <ProfileTabUrlSync onTabChange={setActiveTab} />

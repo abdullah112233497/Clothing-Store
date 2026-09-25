@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
+import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
 
 type InventoryItem = {
   variantId?: number;
@@ -130,7 +132,7 @@ export default function InventoryPage() {
   const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
-    fetch("/api/admin/inventory", { cache: "no-store" })
+    adminFetch("/api/admin/inventory")
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!data?.inventory) return;
@@ -157,6 +159,9 @@ export default function InventoryPage() {
     if (!Number.isInteger(stock) || stock < 0) { alert("Enter a non-negative whole number."); return; }
     const response = await fetch("/api/admin/inventory", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ variantId: item.variantId, stockQuantity: stock, reason: "admin_adjustment" }) });
     if (!response.ok) { const data = await response.json(); alert(data.error || "Unable to update stock."); return; }
+    invalidateAdminCache("/api/admin/inventory");
+    invalidateAdminCache("/api/admin/products");
+    invalidateAdminCache("/api/admin/dashboard");
     setInventoryList((current) => current.map((row) => row.variantId === item.variantId ? { ...row, stock, status: stock === 0 ? "Out of Stock" : stock <= (row.lowStockThreshold || 5) ? "Low Stock" : "In Stock" } : row));
   };
 
@@ -201,6 +206,7 @@ export default function InventoryPage() {
             >
               Manage Products
             </Link>
+            <AdminNotificationBell />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
               <p className="text-xs text-[#8B7A6C]">Store Manager</p>

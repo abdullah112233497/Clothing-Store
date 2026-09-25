@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
+import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
 
 export default function SettingsPage() {
   const [storeStatus, setStoreStatus] = useState(true);
@@ -17,7 +19,7 @@ export default function SettingsPage() {
   const [adminEmail, setAdminEmail] = useState("administrator@wearwell.pk");
 
   useEffect(() => {
-    fetch("/api/admin/settings", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => {
+    adminFetch("/api/admin/settings").then((response) => response.ok ? response.json() : null).then((data) => {
       const settings = data?.settings;
       if (!settings) return;
       setStoreName(settings.store_name); setStoreEmail(settings.store_email); setSupportPhone(settings.support_phone); setWebsiteUrl(settings.website_url); setAddress(settings.address); setStoreStatus(settings.store_status); setEmailNotifications(settings.email_notifications); setOrderNotifications(settings.order_notifications);
@@ -30,6 +32,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     const response = await fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeName, storeEmail, supportPhone, websiteUrl, address, storeStatus, emailNotifications, orderNotifications }) });
     if (!response.ok) return;
+    invalidateAdminCache("/api/admin/settings");
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
@@ -62,6 +65,7 @@ export default function SettingsPage() {
             >
               Save Changes
             </button>
+            <AdminNotificationBell />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
               <p className="text-xs text-[#8B7A6C]">Store Manager</p>

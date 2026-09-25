@@ -6,7 +6,7 @@ export async function GET() {
   const admin = await getAuthenticatedUser();
   if (!admin) return unauthorized();
   if (admin.role !== "admin") return forbidden();
-  const notifications = await sql`SELECT id,type,title,message,is_read,created_at FROM notifications WHERE user_id=${admin.id} ORDER BY created_at DESC LIMIT 50`;
+  const notifications = await sql`SELECT id,order_id,type,title,message,is_read,created_at FROM notifications WHERE user_id=${admin.id} ORDER BY created_at DESC LIMIT 50`;
   return NextResponse.json({ notifications });
 }
 

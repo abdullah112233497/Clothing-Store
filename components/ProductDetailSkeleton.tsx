@@ -1,11 +1,9 @@
 import React from "react";
-import Header from "./Header";
 import Footer from "./Footer";
 
 export default function ProductDetailSkeleton() {
   return (
     <>
-      <Header />
       <main className="min-h-screen bg-[#F8F6F2]">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
           {/* Breadcrumb Skeleton */}

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import ProductDetailSkeleton from "@/components/ProductDetailSkeleton";
+import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 
 type Product = {
 id?: number;
@@ -551,32 +551,42 @@ quantity: number;
 image: string;
 };
 
+type WishlistCacheItem = {
+id: number;
+name: string;
+price: number;
+category: string;
+image: string;
+inStock: boolean;
+};
+
 export default function DynamicProductPage() {
 const params = useParams();
 const router = useRouter();
 
 const slug = params.slug as string;
 
-const staticProduct = products.find(
-(item) =>
-item.name.toLowerCase().replace(/\s+/g, "-") === slug
-);
-
-const [databaseProduct, setDatabaseProduct] = useState<Product | null>(null);
-const product = databaseProduct || staticProduct;
-
-const [isLoading, setIsLoading] = useState(!staticProduct);
+const [loadedProduct, setLoadedProduct] = useState<{ slug: string; product: Product | null } | null>(null);
+const isLoading = loadedProduct?.slug !== slug;
+const product = isLoading ? null : loadedProduct.product;
 const [selectedSize, setSelectedSize] = useState("M");
 const [selectedColor, setSelectedColor] = useState("Black");
 const [quantity, setQuantity] = useState(1);
 const [selectedImage, setSelectedImage] = useState(
 product?.image || ""
 );
-const [loadedMainImage, setLoadedMainImage] = useState<string | null>(null);
-const isMainImageLoaded = loadedMainImage === selectedImage;
 
 const { isLoggedIn } = useAuth();
 const [isWishlisted, setIsWishlisted] = useState(false);
+const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
+
+useLayoutEffect(() => {
+  const root = document.documentElement;
+  const previousBehavior = root.style.scrollBehavior;
+  root.style.scrollBehavior = "auto";
+  window.scrollTo({ top: 0, left: 0 });
+  root.style.scrollBehavior = previousBehavior;
+}, [slug]);
 
 useEffect(() => {
   let active = true;
@@ -584,26 +594,30 @@ useEffect(() => {
     .then((response) => response.ok ? response.json() : null)
     .then((data) => {
       const row = data?.products?.[0];
-      if (!active || !row) return;
+      if (!active) return;
+      if (!row) {
+        setLoadedProduct({ slug, product: null });
+        return;
+      }
       const mapped: Product = {
         id: Number(row.id), name: row.name, price: Number(row.sale_price ?? row.base_price),
         oldPrice: Number(row.base_price), category: row.category_slug?.startsWith("men-") ? "Men" : row.category_slug?.startsWith("ladies-") ? "Women" : "Accessories",
-        image: row.images?.[0]?.url || staticProduct?.image || "", images: row.images?.map((image: { url: string }) => image.url) || [],
-        description: row.description || "", details: staticProduct?.details || [], variants: row.variants || [], attributes: row.attributes || [],
+        image: row.images?.[0]?.url || "", images: row.images?.map((image: { url: string }) => image.url) || [],
+        description: row.description || "", details: [], variants: row.variants || [], attributes: row.attributes || [],
       };
-      setDatabaseProduct(mapped);
+      setLoadedProduct({ slug, product: mapped });
       setSelectedImage(mapped.image);
       const options = mapped.variants?.[0]?.options || {};
       const sizeOption = options.size || options.shoe_size || options.waist;
       if (sizeOption?.value) setSelectedSize(sizeOption.value);
       if (options.color?.value) setSelectedColor(options.color.value);
     })
-    .catch(() => undefined)
-    .finally(() => {
-      if (active) setIsLoading(false);
+    .catch(() => {
+      if (!active) return;
+      setLoadedProduct({ slug, product: null });
     });
   return () => { active = false; };
-}, [slug, staticProduct]);
+}, [slug]);
 
 useEffect(() => {
   if (!product) return;
@@ -612,17 +626,8 @@ useEffect(() => {
       setIsWishlisted(false);
       return;
     }
-    const saved = localStorage.getItem("wishlistItems");
-    if (saved) {
-      try {
-        const items = JSON.parse(saved);
-        setIsWishlisted(items.some((item: { name: string }) => item.name === product.name));
-      } catch {
-        setIsWishlisted(false);
-      }
-    } else {
-      setIsWishlisted(false);
-    }
+    const items = readWishlistItems<WishlistCacheItem>();
+    setIsWishlisted(items.some((item) => item.name === product.name));
   };
 
   checkWishlist();
@@ -640,9 +645,18 @@ const handleToggleWishlist = async () => {
     router.push(`/account/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`);
     return;
   }
+  if (isUpdatingWishlist) return;
 
   const nextState = !isWishlisted;
+  const previousItems = readWishlistItems<WishlistCacheItem>();
+  const optimisticItems = nextState
+    ? previousItems.some((item) => item.name === product.name)
+      ? previousItems
+      : [...previousItems, { id: Date.now(), name: product.name, price: product.price, category: product.category, image: product.image, inStock: true }]
+    : previousItems.filter((item) => item.name !== product.name);
   setIsWishlisted(nextState);
+  setIsUpdatingWishlist(true);
+  writeWishlistItems(optimisticItems);
 
   try {
     const res = await fetch("/api/wishlist", {
@@ -661,36 +675,30 @@ const handleToggleWishlist = async () => {
     const data = await res.json();
     if (!res.ok) {
       setIsWishlisted(!nextState);
+      writeWishlistItems(previousItems);
       return;
     }
 
-    const saved = localStorage.getItem("wishlistItems");
-    let items = saved ? JSON.parse(saved) : [];
+    let items = readWishlistItems<WishlistCacheItem>();
     if (data.wishlisted) {
-      if (!items.some((i: { name: string }) => i.name === product.name)) {
-        items.push({
-          id: data.item?.id || Date.now(),
-          name: product.name,
-          price: product.price,
-          category: product.category,
-          image: product.image,
-          inStock: true,
-        });
-      }
+      const confirmed = { id: data.item?.id || Date.now(), name: product.name, price: product.price, category: product.category, image: product.image, inStock: true };
+      items = [...items.filter((item) => item.name !== product.name), confirmed];
     } else {
-      items = items.filter((i: { name: string }) => i.name !== product.name);
+      items = items.filter((item) => item.name !== product.name);
     }
-    localStorage.setItem("wishlistItems", JSON.stringify(items));
-    window.dispatchEvent(new Event("wishlistUpdated"));
+    setIsWishlisted(Boolean(data.wishlisted));
+    writeWishlistItems(items);
   } catch {
     setIsWishlisted(!nextState);
+    writeWishlistItems(previousItems);
+  } finally {
+    setIsUpdatingWishlist(false);
   }
 };
 
 if (!product) {
     return (
       <>
-        <Header />
         <main className="flex min-h-[70vh] items-center justify-center bg-[#F8F6F2] px-6">
           <div className="text-center">
             <p className="text-xs uppercase tracking-[0.25em] text-gray-400">
@@ -777,14 +785,13 @@ const handleBuyNow = () => {
 if (addToCart()) router.push("/checkout");
 };
 
-if (isLoading && !product) {
+if (isLoading) {
   return <ProductDetailSkeleton />;
 }
 
 if (!product) {
   return (
     <>
-      <Header />
       <main className="min-h-screen bg-[#F8F6F2] py-28 text-center px-4">
         <div className="mx-auto max-w-md">
           <div className="text-5xl">🛍️</div>
@@ -816,7 +823,7 @@ const sizeOptions = availableVariants
 const hasColor = !product.attributes || product.attributes.some((attribute) => attribute.code === "color");
 
 return (
-<> <Header />
+<>
   <main className="min-h-screen bg-[#F8F6F2]">
     <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
       {/* Breadcrumb */}
@@ -861,24 +868,19 @@ return (
             ))}
           </div>
 
-          <div className="skeleton-shimmer relative order-1 overflow-hidden bg-[#EAE4DC] sm:order-2 rounded-2xl">
-            {!isMainImageLoaded && (
-              <div className="skeleton-shimmer absolute inset-0 z-0 h-full w-full" />
-            )}
+          <div className="relative order-1 overflow-hidden bg-[#EAE4DC] sm:order-2 rounded-2xl">
             <img
               src={selectedImage}
               alt={product.name}
-              onLoad={() => setLoadedMainImage(selectedImage)}
-              onError={() => setLoadedMainImage(selectedImage)}
-              className={`aspect-[3/4] w-full object-cover transition-all duration-700 hover:scale-[1.02] ${
-                isMainImageLoaded ? "opacity-100" : "opacity-0"
-              }`}
+              className="aspect-[3/4] w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
             />
             {/* Floating Wishlist Heart */}
             <button
               onClick={handleToggleWishlist}
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              aria-busy={isUpdatingWishlist}
+              disabled={isUpdatingWishlist}
               className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur transition hover:scale-110 hover:bg-white"
             >
               <svg

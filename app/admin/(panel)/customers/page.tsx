@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
+import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
 
 /* ==========================================================================
    ICONS (Exact SVG Design System)
@@ -259,7 +261,7 @@ export default function CustomersPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/customers", { cache: "no-store" })
+    adminFetch("/api/admin/customers")
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!data?.customers) return;
@@ -285,6 +287,8 @@ export default function CustomersPage() {
     const isActive = customer.status !== "Active";
     const response = await fetch("/api/admin/customers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: customer.dbId, isActive }) });
     if (!response.ok) { const data = await response.json(); alert(data.error || "Unable to update customer."); return; }
+    invalidateAdminCache("/api/admin/customers");
+    invalidateAdminCache("/api/admin/dashboard");
     const updated: Customer = { ...customer, status: isActive ? "Active" : "Inactive" };
     setCustomers((current) => current.map((item) => item.dbId === customer.dbId ? updated : item));
     setSelectedCustomer(updated);
@@ -343,6 +347,7 @@ export default function CustomersPage() {
             <span className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[#D5C1A9]/80 bg-white px-3.5 py-1.5 text-xs text-[#694F3D] font-semibold">
               Verified Customer Accounts
             </span>
+            <AdminNotificationBell />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
               <p className="text-xs text-[#8B7A6C]">Store Manager</p>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { clearAdminCache } from "@/lib/admin-cache";
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -22,6 +23,7 @@ function AdminLoginForm() {
       const response = await fetch("/api/auth/admin-login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
       const data = await response.json();
       if (!response.ok) { setError(data.error || "Invalid administrator credentials. Please try again."); return; }
+      clearAdminCache();
       router.replace(redirectUrl);
       router.refresh();
     } catch { setError("An unexpected error occurred. Please try again."); }

@@ -3,12 +3,12 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 
 type Product = {
+  slug?: string;
   name: string;
   price: string;
   category: "Women" | "Men" | "Accessories";
@@ -221,19 +221,23 @@ function ShopContent() {
       .then((data) => {
         if (!active) return;
         if (Array.isArray(data?.products) && data.products.length > 0) {
-          setProducts(data.products.map((product: { name: string; category_slug: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
+          const nextProducts = data.products.map((product: { slug: string; name: string; category_slug: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
+            slug: product.slug,
             name: product.name,
             price: `Rs. ${Number(product.sale_price ?? product.base_price).toLocaleString()}`,
             category: product.category_slug.startsWith("ladies-") ? "Women" : product.category_slug.startsWith("men-") ? "Men" : "Accessories",
-            image: product.images?.[0]?.url || "/images/product-1.png",
+            image: product.images?.[0]?.url || "",
             variants: product.variants,
-          })));
+          }));
+          setProducts(nextProducts);
         } else {
-          setProducts(fallbackProducts);
+          setProducts([]);
         }
       })
       .catch(() => {
-        if (active) setProducts(fallbackProducts);
+        if (active) {
+          setProducts([]);
+        }
       })
       .finally(() => {
         if (active) setIsLoading(false);
@@ -291,7 +295,6 @@ function ShopContent() {
 
   return (
     <>
-      <Header />
 
       <main className="min-h-screen bg-[#F8F6F2]">
 
@@ -386,6 +389,7 @@ function ShopContent() {
                 {filteredProducts.map((product) => (
                   <ProductCard
                     key={`${product.category}-${product.name}`}
+                    slug={product.slug}
                     name={product.name}
                     price={product.price}
                     category={product.category}

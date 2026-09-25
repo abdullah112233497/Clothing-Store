@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 
 type ProductCardProps = {
+  slug?: string;
   name: string;
   price: string;
   category: string;
@@ -41,6 +43,7 @@ type WishlistItem = {
 };
 
 export default function ProductCard({
+  slug,
   name,
   price,
   category,
@@ -50,8 +53,7 @@ export default function ProductCard({
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [loadedImage, setLoadedImage] = useState<string | null>(null);
-  const isImageLoaded = loadedImage === image;
+  const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
 
   useEffect(() => {
     const checkWishlist = () => {
@@ -59,17 +61,8 @@ export default function ProductCard({
         setIsWishlisted(false);
         return;
       }
-      const saved = localStorage.getItem("wishlistItems");
-      if (saved) {
-        try {
-          const items: WishlistItem[] = JSON.parse(saved);
-          setIsWishlisted(items.some((item) => item.name === name));
-        } catch {
-          setIsWishlisted(false);
-        }
-      } else {
-        setIsWishlisted(false);
-      }
+      const items = readWishlistItems<WishlistItem>();
+      setIsWishlisted(items.some((item) => item.name === name));
     };
 
     checkWishlist();
@@ -89,10 +82,19 @@ export default function ProductCard({
       router.push(`/account/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/shop")}`);
       return;
     }
+    if (isUpdatingWishlist) return;
 
     const numericPrice = Number(price.replace(/[^0-9]/g, "")) || 3990;
     const nextState = !isWishlisted;
+    const previousItems = readWishlistItems<WishlistItem>();
+    const optimisticItems = nextState
+      ? previousItems.some((item) => item.name === name)
+        ? previousItems
+        : [...previousItems, { id: Date.now(), name, price: numericPrice, category, image, inStock: true }]
+      : previousItems.filter((item) => item.name !== name);
     setIsWishlisted(nextState);
+    setIsUpdatingWishlist(true);
+    writeWishlistItems(optimisticItems);
 
     try {
       const res = await fetch("/api/wishlist", {
@@ -110,37 +112,28 @@ export default function ProductCard({
       const data = await res.json();
       if (!res.ok) {
         setIsWishlisted(!nextState);
+        writeWishlistItems(previousItems);
         return;
       }
 
-      const saved = localStorage.getItem("wishlistItems");
-      let items: WishlistItem[] = saved ? JSON.parse(saved) : [];
+      let items = readWishlistItems<WishlistItem>();
       if (data.wishlisted) {
-        if (!items.some((i) => i.name === name)) {
-          items.push({
-            id: data.item?.id || Date.now(),
-            name,
-            price: numericPrice,
-            category,
-            image,
-            inStock: true,
-          });
-        }
+        const confirmed = { id: data.item?.id || Date.now(), name, price: numericPrice, category, image, inStock: true };
+        items = [...items.filter((item) => item.name !== name), confirmed];
       } else {
         items = items.filter((i) => i.name !== name);
       }
-      localStorage.setItem("wishlistItems", JSON.stringify(items));
-      window.dispatchEvent(new Event("wishlistUpdated"));
+      setIsWishlisted(Boolean(data.wishlisted));
+      writeWishlistItems(items);
     } catch {
       setIsWishlisted(!nextState);
+      writeWishlistItems(previousItems);
+    } finally {
+      setIsUpdatingWishlist(false);
     }
   };
 
-  const productSlug = name
-    .toLowerCase()
-    .replace(/\s+/g, "-");
-
-  const productLink = `/product/${productSlug}`;
+  const productLink = `/product/${slug || name.toLowerCase().replace(/\s+/g, "-")}`;
 
   const handleQuickAdd = () => {
     const numericPrice = Number(
@@ -198,24 +191,16 @@ export default function ProductCard({
   return (
     <article className="group">
       <div className="relative block aspect-[3/4] overflow-hidden bg-[#F1EEE9]">
-        {/* Professional skeleton shimmer while image is loading */}
-        {!isImageLoaded && (
-          <div className="skeleton-shimmer absolute inset-0 z-0 h-full w-full" />
-        )}
-
         <Link
           href={productLink}
+          scroll
           className="block h-full w-full"
         >
           <img
             src={image}
             alt={name}
             loading="lazy"
-            onLoad={() => setLoadedImage(image)}
-            onError={() => setLoadedImage(image)}
-            className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${
-              isImageLoaded ? "opacity-100" : "opacity-0"
-            }`}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         </Link>
 
@@ -228,6 +213,8 @@ export default function ProductCard({
           onClick={handleToggleWishlist}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-busy={isUpdatingWishlist}
+          disabled={isUpdatingWishlist}
           className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:scale-110 hover:bg-white"
         >
           <svg
@@ -264,6 +251,7 @@ export default function ProductCard({
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-3">
           <Link
             href={productLink}
+            scroll
             className="text-xs sm:text-sm font-medium leading-snug transition hover:text-[#A06E31] line-clamp-2"
           >
             {name}

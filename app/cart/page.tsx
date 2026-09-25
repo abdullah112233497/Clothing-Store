@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Header from "@/components/Header";
 
 type CartItem = {
   name: string;
@@ -157,7 +156,6 @@ export default function CartPage() {
 
   return (
     <>
-      <Header />
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -252,6 +250,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-4">
                         <Link
                           href={`/product/${itemSlug}`}
+                          scroll
                           className="h-24 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-[#F1EEE9]"
                         >
                           <img
@@ -264,6 +263,7 @@ export default function CartPage() {
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/product/${itemSlug}`}
+                            scroll
                             className="text-sm font-bold text-gray-900 transition hover:text-[#A06E31]"
                           >
                             {item.name}

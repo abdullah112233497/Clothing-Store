@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
 import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
@@ -671,6 +672,8 @@ export default function ProductsPage() {
     });
     if (!response.ok) { alert((await response.json()).error || "Unable to save product."); return; }
     invalidateAdminCache("/api/admin/products");
+    invalidateAdminCache("/api/admin/inventory");
+    invalidateAdminCache("/api/admin/dashboard");
     await loadProducts();
     setModalOpen(false);
   };
@@ -680,6 +683,8 @@ export default function ProductsPage() {
       const response = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       if (!response.ok) { alert("Unable to archive product."); return; }
       invalidateAdminCache("/api/admin/products");
+      invalidateAdminCache("/api/admin/inventory");
+      invalidateAdminCache("/api/admin/dashboard");
       await loadProducts();
       setModalOpen(false);
     }
@@ -808,6 +813,7 @@ export default function ProductsPage() {
               <PlusIcon />
               <span>Create New Product</span>
             </button>
+            <AdminNotificationBell />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-[#1D1612]">Admin</p>
               <p className="text-xs text-[#8B7A6C]">Store Manager</p>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAdminSidebar } from "@/components/AdminPanelShell";
+import { clearAdminCache, prefetchAdminData } from "@/lib/admin-cache";
 
 /* ==========================================================================
    ICONS (Identical Stroke SVGs from /admin dashboard)
@@ -121,17 +122,18 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
   const { collapsed, toggle } = useAdminSidebar();
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    clearAdminCache();
     router.replace("/admin/login");
     router.refresh();
   }
   const navItems = [
-    { key: "dashboard", label: "Dashboard", href: "/admin", icon: DashboardIcon },
-    { key: "orders", label: "Orders", href: "/admin/orders", icon: OrdersIcon },
-    { key: "products", label: "Products", href: "/admin/products", icon: ProductsIcon },
-    { key: "customers", label: "Customers", href: "/admin/customers", icon: UsersIcon },
-    { key: "inventory", label: "Inventory", href: "/admin/inventory", icon: InventoryIcon },
-    { key: "payments", label: "Payments", href: "/admin/payments", icon: PaymentIcon },
-    { key: "settings", label: "Settings", href: "/admin/settings", icon: SettingsIcon },
+    { key: "dashboard", label: "Dashboard", href: "/admin", api: "/api/admin/dashboard?", icon: DashboardIcon },
+    { key: "orders", label: "Orders", href: "/admin/orders", api: "/api/admin/orders", icon: OrdersIcon },
+    { key: "products", label: "Products", href: "/admin/products", api: "/api/admin/products", icon: ProductsIcon },
+    { key: "customers", label: "Customers", href: "/admin/customers", api: "/api/admin/customers", icon: UsersIcon },
+    { key: "inventory", label: "Inventory", href: "/admin/inventory", api: "/api/admin/inventory", icon: InventoryIcon },
+    { key: "payments", label: "Payments", href: "/admin/payments", api: "/api/admin/payments", icon: PaymentIcon },
+    { key: "settings", label: "Settings", href: "/admin/settings", api: "/api/admin/settings", icon: SettingsIcon },
   ];
 
   return (
@@ -171,6 +173,8 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
             <Link
               key={item.key}
               href={item.href}
+              onMouseEnter={() => void prefetchAdminData(item.api)}
+              onFocus={() => void prefetchAdminData(item.api)}
               title={collapsed ? item.label : undefined}
               className={`group flex items-center rounded-xl py-3 text-sm transition-all duration-300 ${collapsed ? "justify-center px-2" : "gap-3 px-4"} ${
                 isActive

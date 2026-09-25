@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
+import { adminFetch } from "@/lib/admin-cache";
 
 /* =========================
    ICONS
@@ -196,7 +198,7 @@ export default function AdminDashboard() {
     const params = new URLSearchParams();
     if (dateRange.startDate) params.set("from", dateRange.startDate);
     if (dateRange.endDate) params.set("to", dateRange.endDate);
-    fetch(`/api/admin/dashboard?${params.toString()}`, { cache: "no-store" })
+    adminFetch(`/api/admin/dashboard?${params.toString()}`)
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load dashboard data");
         return response.json();
@@ -267,6 +269,7 @@ export default function AdminDashboard() {
               value={dateRange}
               onChange={handleDateRangeChange}
             />
+            <AdminNotificationBell />
 
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-[#1D1612]">
