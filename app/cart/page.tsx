@@ -57,7 +57,7 @@ export default function CartPage() {
   };
 
   useEffect(() => {
-    loadCart();
+    const timer = window.setTimeout(loadCart, 0);
 
     const handleCartUpdate = () => {
       loadCart();
@@ -67,6 +67,7 @@ export default function CartPage() {
     window.addEventListener("cartUpdated", handleCartUpdate);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("storage", handleCartUpdate);
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
@@ -219,7 +220,7 @@ export default function CartPage() {
               </h2>
 
               <p className="mt-3 text-xs leading-relaxed text-gray-500 sm:text-sm">
-                Looks like you haven't added any products to your bag yet. Explore our latest arrivals and build your signature look.
+                Looks like you haven&apos;t added any products to your bag yet. Explore our latest arrivals and build your signature look.
               </p>
 
               <div className="mt-8">

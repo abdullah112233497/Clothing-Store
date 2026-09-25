@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     // 1. Fetch user from DB
     const users = await sql`
-      SELECT id, first_name, last_name, email, password_hash, phone, birthday, gender, membership_tier, created_at
+      SELECT id, first_name, last_name, email, password_hash, phone, birthday, gender, membership_tier, role, is_active, created_at
       FROM users
       WHERE LOWER(email) = ${cleanEmail}
       LIMIT 1;
@@ -34,6 +34,14 @@ export async function POST(request: Request) {
     }
 
     const user = users[0];
+
+    if (!user.is_active) {
+      return NextResponse.json({ error: "This account has been disabled." }, { status: 403 });
+    }
+
+    if (user.role === "admin") {
+      return NextResponse.json({ error: "Please use the administrator login page." }, { status: 403 });
+    }
 
     // 2. Verify password hash
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
@@ -50,6 +58,7 @@ export async function POST(request: Request) {
       email: user.email,
       firstName: user.first_name,
       lastName: user.last_name,
+      role: user.role,
     });
 
     await setSessionCookie(token);
@@ -65,6 +74,7 @@ export async function POST(request: Request) {
         birthday: user.birthday || "",
         gender: user.gender || "Male",
         membershipTier: user.membership_tier || "VIP Black",
+        role: user.role,
         memberSince: new Date(user.created_at).toLocaleDateString("en-US", {
           month: "long",
           year: "numeric",

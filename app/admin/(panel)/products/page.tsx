@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminDropdown from "@/components/AdminDropdown";
+import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
+import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
+import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-images";
 
 /* ==========================================================================
    TYPES & DATA MODELS
@@ -149,18 +152,18 @@ const POPULAR_COLORS: ColorOption[] = [
 ];
 
 const PRESET_STORE_PHOTOS = [
-  { label: "Women Oversized Tee", url: "/images/product-1.png", category: "Women" },
-  { label: "Women Stitched Kurti", url: "/images/women-4.png", category: "Women" },
-  { label: "Women Casual Dress", url: "/images/women-5.png", category: "Women" },
-  { label: "Women Flowy Coord", url: "/images/women-7.png", category: "Women" },
-  { label: "Men Classic Shirt", url: "/images/product-2.png", category: "Men" },
-  { label: "Men Urban Jacket", url: "/images/product-5.png", category: "Men" },
-  { label: "Men Cargo Pants", url: "/images/product-8.png", category: "Men" },
-  { label: "Men Traditional Kurta", url: "/images/men-4.png", category: "Men" },
-  { label: "Shoulder Bag", url: "/images/product-3.png", category: "Accessories" },
-  { label: "Everyday Sneakers", url: "/images/product-6.png", category: "Accessories" },
-  { label: "Basic Hoodie", url: "/images/product-7.png", category: "Accessories" },
-  { label: "Leather Shoes", url: "/images/accessories-4.png", category: "Accessories" },
+  { label: "Women Oversized Tee", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Women" },
+  { label: "Women Stitched Kurti", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Women" },
+  { label: "Women Casual Dress", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Women" },
+  { label: "Women Flowy Coord", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Women" },
+  { label: "Men Classic Shirt", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Men" },
+  { label: "Men Urban Jacket", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Men" },
+  { label: "Men Cargo Pants", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Men" },
+  { label: "Men Traditional Kurta", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Men" },
+  { label: "Shoulder Bag", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Accessories" },
+  { label: "Everyday Sneakers", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Accessories" },
+  { label: "Basic Hoodie", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Accessories" },
+  { label: "Leather Shoes", url: PRODUCT_IMAGE_PLACEHOLDER, category: "Accessories" },
 ];
 
 /* ==========================================================================
@@ -466,7 +469,8 @@ function getStatusClass(status: Product["status"]) {
    ========================================================================== */
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [activeTab, setActiveTab] = useState<"All" | "Active" | "Low Stock" | "Out of Stock">("All");
@@ -491,6 +495,7 @@ export default function ProductsPage() {
   // Images State (Empty array for brand new products!)
   const [formImages, setFormImages] = useState<string[]>([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [showPresetGallery, setShowPresetGallery] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -508,6 +513,34 @@ export default function ProductsPage() {
   const [newColorName, setNewColorName] = useState("");
   const [newColorHex, setNewColorHex] = useState("#8B5A2B");
 
+  const loadProducts = async () => {
+    const response = await adminFetch("/api/admin/products");
+    if (!response.ok) return;
+    const data = await response.json();
+    setProducts((data.products || []).map((product: { id: number; name: string; category: string; category_slug: string; parent_category_slug?: string; base_sku?: string; base_price: number; sale_price?: number; status: string; stock: number; images?: Array<{ url: string }>; admin_metadata?: Partial<Product>; variant_options?: Array<{ code: string; value: string; displayValue?: string; colorHex?: string }> }) => {
+      const categoryPath = `${product.parent_category_slug || ""} ${product.category_slug || ""}`;
+      const category = categoryPath.includes("ladies") ? "Women" : categoryPath.includes("men") ? "Men" : "Accessories";
+      const images = (product.images || []).map((image) => image.url);
+      const stock = Number(product.stock);
+      const metadata = product.admin_metadata || {};
+      const options = product.variant_options || [];
+      const inferredSizeSystem: SizeSystem = options.some((option) => option.code === "waist") ? "waist" : options.some((option) => option.code === "shoe_size") ? "footwear" : options.some((option) => option.code === "size") ? "alpha" : "free";
+      const sizeCodes = new Set(["size", "waist", "shoe_size"]);
+      const inferredSizes = [...new Set(options.filter((option) => sizeCodes.has(option.code)).map((option) => option.displayValue || option.value))];
+      const inferredColors = options.filter((option) => option.code === "color").map((option) => ({ name: option.value, hex: option.colorHex || "#111111" }));
+      return { id: String(product.id), name: product.name, category, productType: String(metadata.productType || product.category), fitType: String(metadata.fitType || "Regular Fit"), fabric: String(metadata.fabric || "Premium Fabric"), season: String(metadata.season || "All-Season Essential"), sku: product.base_sku || "—", price: `Rs. ${Number(product.sale_price ?? product.base_price).toLocaleString("en-PK")}`, stock, status: stock === 0 ? "Out of Stock" : stock <= 5 ? "Low Stock" : product.status === "active" ? "Active" : "Out of Stock", image: images[0] || PRODUCT_IMAGE_PLACEHOLDER, images, sizeSystem: metadata.sizeSystem as SizeSystem || inferredSizeSystem, sizes: Array.isArray(metadata.sizes) && metadata.sizes.length ? metadata.sizes.map(String) : inferredSizes.length ? inferredSizes : ["Standard"], colors: Array.isArray(metadata.colors) && metadata.colors.length ? metadata.colors as ColorOption[] : inferredColors.length ? inferredColors : [{ name: "Standard", hex: "#111111" }] } as Product;
+    }));
+  };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadProducts()
+        .catch((error) => console.error("Products load failed:", error))
+        .finally(() => setIsLoading(false));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   // Prevent background scrolling and interaction when modal is open
   useEffect(() => {
     if (modalOpen) {
@@ -524,36 +557,31 @@ export default function ProductsPage() {
 
   /* ------------------- LOCAL FILE UPLOAD LOGIC ------------------- */
 
-  const processUploadedFiles = (files: FileList | null) => {
+  const processUploadedFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-
-    const newLoadedImages: string[] = [];
-    let filesProcessed = 0;
-
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) {
-        alert(`File ${file.name} is not a valid image format.`);
-        filesProcessed++;
-        return;
+    setIsUploadingImages(true);
+    try {
+      const uploaded: string[] = [];
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) { alert(`${file.name} is not a valid image.`); continue; }
+        if (file.size > 8 * 1024 * 1024) { alert(`${file.name} is larger than 8 MB.`); continue; }
+        const body = new FormData();
+        body.append("file", file);
+        const response = await fetch("/api/admin/uploads/cloudinary", { method: "POST", body });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `Unable to upload ${file.name}.`);
+        if (data.url) uploaded.push(data.url);
       }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        if (result && !formImages.includes(result) && !newLoadedImages.includes(result)) {
-          newLoadedImages.push(result);
-        }
-        filesProcessed++;
-        if (filesProcessed === files.length) {
-          setFormImages((prev) => [...prev, ...newLoadedImages]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      setFormImages((prev) => [...prev, ...uploaded.filter((url) => !prev.includes(url))]);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Unable to upload images.");
+    } finally {
+      setIsUploadingImages(false);
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    processUploadedFiles(e.target.files);
+    void processUploadedFiles(e.target.files);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -571,7 +599,7 @@ export default function ProductsPage() {
     e.preventDefault();
     setIsDraggingFile(false);
     if (e.dataTransfer.files) {
-      processUploadedFiles(e.dataTransfer.files);
+      void processUploadedFiles(e.dataTransfer.files);
     }
   };
 
@@ -623,67 +651,36 @@ export default function ProductsPage() {
     setModalOpen(true);
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!formName.trim()) {
       alert("Please enter a product title.");
       return;
     }
 
-    const primaryImage = formImages.length > 0 ? formImages[0] : "/images/product-1.png";
+    if (isUploadingImages) { alert("Please wait for image uploads to finish."); return; }
+    const primaryImage = formImages.length > 0 ? formImages[0] : PRODUCT_IMAGE_PLACEHOLDER;
     const cleanedPrice = formPrice.trim().startsWith("Rs.") ? formPrice.trim() : `Rs. ${formPrice.trim()}`;
 
-    if (isNewProduct) {
-      const newProduct: Product = {
-        id: `PROD-${Math.floor(100 + Math.random() * 900)}`,
-        name: formName.trim(),
-        category: formCategory,
-        productType: formProductType.trim() || "Apparel",
-        fitType: formFitType,
-        fabric: formFabric.trim() || "Premium Fabric",
-        season: formSeason,
-        sku: formSku.trim() || `WW-${Math.floor(100 + Math.random() * 900)}`,
-        price: cleanedPrice,
-        stock: Number(formStock) || 0,
-        status: formStatus,
-        image: primaryImage,
-        images: formImages.length > 0 ? formImages : [primaryImage],
-        sizeSystem: formSizeSystem,
-        sizes: formSizes.length > 0 ? formSizes : ["Standard"],
-        colors: formColors.length > 0 ? formColors : [{ name: "Jet Black", hex: "#111111" }],
-      };
-      setProducts([newProduct, ...products]);
-    } else if (editingId) {
-      setProducts(
-        products.map((p) =>
-          p.id === editingId
-            ? {
-                ...p,
-                name: formName.trim(),
-                category: formCategory,
-                productType: formProductType.trim() || "Apparel",
-                fitType: formFitType,
-                fabric: formFabric.trim() || "Premium Fabric",
-                season: formSeason,
-                sku: formSku.trim(),
-                price: cleanedPrice,
-                stock: Number(formStock) || 0,
-                status: formStatus,
-                image: primaryImage,
-                images: formImages.length > 0 ? formImages : [primaryImage],
-                sizeSystem: formSizeSystem,
-                sizes: formSizes,
-                colors: formColors,
-              }
-            : p
-        )
-      );
-    }
+    const numericPrice = Number(cleanedPrice.replace(/[^0-9.]/g, ""));
+    const categoryName = formCategory === "Women" ? "Ladies Clothing" : formCategory === "Men" ? "Men Clothing" : "Accessories";
+    const typeKey = formProductType.toLowerCase();
+    const categorySlug = formCategory === "Women" ? (typeKey.includes("unstitched") ? "ladies-unstitched" : "ladies-stitched") : formCategory === "Men" ? (/(pant|trouser|chino|cargo|jean)/.test(typeKey) ? "men-pants" : /(shirt|polo|tee)/.test(typeKey) ? "men-shirts" : "men-stitched") : (/(shoe|sneaker|loafer|derby|sandal)/.test(typeKey) ? "shoes" : /(bag|tote|backpack|crossbody)/.test(typeKey) ? "bags" : "other-accessories");
+    const response = await fetch(isNewProduct ? "/api/admin/products" : `/api/admin/products/${editingId}`, {
+      method: isNewProduct ? "POST" : "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: formName.trim(), categoryName, categorySlug, sku: formSku.trim() || `WW-${Date.now()}`, price: numericPrice, status: "active", stock: formStatus === "Out of Stock" ? 0 : Number(formStock) || 0, images: formImages.length ? formImages : [primaryImage], description: `${formProductType} · ${formFabric}`, productType: formProductType, fitType: formFitType, fabric: formFabric, season: formSeason, sizeSystem: formSizeSystem, sizes: formSizes, colors: formColors }),
+    });
+    if (!response.ok) { alert((await response.json()).error || "Unable to save product."); return; }
+    invalidateAdminCache("/api/admin/products");
+    await loadProducts();
     setModalOpen(false);
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      setProducts(products.filter((p) => p.id !== id));
+      const response = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      if (!response.ok) { alert("Unable to archive product."); return; }
+      invalidateAdminCache("/api/admin/products");
+      await loadProducts();
       setModalOpen(false);
     }
   };
@@ -787,7 +784,7 @@ export default function ProductsPage() {
 
       {/* MAIN BODY */}
       <section
-        className={`lg:ml-64 ${modalOpen ? "pointer-events-none select-none" : ""}`}
+        className={`transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)] ${modalOpen ? "pointer-events-none select-none" : ""}`}
         aria-hidden={modalOpen}
       >
         {/* TOP BAR */}
@@ -848,15 +845,15 @@ export default function ProductsPage() {
 
             {/* STATUS TABS */}
             <div className="mb-5 flex gap-2 overflow-x-auto border-b border-[#D5C1A9]/40 pb-3">
-              {[
+              {([
                 { label: "All Products", key: "All", count: products.length },
                 { label: "Active", key: "Active", count: products.filter((p) => p.status === "Active").length },
                 { label: "Low Stock", key: "Low Stock", count: products.filter((p) => p.status === "Low Stock").length },
                 { label: "Out of Stock", key: "Out of Stock", count: products.filter((p) => p.status === "Out of Stock").length },
-              ].map((tab) => (
+              ] as const).map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
+                  onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
                     activeTab === tab.key
                       ? "bg-[#1D1612] text-white shadow-xs"
@@ -933,7 +930,7 @@ export default function ProductsPage() {
                   </thead>
 
                   <tbody className="divide-y divide-[#D5C1A9]/30 text-xs">
-                    {filteredProducts.map((product) => {
+                    {isLoading ? <AdminTableSkeletonRows columns={9} /> : filteredProducts.map((product) => {
                       const galleryCount = product.images?.length || 1;
                       return (
                         <tr
@@ -949,11 +946,11 @@ export default function ProductsPage() {
                                 title="Click to view/edit media"
                               >
                                 <img
-                                  src={product.image || (product.images && product.images[0]) || "/images/product-1.png"}
+                                  src={product.image || (product.images && product.images[0]) || PRODUCT_IMAGE_PLACEHOLDER}
                                   alt={product.name}
                                   className="h-full w-full object-cover"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "/images/product-1.png";
+                                    (e.target as HTMLImageElement).src = PRODUCT_IMAGE_PLACEHOLDER;
                                   }}
                                 />
                                 {galleryCount > 1 && (
@@ -1187,7 +1184,7 @@ export default function ProductsPage() {
                       <UploadCloudIcon />
                     </div>
                     <p className="text-xs font-bold text-[#080808]">
-                      Drop product images here, or browse files
+                      {isUploadingImages ? "Uploading images securely..." : "Drop product images here, or browse files"}
                     </p>
                     <p className="text-[10px] text-[#8B7A6C] mt-0.5">
                       Supports PNG, JPG, WEBP. Select multiple files at once.
@@ -1216,7 +1213,7 @@ export default function ProductsPage() {
                               alt={`Product upload ${idx + 1}`}
                               className="h-full w-full object-cover"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = "/images/product-1.png";
+                                (e.target as HTMLImageElement).src = PRODUCT_IMAGE_PLACEHOLDER;
                               }}
                             />
                             {idx === 0 ? (
@@ -1464,7 +1461,7 @@ export default function ProductsPage() {
                       </label>
                       <AdminDropdown
                         value={formStatus}
-                        onChange={(val) => setFormStatus(val as any)}
+                        onChange={(val) => setFormStatus(val as Product["status"])}
                         options={[
                           { value: "Active", label: "Active (In Stock)" },
                           { value: "Low Stock", label: "Low Stock" },
@@ -1677,7 +1674,7 @@ export default function ProductsPage() {
                             alt="Cover preview"
                             className="h-full w-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/images/product-1.png";
+                              (e.target as HTMLImageElement).src = PRODUCT_IMAGE_PLACEHOLDER;
                             }}
                           />
                           <div className="absolute top-2.5 left-2.5">
@@ -1836,7 +1833,7 @@ export default function ProductsPage() {
                   onClick={handleSaveProduct}
                   className="rounded-xl bg-[#1D1612] px-6 py-2 text-xs font-bold text-white hover:bg-[#A06E31] transition shadow-xs"
                 >
-                  {isNewProduct ? "Create & Publish Product" : "Save Changes"}
+                  {isUploadingImages ? "Uploading Images..." : isNewProduct ? "Create & Publish Product" : "Save Changes"}
                 </button>
               </div>
             </div>

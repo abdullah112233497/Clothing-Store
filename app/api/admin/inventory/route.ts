@@ -10,7 +10,8 @@ export async function GET() {
     pv.stock_quantity,pv.reserved_quantity,pv.low_stock_threshold,pv.is_active,
     COALESCE((SELECT SUM(-quantity_change) FROM inventory_movements im WHERE im.variant_id=pv.id AND im.reason='order_placed'),0) sold,
     COALESCE((SELECT jsonb_object_agg(a.code,av.value) FROM variant_attribute_values vav JOIN attribute_values av ON av.id=vav.attribute_value_id JOIN attributes a ON a.id=av.attribute_id WHERE vav.variant_id=pv.id),'{}'::jsonb) options
-    FROM product_variants pv JOIN products p ON p.id=pv.product_id JOIN categories c ON c.id=p.category_id ORDER BY p.name,pv.sku`;
+    FROM product_variants pv JOIN products p ON p.id=pv.product_id JOIN categories c ON c.id=p.category_id
+    WHERE p.status <> 'archived' AND pv.is_active=TRUE ORDER BY p.name,pv.sku`;
   return NextResponse.json({ inventory });
 }
 

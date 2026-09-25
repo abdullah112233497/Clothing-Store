@@ -13,13 +13,13 @@ export async function GET() {
     await initDb();
 
     const users = await sql`
-      SELECT id, first_name, last_name, email, phone, birthday, gender, membership_tier, created_at
+      SELECT id, first_name, last_name, email, phone, birthday, gender, membership_tier, role, is_active, created_at
       FROM users
       WHERE id = ${session.userId}
       LIMIT 1;
     `;
 
-    if (users.length === 0) {
+    if (users.length === 0 || !users[0].is_active) {
       return NextResponse.json({ user: null }, { status: 200 });
     }
 
@@ -35,6 +35,7 @@ export async function GET() {
         birthday: user.birthday || "",
         gender: user.gender || "Male",
         membershipTier: user.membership_tier || "VIP Black",
+        role: user.role,
         memberSince: new Date(user.created_at).toLocaleDateString("en-US", {
           month: "long",
           year: "numeric",

@@ -374,6 +374,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
+      // Mirror authenticated session data into this page's editable form state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoggedIn(true);
       setProfile((prev) => ({
         ...prev,
@@ -401,6 +403,8 @@ export default function ProfilePage() {
     // Load Avatar
     const savedAvatar = localStorage.getItem("userAvatar");
     if (savedAvatar) {
+      // Hydrate the client-only avatar from browser storage after mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvatarUrl(savedAvatar);
     }
 
@@ -691,7 +695,7 @@ export default function ProfilePage() {
     };
 
     const savedCart = localStorage.getItem("cartItems");
-    let cartItems = savedCart ? JSON.parse(savedCart) : [];
+    const cartItems = savedCart ? JSON.parse(savedCart) : [];
 
     const existingIndex = cartItems.findIndex(
       (c: OrderItem) => c.name === newItem.name && c.size === newItem.size

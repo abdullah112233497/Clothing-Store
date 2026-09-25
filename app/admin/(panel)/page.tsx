@@ -1,31 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
+import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
 
 /* =========================
    ICONS
 ========================= */
-
-function DashboardIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
 
 function OrdersIcon() {
   return (
@@ -75,40 +58,6 @@ function UsersIcon() {
   );
 }
 
-function InventoryIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M3 7l9-4 9 4-9 4-9-4Z" />
-      <path d="M3 7v10l9 4 9-4V7" />
-      <path d="M12 11v10" />
-    </svg>
-  );
-}
-
-function PaymentIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 10h18" />
-      <path d="M7 15h4" />
-    </svg>
-  );
-}
-
 function SettingsIcon() {
   return (
     <svg
@@ -123,38 +72,6 @@ function SettingsIcon() {
     >
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
       <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function LogoutIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M10 17l5-5-5-5" />
-      <path d="M15 12H3" />
-      <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
-    </svg>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   );
 }
@@ -201,82 +118,25 @@ function ClipboardIcon() {
 
 const stats = [
   {
+    key: "revenue" as const,
     title: "Total Revenue (COD)",
-    value: "Rs. 245,890",
-    change: "+12.5%",
     icon: <RevenueIcon />,
   },
   {
+    key: "orders" as const,
     title: "Total Orders",
-    value: "128",
-    change: "+8.2%",
     icon: <OrdersIcon />,
   },
   {
+    key: "customers" as const,
     title: "Customers",
-    value: "86",
-    change: "+14.8%",
     icon: <UsersIcon />,
   },
   {
+    key: "products" as const,
     title: "Products",
-    value: "42",
-    change: "+5.4%",
     icon: <ProductsIcon />,
   },
-];
-
-const recentOrders = [
-  {
-    id: "#1001",
-    customer: "Ayesha Khan (Lahore)",
-    product: "Essential Oversized Tee (M)",
-    amount: "Rs. 3,499",
-    status: "Delivered",
-  },
-  {
-    id: "#1002",
-    customer: "Sara Ahmed (Karachi)",
-    product: "Urban Denim Jacket (L)",
-    amount: "Rs. 7,999",
-    status: "Shipped",
-  },
-  {
-    id: "#1003",
-    customer: "Ali Raza (Islamabad)",
-    product: "Minimal Shoulder Bag",
-    amount: "Rs. 5,499",
-    status: "Confirmed",
-  },
-  {
-    id: "#1004",
-    customer: "Hina Malik (Rawalpindi)",
-    product: "Premium Basic Hoodie (S)",
-    amount: "Rs. 5,999",
-    status: "Delivered",
-  },
-  {
-    id: "#1005",
-    customer: "Hamza Ali (Faisalabad)",
-    product: "Modern Cargo Pants (32)",
-    amount: "Rs. 6,999",
-    status: "Pending",
-  },
-];
-
-const salesData = [
-  { month: "Jan", value: 45 },
-  { month: "Feb", value: 58 },
-  { month: "Mar", value: 52 },
-  { month: "Apr", value: 70 },
-  { month: "May", value: 64 },
-  { month: "Jun", value: 82 },
-  { month: "Jul", value: 76 },
-  { month: "Aug", value: 94 },
-  { month: "Sep", value: 88 },
-  { month: "Oct", value: 100 },
-  { month: "Nov", value: 91 },
-  { month: "Dec", value: 108 },
 ];
 
 /* =========================
@@ -284,19 +144,20 @@ const salesData = [
 ========================= */
 
 function statusStyle(status: string) {
-  if (status === "Delivered" || status === "Paid") {
+  const normalized = status.toLowerCase();
+  if (normalized === "delivered" || normalized === "paid") {
     return "bg-green-50 text-green-700 border-green-200";
   }
 
-  if (status === "Pending") {
+  if (normalized === "pending") {
     return "bg-yellow-50 text-yellow-700 border-yellow-200";
   }
 
-  if (status === "Shipped") {
+  if (normalized === "shipped") {
     return "bg-blue-50 text-blue-700 border-blue-200";
   }
 
-  if (status === "Confirmed" || status === "Processing") {
+  if (normalized === "confirmed" || normalized === "processing") {
     return "bg-amber-50 text-amber-700 border-amber-200";
   }
 
@@ -308,12 +169,73 @@ function statusStyle(status: string) {
 ========================= */
 
 export default function AdminDashboard() {
+  const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRangeValue>({
     startDate: "",
     endDate: "",
     preset: "all",
     label: "All Dates",
   });
+  const [dashboard, setDashboard] = useState<{
+    stats: { revenue: number; orders: number; customers: number; products: number } | null;
+    changes: { revenue: number | null; orders: number | null; customers: number | null; products: number | null };
+    recentOrders: Array<{ id: number; order_number: string; customer_name: string; total_amount: number; status: string; product: string }>;
+    sales: Array<{ month: string; revenue: number; orders: number }>;
+    statusBreakdown: Array<{ status: string; count: number }>;
+    topProduct: { name: string; sold: number; revenue: number } | null;
+  }>({
+    stats: null,
+    changes: { revenue: 0, orders: 0, customers: 0, products: 0 },
+    recentOrders: [],
+    sales: [],
+    statusBreakdown: [],
+    topProduct: null,
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (dateRange.startDate) params.set("from", dateRange.startDate);
+    if (dateRange.endDate) params.set("to", dateRange.endDate);
+    fetch(`/api/admin/dashboard?${params.toString()}`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load dashboard data");
+        return response.json();
+      })
+      .then(setDashboard)
+      .catch((error) => console.error("Dashboard load failed:", error))
+      .finally(() => setIsLoading(false));
+  }, [dateRange.startDate, dateRange.endDate]);
+
+  const dashboardStats = useMemo(() => {
+    const values = dashboard.stats;
+    return stats.map((stat) => {
+      const change = dashboard.changes[stat.key];
+      return {
+        ...stat,
+        value: values
+          ? stat.key === "revenue"
+            ? `Rs. ${Number(values.revenue).toLocaleString("en-PK")}`
+            : Number(values[stat.key]).toLocaleString("en-PK")
+          : "—",
+        change: change === null ? "New" : `${change >= 0 ? "+" : ""}${change}%`,
+        changeClass: change !== null && change < 0 ? "text-rose-600" : "text-emerald-700",
+      };
+    });
+  }, [dashboard.changes, dashboard.stats]);
+  const statusTotal = dashboard.statusBreakdown.reduce((sum, item) => sum + Number(item.count), 0);
+  const statusPercent = (...statuses: string[]) => {
+    if (!statusTotal) return 0;
+    const count = dashboard.statusBreakdown
+      .filter((item) => statuses.includes(item.status.toLowerCase()))
+      .reduce((sum, item) => sum + Number(item.count), 0);
+    return Math.round((count / statusTotal) * 100);
+  };
+  const dynamicSales = dashboard.sales.length ? dashboard.sales : [];
+  const monthlyRevenueChange = dashboard.changes.revenue;
+  const handleDateRangeChange = (value: DateRangeValue) => {
+    setIsLoading(true);
+    setDateRange(value);
+  };
 
   return (
     <main className="min-h-screen bg-[#F8F6F2] text-[#080808]">
@@ -321,7 +243,7 @@ export default function AdminDashboard() {
 
       {/* ================= MAIN ================= */}
 
-      <section className="lg:ml-64">
+      <section className="transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)]">
 
         {/* TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
@@ -343,7 +265,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3">
             <AdminDateRangeFilter
               value={dateRange}
-              onChange={setDateRange}
+              onChange={handleDateRangeChange}
             />
 
             <div className="hidden text-right sm:block">
@@ -401,7 +323,7 @@ export default function AdminDashboard() {
           {/* STATS */}
           <section className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-            {stats.map((stat) => (
+            {dashboardStats.map((stat) => (
               <div
                 key={stat.title}
                 className="group rounded-2xl border border-[#D5C1A9]/60 bg-white p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
@@ -418,7 +340,7 @@ export default function AdminDashboard() {
                       {stat.value}
                     </h3>
 
-                    <p className="mt-2 text-xs font-semibold text-emerald-700">
+                    <p className={`mt-2 text-xs font-semibold ${stat.changeClass}`}>
                       {stat.change} this month
                     </p>
                   </div>
@@ -452,15 +374,19 @@ export default function AdminDashboard() {
                   </h2>
                 </div>
 
-                <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-                  +18.4%
+                <span className={`rounded-full px-3 py-1.5 text-xs font-semibold border ${monthlyRevenueChange !== null && monthlyRevenueChange < 0 ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+                  {monthlyRevenueChange === null ? "New" : `${monthlyRevenueChange >= 0 ? "+" : ""}${monthlyRevenueChange}%`}
                 </span>
 
               </div>
 
               <div className="mt-8 flex h-64 items-end gap-2 sm:gap-3">
 
-                {salesData.map((item) => (
+                {!isLoading && dynamicSales.length === 0 ? (
+                  <div className="flex h-full w-full items-center justify-center text-sm text-[#8B7A6C]">
+                    No sales recorded for this period
+                  </div>
+                ) : dynamicSales.map((item) => (
                   <div
                     key={item.month}
                     className="group flex h-full flex-1 flex-col items-center justify-end"
@@ -471,17 +397,17 @@ export default function AdminDashboard() {
                       <div
                         className="w-full rounded-t-lg bg-[#1D1612] opacity-85 transition-all duration-300 group-hover:bg-[#A06E31] group-hover:opacity-100"
                         style={{
-                          height: `${(item.value / 108) * 100}%`,
+                          height: `${(Number(item.revenue) / Math.max(...dynamicSales.map((sale) => Number(sale.revenue)), 1)) * 100}%`,
                         }}
                       />
 
                       <span className="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-[#1D1612] px-2 py-1 text-[10px] text-white group-hover:block whitespace-nowrap shadow-xs">
-                        {item.value}k
+                        Rs. {Number(item.revenue).toLocaleString("en-PK")}
                       </span>
 
                     </div>
 
-                    <span className="mt-3 text-[10px] text-[#8B7A6C] sm:text-xs">
+                      <span className="mt-3 text-[10px] text-[#8B7A6C] sm:text-xs">
                       {item.month}
                     </span>
 
@@ -508,44 +434,44 @@ export default function AdminDashboard() {
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="text-[#1D1612] font-medium">Delivered & Paid (COD)</span>
-                    <span className="font-bold text-[#1D1612]">68%</span>
+                    <span className="font-bold text-[#1D1612]">{statusPercent("delivered")}%</span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
-                    <div className="h-full w-[68%] rounded-full bg-[#A06E31]" />
+                    <div className="h-full rounded-full bg-[#A06E31]" style={{ width: `${statusPercent("delivered")}%` }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="text-[#1D1612] font-medium">Shipped (In Transit)</span>
-                    <span className="font-bold text-[#1D1612]">18%</span>
+                    <span className="font-bold text-[#1D1612]">{statusPercent("shipped")}%</span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
-                    <div className="h-full w-[18%] rounded-full bg-[#1D1612]" />
+                    <div className="h-full rounded-full bg-[#1D1612]" style={{ width: `${statusPercent("shipped")}%` }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="text-[#1D1612] font-medium">Pending Verification</span>
-                    <span className="font-bold text-[#1D1612]">9%</span>
+                    <span className="font-bold text-[#1D1612]">{statusPercent("pending", "confirmed", "processing")}%</span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
-                    <div className="h-full w-[9%] rounded-full bg-[#8B7A6C]" />
+                    <div className="h-full rounded-full bg-[#8B7A6C]" style={{ width: `${statusPercent("pending", "confirmed", "processing")}%` }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="text-[#1D1612] font-medium">Cancelled / Returned</span>
-                    <span className="font-bold text-[#1D1612]">5%</span>
+                    <span className="font-bold text-[#1D1612]">{statusPercent("cancelled", "returned")}%</span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-[#D5C1A9]/30">
-                    <div className="h-full w-[5%] rounded-full bg-rose-500" />
+                    <div className="h-full rounded-full bg-rose-500" style={{ width: `${statusPercent("cancelled", "returned")}%` }} />
                   </div>
                 </div>
 
@@ -609,8 +535,13 @@ export default function AdminDashboard() {
                 </thead>
 
                 <tbody>
-
-                  {recentOrders.map((order) => (
+                  {isLoading ? <AdminTableSkeletonRows columns={5} rows={5} /> : dashboard.recentOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-10 text-center text-sm text-[#8B7A6C]">
+                        No orders found for this period
+                      </td>
+                    </tr>
+                  ) : dashboard.recentOrders.map((order) => (
                     <tr
                       key={order.id}
                       className="border-b border-black/5 last:border-0 transition-colors hover:bg-[#F8F6F2]"
@@ -618,12 +549,12 @@ export default function AdminDashboard() {
 
                       <td className="px-6 py-5 text-sm font-semibold">
                         <Link href="/admin/orders" className="hover:underline">
-                          {order.id}
+                          #{order.order_number}
                         </Link>
                       </td>
 
                       <td className="px-6 py-5 text-sm">
-                        {order.customer}
+                        {order.customer_name}
                       </td>
 
                       <td className="px-6 py-5 text-sm text-black/60">
@@ -631,7 +562,7 @@ export default function AdminDashboard() {
                       </td>
 
                       <td className="px-6 py-5 text-sm font-medium">
-                        {order.amount}
+                        Rs. {Number(order.total_amount).toLocaleString("en-PK")}
                       </td>
 
                       <td className="px-6 py-5">
@@ -658,7 +589,7 @@ export default function AdminDashboard() {
             {/* MOBILE ORDERS */}
             <div className="divide-y divide-black/5 md:hidden">
 
-              {recentOrders.map((order) => (
+              {dashboard.recentOrders.map((order) => (
                 <div
                   key={order.id}
                   className="p-5 transition-colors hover:bg-[#F8F6F2]"
@@ -668,11 +599,11 @@ export default function AdminDashboard() {
 
                     <div>
                       <p className="text-sm font-semibold">
-                        {order.id}
+                        #{order.order_number}
                       </p>
 
                       <p className="mt-1 text-sm">
-                        {order.customer}
+                        {order.customer_name}
                       </p>
                     </div>
 
@@ -681,7 +612,7 @@ export default function AdminDashboard() {
                         order.status
                       )}`}
                     >
-                      {order.status}
+                        {order.status}
                     </span>
 
                   </div>
@@ -693,7 +624,7 @@ export default function AdminDashboard() {
                     </p>
 
                     <p className="text-sm font-semibold">
-                      {order.amount}
+                      Rs. {Number(order.total_amount).toLocaleString("en-PK")}
                     </p>
 
                   </div>
@@ -738,21 +669,21 @@ export default function AdminDashboard() {
                 <div className="flex-1">
 
                   <h3 className="font-semibold">
-                    Essential Oversized Tee
+                    {dashboard.topProduct?.name || "—"}
                   </h3>
 
                   <p className="mt-1 text-sm text-black/45">
-                    Women · Clothing
+                    COD sales performance
                   </p>
 
                   <div className="mt-3 flex items-center gap-3">
 
                     <span className="text-sm font-semibold">
-                      Rs. 3,499
+                    Rs. {Number(dashboard.topProduct?.revenue || 0).toLocaleString("en-PK")}
                     </span>
 
                     <span className="text-xs text-green-600 font-medium">
-                      42 sold
+                      {dashboard.topProduct?.sold || 0} sold
                     </span>
 
                   </div>

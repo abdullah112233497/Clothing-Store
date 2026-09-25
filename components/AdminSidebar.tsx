@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAdminSidebar } from "@/components/AdminPanelShell";
 
 /* ==========================================================================
    ICONS (Identical Stroke SVGs from /admin dashboard)
@@ -83,6 +85,24 @@ function LogoutIcon() {
   );
 }
 
+function ChevronIcon({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
 export type AdminNavTab =
   | "dashboard"
   | "orders"
@@ -97,6 +117,13 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
+  const router = useRouter();
+  const { collapsed, toggle } = useAdminSidebar();
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/admin/login");
+    router.refresh();
+  }
   const navItems = [
     { key: "dashboard", label: "Dashboard", href: "/admin", icon: DashboardIcon },
     { key: "orders", label: "Orders", href: "/admin/orders", icon: OrdersIcon },
@@ -108,19 +135,35 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-[#1D1612] text-white lg:flex border-r border-[#3A2C22]">
+    <aside
+      className={`fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-[#3A2C22] bg-[#1D1612] text-white transition-[width] duration-300 lg:flex ${collapsed ? "w-20" : "w-64"}`}
+    >
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={collapsed ? "Expand admin sidebar" : "Collapse admin sidebar"}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute -right-3 top-16 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-[#A06E31]/60 bg-[#1D1612] text-[#D5C1A9] shadow-md transition-colors hover:bg-[#A06E31] hover:text-white"
+      >
+        <ChevronIcon collapsed={collapsed} />
+      </button>
+
       {/* Logo */}
-      <div className="flex h-20 items-center border-b border-[#3A2C22] px-7">
-        <Link href="/admin">
-          <h1 className="text-xl font-bold tracking-[0.18em] text-[#F8F6F2]">WEARWELL</h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-[#D5C1A9]">
-            Admin Portal
-          </p>
+      <div className={`flex h-20 items-center border-b border-[#3A2C22] ${collapsed ? "justify-center px-2" : "px-7"}`}>
+        <Link href="/admin" className={collapsed ? "text-center" : ""} title={collapsed ? "WEARWELL Admin" : undefined}>
+          <h1 className={`font-bold text-[#F8F6F2] ${collapsed ? "text-xl tracking-normal" : "text-xl tracking-[0.18em]"}`}>
+            {collapsed ? "W" : "WEARWELL"}
+          </h1>
+          {!collapsed && (
+            <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-[#D5C1A9]">
+              Admin Portal
+            </p>
+          )}
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2 px-4 py-6">
+      <nav className={`flex-1 space-y-2 py-6 ${collapsed ? "px-3" : "px-4"}`}>
         {navItems.map((item) => {
           const isActive = currentTab === item.key;
           const Icon = item.icon;
@@ -128,28 +171,31 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
             <Link
               key={item.key}
               href={item.href}
-              className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-300 ${
+              title={collapsed ? item.label : undefined}
+              className={`group flex items-center rounded-xl py-3 text-sm transition-all duration-300 ${collapsed ? "justify-center px-2" : "gap-3 px-4"} ${
                 isActive
                   ? "bg-[#A06E31] font-semibold text-white shadow-md shadow-[#A06E31]/25"
-                  : "text-[#D5C1A9]/75 hover:translate-x-1 hover:bg-[#2C211B] hover:text-white"
+                  : `text-[#D5C1A9]/75 hover:bg-[#2C211B] hover:text-white ${collapsed ? "" : "hover:translate-x-1"}`
               }`}
             >
               <Icon />
-              <span>{item.label}</span>
+              {!collapsed && <span>{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Logout */}
-      <div className="border-t border-[#3A2C22] p-4">
-        <Link
-          href="/account/login"
-          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-[#D5C1A9]/70 transition-all duration-300 hover:bg-rose-500/15 hover:text-rose-200"
+      <div className={`border-t border-[#3A2C22] ${collapsed ? "p-3" : "p-4"}`}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={collapsed ? "Logout" : undefined}
+          className={`flex w-full items-center rounded-xl py-3 text-sm text-[#D5C1A9]/70 transition-all duration-300 hover:bg-rose-500/15 hover:text-rose-200 ${collapsed ? "justify-center px-2" : "gap-3 px-4"}`}
         >
           <LogoutIcon />
-          <span>Logout</span>
-        </Link>
+          {!collapsed && <span>Logout</span>}
+        </button>
       </div>
     </aside>
   );

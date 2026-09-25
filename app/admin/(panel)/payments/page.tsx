@@ -5,6 +5,7 @@ import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
+import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
 
 /* ==========================================================================
    ICONS (Exact SVG Design System from Admin Panel)
@@ -141,6 +142,7 @@ export type PaymentStatusType = "Collected" | "Pending" | "Refunded";
 
 export type PaymentRecord = {
   id: string;
+  dbId?: number;
   orderId: string;
   customer: string;
   email: string;
@@ -356,7 +358,8 @@ function getMethodBadge(method: PaymentMethodType) {
    ========================================================================== */
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"All" | "Collected" | "Pending" | "Refunded">("All");
   const [methodFilter, setMethodFilter] = useState<string>("All");
@@ -369,6 +372,35 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/payments", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.payments) return;
+        setPayments(data.payments.map((payment: { id: number; order_id: number; order_number: string; customer_name: string; customer_email: string; customer_phone?: string; shipping_address_snapshot?: { city?: string; line1?: string }; courier?: string; tracking_number?: string; method: string; status: string; amount: number; reconciled_at?: string; created_at: string; items_summary?: string }) => ({
+          id: `#PAY-${payment.id}`,
+          dbId: payment.id,
+          orderId: `#${payment.order_number}`,
+          customer: payment.customer_name,
+          email: payment.customer_email,
+          phone: payment.customer_phone || "",
+          city: payment.shipping_address_snapshot?.city || "—",
+          address: payment.shipping_address_snapshot?.line1 || "—",
+          method: payment.method === "cod" ? "Cash on Delivery" : payment.method as PaymentMethodType,
+          amount: Number(payment.amount),
+          date: new Date(payment.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          time: new Date(payment.created_at).toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" }),
+          status: payment.reconciled_at || payment.status === "paid" || payment.status === "authorized" ? "Collected" : payment.status === "refunded" ? "Refunded" : "Pending",
+          courier: payment.courier || "Unassigned",
+          trackingNumber: payment.tracking_number || undefined,
+          itemsSummary: payment.items_summary || "—",
+          reconciled: Boolean(payment.reconciled_at),
+        })));
+      })
+      .catch((error) => console.error("Payments load failed:", error))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   // Prevent background scrolling and interaction when modal is open
   useEffect(() => {
@@ -487,18 +519,12 @@ export default function PaymentsPage() {
     showToast("Payment statement downloaded successfully.");
   };
 
-  const handleMarkReconciled = (paymentId: string) => {
-    setPayments((prev) =>
-      prev.map((p) =>
-        p.id === paymentId
-          ? {
-              ...p,
-              status: "Collected",
-              reconciled: true,
-            }
-          : p
-      )
-    );
+  const handleMarkReconciled = async (paymentId: string) => {
+    const payment = payments.find((item) => item.id === paymentId);
+    if (!payment) return;
+    const response = await fetch("/api/admin/payments", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: payment.dbId, reconciled: true }) });
+    if (!response.ok) return;
+    setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: "Collected", reconciled: true } : p));
     if (selectedPayment && selectedPayment.id === paymentId) {
       setSelectedPayment((prev) => (prev ? { ...prev, status: "Collected", reconciled: true } : null));
     }
@@ -522,7 +548,7 @@ export default function PaymentsPage() {
       {/* ==========================================================================
          MAIN CONTENT AREA
          ========================================================================== */}
-      <section className={`lg:ml-64 ${selectedPayment ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedPayment}>
+      <section className={`transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)] ${selectedPayment ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedPayment}>
         {/* STICKY TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -747,7 +773,7 @@ export default function PaymentsPage() {
               {/* STATUS FILTER TABS */}
               <div className="border-b border-[#D5C1A9]/60 px-6 pt-5">
                 <div className="flex flex-wrap items-center gap-2 pb-4">
-                  {[
+                  {([
                     { key: "All", label: "All Transactions", count: payments.length },
                     {
                       key: "Collected",
@@ -764,10 +790,10 @@ export default function PaymentsPage() {
                       label: "Refunds",
                       count: payments.filter((p) => p.status === "Refunded").length,
                     },
-                  ].map((tab) => (
+                  ] as const).map((tab) => (
                     <button
                       key={tab.key}
-                      onClick={() => setActiveTab(tab.key as any)}
+                      onClick={() => setActiveTab(tab.key)}
                       className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
                         activeTab === tab.key
                           ? "bg-[#1D1612] text-white shadow-xs"
@@ -868,7 +894,7 @@ export default function PaymentsPage() {
                   </thead>
 
                   <tbody className="divide-y divide-[#D5C1A9]/40 text-xs">
-                    {filteredPayments.length === 0 ? (
+                    {isLoading ? <AdminTableSkeletonRows columns={7} /> : filteredPayments.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center text-[#8B7A6C]">
                           <p className="text-base font-semibold text-[#1D1612]">No transactions found</p>

@@ -124,9 +124,14 @@ DATABASE_URL=postgresql://<user>:<password>@<host>/<dbname>?sslmode=require
 
 # JWT Secret for Session Encryption
 JWT_SECRET=your_super_secret_jwt_key_here
+
+# Cloudinary server-side upload credentials
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-> **Note**: The application automatically runs `initDb()` on initial database requests to create the `users` and `wishlist_items` tables if they don't exist.
+> **Note**: Product images are stored in Cloudinary; PostgreSQL only stores their delivery URLs. If Cloudinary credentials are incomplete, the admin uploader uses a temporary Cloudinary demo image. Run `npm run migrate:images` once for a legacy database that contains local paths or base64 image data.
 
 ### 4. Running Locally
 

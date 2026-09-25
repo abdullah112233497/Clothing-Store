@@ -55,6 +55,8 @@ export default function CheckoutPage() {
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
         if (Array.isArray(parsed)) {
+          // Hydrate client-only cart state from browser storage after mount.
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setCartItems(parsed);
         }
       }

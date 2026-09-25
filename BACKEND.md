@@ -1,6 +1,8 @@
 # WEARWELL commerce backend
 
-The application uses PostgreSQL through `@neondatabase/serverless`. Set `DATABASE_URL` and `JWT_SECRET` in `.env.local`. The first database-backed request runs the idempotent schema upgrade and development catalog seed in `lib/db.ts`.
+The application uses PostgreSQL through `@neondatabase/serverless`. Set `DATABASE_URL`, `JWT_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `.env.local`. The first database-backed request runs the idempotent schema upgrade and development catalog seed in `lib/db.ts`.
+
+Product binaries are uploaded to Cloudinary and only their optimized HTTPS delivery URLs are stored in PostgreSQL. For a legacy database, run `npm run migrate:images` once to replace local/base64 product, order, and wishlist image values with the temporary Cloudinary placeholder.
 
 ## Data model
 

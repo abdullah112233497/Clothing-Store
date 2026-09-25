@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
 
 /* ==========================================================================
    ICONS (Exact SVG Design System)
@@ -139,6 +140,7 @@ function EyeIcon({ className = "w-5 h-5" }: { className?: string }) {
 
 type Customer = {
   id: string;
+  dbId?: number;
   name: string;
   email: string;
   phone: string;
@@ -249,11 +251,44 @@ function formatPKR(val: number) {
    ========================================================================== */
 
 export default function CustomersPage() {
-  const [customers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"All" | "Active" | "Inactive">("All");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/customers", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.customers) return;
+        setCustomers(data.customers.map((customer: { id: number; first_name: string; last_name: string; email: string; phone?: string; city?: string; orders: number; spent: number; last_order_date?: string; is_active: boolean }) => ({
+          id: `CUST-${String(customer.id).padStart(3, "0")}`,
+          dbId: customer.id,
+          name: `${customer.first_name} ${customer.last_name}`,
+          email: customer.email,
+          phone: customer.phone || "",
+          city: customer.city || "—",
+          orders: Number(customer.orders),
+          totalSpent: Number(customer.spent),
+          lastOrderDate: customer.last_order_date ? new Date(customer.last_order_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—",
+          status: customer.is_active ? "Active" : "Inactive",
+        })));
+      })
+      .catch((error) => console.error("Customers load failed:", error))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const toggleCustomerStatus = async (customer: Customer) => {
+    if (!customer.dbId) return;
+    const isActive = customer.status !== "Active";
+    const response = await fetch("/api/admin/customers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: customer.dbId, isActive }) });
+    if (!response.ok) { const data = await response.json(); alert(data.error || "Unable to update customer."); return; }
+    const updated: Customer = { ...customer, status: isActive ? "Active" : "Inactive" };
+    setCustomers((current) => current.map((item) => item.dbId === customer.dbId ? updated : item));
+    setSelectedCustomer(updated);
+  };
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter((c) => c.status === "Active").length;
@@ -290,7 +325,7 @@ export default function CustomersPage() {
       <AdminSidebar currentTab="customers" />
 
       {/* MAIN BODY */}
-      <section className={`lg:ml-64 ${selectedCustomer ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedCustomer}>
+      <section className={`transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)] ${selectedCustomer ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedCustomer}>
         {/* TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -342,7 +377,7 @@ export default function CustomersPage() {
                   Total Customers
                 </p>
                 <p className="mt-3 text-2xl font-bold tracking-tight text-[#1D1612]">
-                  {totalCustomers}
+                  {isLoading ? <span className="admin-loading-value">000</span> : totalCustomers}
                 </p>
                 <p className="mt-1 text-xs text-emerald-700 font-semibold">+18% new clients</p>
               </div>
@@ -352,7 +387,7 @@ export default function CustomersPage() {
                   Active Shoppers
                 </p>
                 <p className="mt-3 text-2xl font-bold tracking-tight text-[#1D1612]">
-                  {activeCustomers}
+                  {isLoading ? <span className="admin-loading-value">000</span> : activeCustomers}
                 </p>
                 <p className="mt-1 text-xs text-[#8B7A6C]">Placed orders in past 30 days</p>
               </div>
@@ -362,7 +397,7 @@ export default function CustomersPage() {
                   Total Lifetime Spent
                 </p>
                 <p className="mt-3 text-2xl font-bold tracking-tight text-[#1D1612]">
-                  {formatPKR(totalRevenue)}
+                  {isLoading ? <span className="admin-loading-value">Rs. 00,000</span> : formatPKR(totalRevenue)}
                 </p>
                 <p className="mt-1 text-xs text-[#8B7A6C]">Cumulative customer spend</p>
               </div>
@@ -372,7 +407,7 @@ export default function CustomersPage() {
                   Avg. Spend Per Client
                 </p>
                 <p className="mt-3 text-2xl font-bold tracking-tight text-[#1D1612]">
-                  {formatPKR(avgSpent)}
+                  {isLoading ? <span className="admin-loading-value">Rs. 00,000</span> : formatPKR(avgSpent)}
                 </p>
                 <p className="mt-1 text-xs text-[#8B7A6C]">High-value retention</p>
               </div>
@@ -383,14 +418,14 @@ export default function CustomersPage() {
               {/* TABS */}
               <div className="border-b border-[#D5C1A9]/60 px-6 pt-5">
                 <div className="flex items-center gap-2 pb-4">
-                  {[
+                  {([
                     { key: "All", label: "All Customers", count: customers.length },
                     { key: "Active", label: "Active", count: activeCustomers },
                     { key: "Inactive", label: "Inactive", count: customers.length - activeCustomers },
-                  ].map((tab) => (
+                  ] as const).map((tab) => (
                     <button
                       key={tab.key}
-                      onClick={() => setActiveTab(tab.key as any)}
+                      onClick={() => setActiveTab(tab.key)}
                       className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition ${
                         activeTab === tab.key
                           ? "bg-[#1D1612] text-white shadow-xs"
@@ -440,7 +475,7 @@ export default function CustomersPage() {
                   </thead>
 
                   <tbody className="divide-y divide-[#D5C1A9]/30 text-xs">
-                    {filteredCustomers.map((cust) => (
+                    {isLoading ? <AdminTableSkeletonRows columns={7} /> : filteredCustomers.map((cust) => (
                       <tr
                         key={cust.id}
                         className="transition hover:bg-[#FAF7F2]/60"
@@ -656,13 +691,10 @@ export default function CustomersPage() {
 
             {/* MODAL FOOTER */}
             <div className="px-6 py-4 bg-white border-t border-[#D5C1A9]/60 flex items-center justify-between gap-3 sticky bottom-0 z-20 shadow-xs">
-              <a
-                href={`tel:${selectedCustomer.phone}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5C1A9] bg-white px-3.5 py-2 text-xs font-semibold text-[#080808] transition hover:bg-[#FAF7F2]"
-              >
-                <PhoneIcon />
-                <span>Call Client</span>
-              </a>
+              <div className="flex items-center gap-2">
+                <a href={`tel:${selectedCustomer.phone}`} className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5C1A9] bg-white px-3.5 py-2 text-xs font-semibold text-[#080808] transition hover:bg-[#FAF7F2]"><PhoneIcon /><span>Call Client</span></a>
+                <button type="button" onClick={() => toggleCustomerStatus(selectedCustomer)} className="rounded-lg border border-[#D5C1A9] bg-white px-3.5 py-2 text-xs font-semibold text-[#080808] transition hover:bg-[#FAF7F2]">{selectedCustomer.status === "Active" ? "Deactivate" : "Activate"}</button>
+              </div>
 
               <button
                 onClick={() => setSelectedCustomer(null)}

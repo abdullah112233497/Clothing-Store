@@ -37,6 +37,8 @@ export default function OrderSuccessPage() {
     const savedOrder = localStorage.getItem("lastOrder");
 
     if (savedOrder) {
+      // Hydrate the completed order from browser storage after mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrder(JSON.parse(savedOrder));
     }
 

@@ -88,6 +88,7 @@ export async function POST(request: Request) {
       email: newUser.email,
       firstName: newUser.first_name,
       lastName: newUser.last_name,
+      role: "customer",
     });
 
     await setSessionCookie(token);
@@ -104,6 +105,7 @@ export async function POST(request: Request) {
           birthday: newUser.birthday || "",
           gender: newUser.gender || "Male",
           membershipTier: newUser.membership_tier || "VIP Black",
+          role: "customer",
           memberSince: new Date(newUser.created_at).toLocaleDateString("en-US", {
             month: "long",
             year: "numeric",

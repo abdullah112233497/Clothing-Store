@@ -572,18 +572,14 @@ const [quantity, setQuantity] = useState(1);
 const [selectedImage, setSelectedImage] = useState(
 product?.image || ""
 );
-const [isMainImageLoaded, setIsMainImageLoaded] = useState(false);
+const [loadedMainImage, setLoadedMainImage] = useState<string | null>(null);
+const isMainImageLoaded = loadedMainImage === selectedImage;
 
 const { isLoggedIn } = useAuth();
 const [isWishlisted, setIsWishlisted] = useState(false);
 
 useEffect(() => {
-  setIsMainImageLoaded(false);
-}, [selectedImage]);
-
-useEffect(() => {
   let active = true;
-  setIsLoading(true);
   fetch(`/api/products?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
     .then((response) => response.ok ? response.json() : null)
     .then((data) => {
@@ -872,8 +868,8 @@ return (
             <img
               src={selectedImage}
               alt={product.name}
-              onLoad={() => setIsMainImageLoaded(true)}
-              onError={() => setIsMainImageLoaded(true)}
+              onLoad={() => setLoadedMainImage(selectedImage)}
+              onError={() => setLoadedMainImage(selectedImage)}
               className={`aspect-[3/4] w-full object-cover transition-all duration-700 hover:scale-[1.02] ${
                 isMainImageLoaded ? "opacity-100" : "opacity-0"
               }`}

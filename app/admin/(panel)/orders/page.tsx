@@ -5,6 +5,8 @@ import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminDateRangeFilter, { DateRangeValue } from "@/components/AdminDateRangeFilter";
+import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
+import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
 
 /* =========================
    TYPES
@@ -20,6 +22,7 @@ type OrderItem = {
 
 type Order = {
   id: string;
+  dbId?: number;
   customer: string;
   phone: string;
   email: string;
@@ -33,7 +36,7 @@ type Order = {
   total: string;
   paymentMethod: "Cash on Delivery";
   paymentStatus: "Pending" | "Collected";
-  status: "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";
+  status: "Pending" | "Confirmed" | "Processing" | "Shipped" | "Delivered" | "Cancelled" | "Returned";
   date: string;
 };
 
@@ -362,7 +365,8 @@ function formatOrderPrice(val: string | number) {
 ========================= */
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"All" | "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled">("All");
@@ -377,6 +381,36 @@ export default function OrdersPage() {
   // Dispatch fields inside modal
   const [courierName, setCourierName] = useState("TCS Express");
   const [trackingNumberInput, setTrackingNumberInput] = useState("");
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+
+  useEffect(() => {
+    adminFetch("/api/admin/orders")
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.orders) return;
+        setOrders(data.orders.map((order: { id: number; orderNumber: string; customer: { name: string; phone: string; email: string; address: string; city: string; notes?: string }; items: Array<{ name: string; size?: string; sku: string; price: number; quantity: number }>; courier?: string; trackingNumber?: string; total: number; paymentMethod: string; paymentStatus: string; status: string; createdAt: string }) => ({
+          id: order.orderNumber,
+          dbId: order.id,
+          customer: order.customer.name,
+          phone: order.customer.phone,
+          email: order.customer.email,
+          address: order.customer.address,
+          city: order.customer.city,
+          notes: order.customer.notes,
+          product: order.items.map((item) => `${item.name}${item.size ? ` (${item.size})` : ""}`).join(", "),
+          items: order.items.map((item) => ({ name: item.name, size: item.size || "", sku: item.sku, price: `Rs. ${Number(item.price).toLocaleString("en-PK")}`, quantity: item.quantity })),
+          courier: order.courier || "Unassigned",
+          trackingNumber: order.trackingNumber || undefined,
+          total: `Rs. ${Number(order.total).toLocaleString("en-PK")}`,
+          paymentMethod: "Cash on Delivery",
+          paymentStatus: order.paymentStatus === "paid" ? "Collected" : "Pending",
+          status: order.status.charAt(0).toUpperCase() + order.status.slice(1) as Order["status"],
+          date: new Date(order.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        })));
+      })
+      .catch((error) => console.error("Orders load failed:", error))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   // Prevent background scrolling and interaction when modal is open
   useEffect(() => {
@@ -429,16 +463,30 @@ export default function OrdersPage() {
   const cancelledCount = orders.filter((o) => o.status === "Cancelled").length;
 
   // Manual Status Handlers
-  const handleUpdateStatus = (newStatus: Order["status"], extraProps?: Partial<Order>) => {
+  const handleUpdateStatus = async (newStatus: Order["status"], extraProps?: Partial<Order>) => {
     if (!selectedOrder) return;
+    if (isUpdatingOrder) return;
+    const payload: Record<string, string> = {};
+    if (newStatus) payload.status = newStatus.toLowerCase();
+    if (extraProps?.paymentStatus) payload.paymentStatus = extraProps.paymentStatus === "Collected" ? "paid" : "pending";
+    if (extraProps?.courier) payload.courier = extraProps.courier;
+    if (extraProps?.trackingNumber) payload.trackingNumber = extraProps.trackingNumber;
+    setIsUpdatingOrder(true);
+    const response = await fetch(`/api/admin/orders/${selectedOrder.dbId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) { alert(data?.error || "Unable to update order status."); setIsUpdatingOrder(false); return; }
+    const serverOrder = data?.order;
     const updated = {
       ...selectedOrder,
-      status: newStatus,
-      ...(newStatus === "Delivered" ? { paymentStatus: "Collected" as const } : {}),
-      ...extraProps,
+      status: (serverOrder?.status ? String(serverOrder.status).charAt(0).toUpperCase() + String(serverOrder.status).slice(1) : newStatus) as Order["status"],
+      paymentStatus: serverOrder?.paymentStatus === "paid" ? "Collected" as const : extraProps?.paymentStatus || selectedOrder.paymentStatus,
+      courier: serverOrder?.courier || extraProps?.courier || selectedOrder.courier,
+      trackingNumber: serverOrder?.trackingNumber || extraProps?.trackingNumber || selectedOrder.trackingNumber,
     };
     setOrders((prev) => prev.map((o) => (o.id === selectedOrder.id ? updated : o)));
     setSelectedOrder(updated);
+    invalidateAdminCache("/api/admin/orders");
+    setIsUpdatingOrder(false);
   };
 
   return (
@@ -446,7 +494,7 @@ export default function OrdersPage() {
       <AdminSidebar currentTab="orders" />
 
       {/* MAIN CONTENT */}
-      <section className={`lg:ml-64 ${selectedOrder ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedOrder}>
+      <section className={`transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)] ${selectedOrder ? "pointer-events-none select-none" : ""}`} aria-hidden={!!selectedOrder}>
         {/* TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -502,17 +550,17 @@ export default function OrdersPage() {
 
             {/* ESSENTIAL STATUS TABS */}
             <div className="mb-5 flex gap-2 overflow-x-auto border-b border-[#D5C1A9]/40 pb-3">
-              {[
+              {([
                 { label: "All Orders", key: "All", count: orders.length },
                 { label: "Pending Verification", key: "Pending", count: pendingCount },
                 { label: "Confirmed & Packing", key: "Confirmed", count: confirmedCount },
                 { label: "Shipped (In Transit)", key: "Shipped", count: shippedCount },
                 { label: "Delivered & Paid", key: "Delivered", count: deliveredCount },
                 { label: "Cancelled", key: "Cancelled", count: cancelledCount },
-              ].map((tab) => (
+              ] as const).map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
+                  onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold whitespace-nowrap transition-all ${
                     activeTab === tab.key
                       ? "bg-[#1D1612] text-white shadow-xs"
@@ -638,8 +686,7 @@ export default function OrdersPage() {
                   </thead>
 
                   <tbody className="divide-y divide-[#8B7A6C]/10">
-
-                    {filteredOrders.map((order) => (
+                    {isLoading ? <AdminTableSkeletonRows columns={8} /> : filteredOrders.map((order) => (
                       <tr
                         key={order.id}
                         className="transition hover:bg-[#F8F6F2]/50"
@@ -863,10 +910,11 @@ export default function OrdersPage() {
                 <span className="text-xs font-semibold text-[#080808]/70">Change Status:</span>
                 <AdminDropdown
                   value={selectedOrder.status}
-                  onChange={(val) => handleUpdateStatus(val as any)}
+                  onChange={(val) => handleUpdateStatus(val as Order["status"])}
                   options={[
                     { value: "Pending", label: "Pending Verification" },
                     { value: "Confirmed", label: "Confirmed & Packing" },
+                    { value: "Processing", label: "Processing / Packing" },
                     { value: "Shipped", label: "Shipped (In Transit)" },
                     { value: "Delivered", label: "Delivered & Paid" },
                     { value: "Cancelled", label: "Cancelled" },
@@ -880,7 +928,7 @@ export default function OrdersPage() {
                 <span className="text-xs font-semibold text-[#080808]/70">COD Payment:</span>
                 <AdminDropdown
                   value={selectedOrder.paymentStatus}
-                  onChange={(val) => handleUpdateStatus(selectedOrder.status, { paymentStatus: val as any })}
+                  onChange={(val) => handleUpdateStatus(selectedOrder.status, { paymentStatus: val as Order["paymentStatus"] })}
                   options={[
                     { value: "Pending", label: "Pending (Not Collected)" },
                     { value: "Collected", label: "Collected (Cash Received)" },

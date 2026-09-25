@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 
 export default function SettingsPage() {
@@ -8,8 +8,28 @@ export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [orderNotifications, setOrderNotifications] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [storeName, setStoreName] = useState("WEARWELL");
+  const [storeEmail, setStoreEmail] = useState("hello@wearwell.pk");
+  const [supportPhone, setSupportPhone] = useState("+92 300 1234567");
+  const [websiteUrl, setWebsiteUrl] = useState("www.wearwell.pk");
+  const [address, setAddress] = useState("Pakistan");
+  const [adminName, setAdminName] = useState("Store Admin");
+  const [adminEmail, setAdminEmail] = useState("administrator@wearwell.pk");
 
-  const handleSave = () => {
+  useEffect(() => {
+    fetch("/api/admin/settings", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => {
+      const settings = data?.settings;
+      if (!settings) return;
+      setStoreName(settings.store_name); setStoreEmail(settings.store_email); setSupportPhone(settings.support_phone); setWebsiteUrl(settings.website_url); setAddress(settings.address); setStoreStatus(settings.store_status); setEmailNotifications(settings.email_notifications); setOrderNotifications(settings.order_notifications);
+    }).catch((error) => console.error("Settings load failed:", error));
+    fetch("/api/auth/me", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => {
+      if (data?.user) { setAdminName(`${data.user.firstName} ${data.user.lastName}`); setAdminEmail(data.user.email); }
+    }).catch((error) => console.error("Admin profile load failed:", error));
+  }, []);
+
+  const handleSave = async () => {
+    const response = await fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeName, storeEmail, supportPhone, websiteUrl, address, storeStatus, emailNotifications, orderNotifications }) });
+    if (!response.ok) return;
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
@@ -21,7 +41,7 @@ export default function SettingsPage() {
       <AdminSidebar currentTab="settings" />
 
       {/* ================= MAIN ================= */}
-      <section className="lg:ml-64">
+      <section className="transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)]">
         {/* ================= HEADER ================= */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -100,7 +120,8 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="WEARWELL"
+                      value={storeName}
+                      onChange={(event) => setStoreName(event.target.value)}
                       className="w-full rounded-xl border border-[#D5C1A9]/80 bg-[#FAF7F2] px-3.5 py-2.5 text-xs text-[#1D1612] outline-none transition focus:border-[#A06E31]"
                     />
                   </div>
@@ -111,7 +132,8 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="email"
-                      defaultValue="hello@wearwell.pk"
+                      value={storeEmail}
+                      onChange={(event) => setStoreEmail(event.target.value)}
                       className="w-full rounded-xl border border-[#D5C1A9]/80 bg-[#FAF7F2] px-3.5 py-2.5 text-xs text-[#1D1612] outline-none transition focus:border-[#A06E31]"
                     />
                   </div>
@@ -122,7 +144,8 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="+92 300 1234567"
+                      value={supportPhone}
+                      onChange={(event) => setSupportPhone(event.target.value)}
                       className="w-full rounded-xl border border-[#D5C1A9]/80 bg-[#FAF7F2] px-3.5 py-2.5 text-xs text-[#1D1612] outline-none transition focus:border-[#A06E31]"
                     />
                   </div>
@@ -133,8 +156,10 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="www.wearwell.pk"
-                      className="w-full rounded-xl border border-[#D5C1A9]/80 bg-[#FAF7F2] px-3.5 py-2.5 text-xs text-[#1D1612] outline-none transition focus:border-[#A06E31]"
+                      value={websiteUrl}
+                      readOnly
+                      aria-readonly="true"
+                      className="w-full cursor-not-allowed rounded-xl border border-[#D5C1A9]/80 bg-[#F1ECE6] px-3.5 py-2.5 text-xs text-[#8B7A6C] outline-none"
                     />
                   </div>
 
@@ -144,7 +169,8 @@ export default function SettingsPage() {
                     </label>
                     <textarea
                       rows={3}
-                      defaultValue="Plot 12-B, Industrial Area, Faisalabad, Punjab, Pakistan"
+                      value={address}
+                      onChange={(event) => setAddress(event.target.value)}
                       className="w-full resize-none rounded-xl border border-[#D5C1A9]/80 bg-[#FAF7F2] px-3.5 py-2.5 text-xs text-[#1D1612] outline-none transition focus:border-[#A06E31]"
                     />
                   </div>
@@ -265,10 +291,10 @@ export default function SettingsPage() {
 
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-[#1D1612]">
-                      Store Admin
+                      {adminName}
                     </p>
                     <p className="mt-0.5 text-xs text-[#8B7A6C]">
-                      administrator@wearwell.pk
+                      {adminEmail}
                     </p>
                   </div>
                 </div>

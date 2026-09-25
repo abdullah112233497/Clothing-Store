@@ -10,12 +10,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!admin) return unauthorized();
   if (admin.role !== "admin") return forbidden();
   const id = Number((await params).id);
-  const { status, note = "" } = await request.json();
-  if (!Number.isInteger(id) || !statuses.includes(status)) return NextResponse.json({ error: "Invalid order or status." }, { status: 400 });
+  const { status, note = "", paymentStatus, courier, trackingNumber } = await request.json();
+  if (!Number.isInteger(id) || (status && !statuses.includes(status)) || (paymentStatus && !['pending','authorized','paid','failed','refunded'].includes(paymentStatus))) return NextResponse.json({ error: "Invalid order or status." }, { status: 400 });
   const current = await sql`SELECT id,user_id,status,order_number FROM orders WHERE id=${id} LIMIT 1`;
   if (!current[0]) return NextResponse.json({ error: "Order not found." }, { status: 404 });
   if (current[0].status === 'cancelled' || current[0].status === 'returned') return NextResponse.json({ error: "A closed order cannot change status." }, { status: 409 });
-  if (status === 'cancelled') {
+  const nextStatus = status || current[0].status;
+  const markPaid = nextStatus === 'delivered' && !paymentStatus;
+  if (nextStatus === 'cancelled') {
     const changed = await sql`WITH changed_order AS (
         UPDATE orders SET status='cancelled',updated_at=NOW() WHERE id=${id} AND status NOT IN ('cancelled','returned')
         RETURNING id,user_id,order_number
@@ -36,9 +38,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!changed[0]) return NextResponse.json({ error: "Order was already closed." }, { status: 409 });
   } else {
     await sql.transaction((tx) => [
-      tx`UPDATE orders SET status=${status},updated_at=NOW() WHERE id=${id}`,
-      tx`INSERT INTO order_status_history(order_id,from_status,to_status,changed_by,note) VALUES(${id},${String(current[0].status)},${status},${admin.id},${String(note)})`,
-      tx`INSERT INTO notifications(user_id,order_id,type,title,message) VALUES(${Number(current[0].user_id)},${id},${`order_${status}`},${`Order ${status}`},${`Your order #${current[0].order_number} is now ${status}.`})`,
+      tx`UPDATE orders SET status=${nextStatus}, payment_status=CASE WHEN ${markPaid} THEN 'paid' ELSE COALESCE(${paymentStatus || null},payment_status) END, courier=COALESCE(${courier ?? null},courier), tracking_number=COALESCE(${trackingNumber ?? null},tracking_number),updated_at=NOW() WHERE id=${id}`,
+      tx`UPDATE payments SET status=CASE WHEN ${markPaid} THEN 'paid' ELSE COALESCE(${paymentStatus || null},status) END, updated_at=NOW() WHERE order_id=${id}`,
+      tx`INSERT INTO order_status_history(order_id,from_status,to_status,changed_by,note) SELECT ${id},${String(current[0].status)},${nextStatus},${admin.id},${String(note)} WHERE ${nextStatus} <> ${String(current[0].status)}`,
+      tx`INSERT INTO notifications(user_id,order_id,type,title,message) SELECT ${Number(current[0].user_id)},${id},${`order_${nextStatus}`},${`Order ${nextStatus}`},${`Your order #${current[0].order_number} is now ${nextStatus}.`} WHERE ${nextStatus} <> ${String(current[0].status)}`,
     ]);
   }
   return NextResponse.json({ success: true, order: await getOrderById(id, admin.id, true) });

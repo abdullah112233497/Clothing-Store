@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-images";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) console.warn("WARNING: DATABASE_URL environment variable is not defined.");
@@ -40,10 +41,12 @@ async function initializeSchema() {
     weight_grams INTEGER CHECK (weight_grams IS NULL OR weight_grams >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CHECK (sale_price IS NULL OR sale_price >= 0))`;
+  await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS admin_metadata JSONB NOT NULL DEFAULT '{}'::jsonb`;
   await sql`CREATE TABLE IF NOT EXISTS product_images (
     id SERIAL PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     url VARCHAR(1000) NOT NULL, alt_text VARCHAR(255), sort_order INTEGER NOT NULL DEFAULT 0,
     is_primary BOOLEAN NOT NULL DEFAULT FALSE)`;
+  await sql`ALTER TABLE product_images ALTER COLUMN url TYPE TEXT`;
   await sql`CREATE TABLE IF NOT EXISTS attributes (
     id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, code VARCHAR(100) UNIQUE NOT NULL,
     display_type VARCHAR(20) NOT NULL DEFAULT 'select' CHECK (display_type IN ('select','color','text','number','boolean')),
@@ -102,8 +105,10 @@ async function initializeSchema() {
     subtotal NUMERIC(12,2) NOT NULL CHECK (subtotal >= 0),
     shipping_cost NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (shipping_cost >= 0),
     discount_amount NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
-    total_amount NUMERIC(12,2) NOT NULL CHECK (total_amount >= 0),
+    total_amount NUMERIC(12,2) NOT NULL CHECK (total_amount >= 0), courier VARCHAR(100), tracking_number VARCHAR(150),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS courier VARCHAR(100)`;
+  await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number VARCHAR(150)`;
   await sql`CREATE TABLE IF NOT EXISTS order_items (
     id BIGSERIAL PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
@@ -118,6 +123,8 @@ async function initializeSchema() {
     amount NUMERIC(12,2) NOT NULL, provider_reference VARCHAR(255),
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  await sql`ALTER TABLE payments ADD COLUMN IF NOT EXISTS reconciled_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE payments ADD COLUMN IF NOT EXISTS reconciled_by INTEGER REFERENCES users(id) ON DELETE SET NULL`;
   await sql`CREATE TABLE IF NOT EXISTS order_status_history (
     id BIGSERIAL PRIMARY KEY, order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     from_status VARCHAR(30), to_status VARCHAR(30) NOT NULL,
@@ -134,6 +141,13 @@ async function initializeSchema() {
     title VARCHAR(200) NOT NULL, message TEXT NOT NULL, channel VARCHAR(20) NOT NULL DEFAULT 'in_app',
     is_read BOOLEAN NOT NULL DEFAULT FALSE, metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), read_at TIMESTAMPTZ)`;
+  await sql`CREATE TABLE IF NOT EXISTS admin_store_settings (
+    id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id=1), store_name VARCHAR(150) NOT NULL DEFAULT 'WEARWELL',
+    store_email VARCHAR(255) NOT NULL DEFAULT 'hello@wearwell.pk', support_phone VARCHAR(50) NOT NULL DEFAULT '+92 300 1234567',
+    website_url VARCHAR(255) NOT NULL DEFAULT 'www.wearwell.pk', address TEXT NOT NULL DEFAULT 'Pakistan',
+    store_status BOOLEAN NOT NULL DEFAULT TRUE, email_notifications BOOLEAN NOT NULL DEFAULT TRUE,
+    order_notifications BOOLEAN NOT NULL DEFAULT TRUE, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  await sql`INSERT INTO admin_store_settings(id) VALUES(1) ON CONFLICT(id) DO NOTHING`;
   await sql`CREATE TABLE IF NOT EXISTS wishlist_items (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id INTEGER REFERENCES products(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL,
@@ -224,13 +238,13 @@ async function seedCatalog() {
     JOIN categories c ON c.slug=v.category_slug CROSS JOIN brands b WHERE b.slug='wearwell'
     ON CONFLICT(slug) DO NOTHING`;
   await sql`INSERT INTO product_images(product_id,url,alt_text,sort_order,is_primary)
-    SELECT p.id,v.url,p.name,0,TRUE FROM (VALUES
+    SELECT p.id,${PRODUCT_IMAGE_PLACEHOLDER},p.name,0,TRUE FROM (VALUES
       ('essential-oversized-tee','/images/product-1.png'),('linen-unstitched-suit','/images/women-10.png'),
       ('classic-casual-shirt','/images/product-2.png'),('modern-cargo-pants','/images/men-8.png'),
       ('everyday-sneakers','/images/product-6.png'),('minimal-shoulder-bag','/images/product-3.png')
     ) v(slug,url) JOIN products p ON p.slug=v.slug WHERE NOT EXISTS(SELECT 1 FROM product_images pi WHERE pi.product_id=p.id)`;
   await sql`INSERT INTO product_images(product_id,url,alt_text,sort_order,is_primary)
-    SELECT p.id,v.url,p.name,0,TRUE FROM (VALUES
+    SELECT p.id,${PRODUCT_IMAGE_PLACEHOLDER},p.name,0,TRUE FROM (VALUES
       ('relaxed-fit-trousers','/images/product-4.png'),('premium-basic-hoodie','/images/product-7.png'),
       ('ribbed-knit-top','/images/women-4.png'),('relaxed-linen-shirt','/images/women-5.png'),('wide-leg-denim','/images/women-6.png'),
       ('oversized-blazer','/images/women-7.png'),('satin-midi-dress','/images/women-8.png'),('cropped-denim-jacket','/images/women-9.png'),

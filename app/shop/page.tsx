@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -206,7 +206,7 @@ const fallbackProducts: Product[] = [
 
 const categories = ["All", "Women", "Men", "Accessories"];
 
-export default function ShopPage() {
+function ShopContent() {
   const searchParams = useSearchParams();
 
   const [activeCategory, setActiveCategory] = useState("All");
@@ -216,7 +216,6 @@ export default function ShopPage() {
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
     fetch("/api/products", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
@@ -445,5 +444,13 @@ export default function ShopPage() {
 
       </main>
     </>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F6F2]" />}>
+      <ShopContent />
+    </Suspense>
   );
 }

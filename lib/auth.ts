@@ -6,6 +6,7 @@ export interface SessionPayload {
   email: string;
   firstName: string;
   lastName: string;
+  role?: "customer" | "admin";
   [key: string]: unknown;
 }
 

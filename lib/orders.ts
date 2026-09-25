@@ -99,6 +99,9 @@ export async function placeOrder(userId: number, input: CheckoutInput) {
       ), notification AS (
         INSERT INTO notifications (user_id,order_id,type,title,message)
         SELECT ${userId},id,'order_placed','Order placed',${`Your order #${orderNumber} has been placed successfully.`} FROM new_order
+        UNION ALL
+        SELECT u.id,no.id,'admin_order_placed','New order received',${`Order #${orderNumber} was placed and needs review.`}
+        FROM users u CROSS JOIN new_order no WHERE u.role='admin' AND u.id<>${userId}
       ) SELECT * FROM new_order`;
     return getOrderById(Number(created[0].id), userId, false);
   } catch (error) {
@@ -128,6 +131,7 @@ export function serializeOrder(row: Record<string, unknown>) {
   return { id: Number(row.id), orderNumber: `#${row.order_number}`, status: String(row.status), paymentStatus: String(row.payment_status),
     paymentMethod: String(row.payment_method), customer: { name: row.customer_name, email: row.customer_email, phone: row.customer_phone,
       address: address.line1 || "", city: address.city || "", postalCode: address.postalCode || "", notes: row.notes || "" },
+    courier: row.courier || "Unassigned", trackingNumber: row.tracking_number || "",
     items, subtotal: Number(row.subtotal), shipping: Number(row.shipping_cost), discount: Number(row.discount_amount),
     total: Number(row.total_amount), createdAt: row.created_at };
 }

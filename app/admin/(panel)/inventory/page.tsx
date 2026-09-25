@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminDropdown from "@/components/AdminDropdown";
+import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
 
 type InventoryItem = {
+  variantId?: number;
+  lowStockThreshold?: number;
   name: string;
   category: string;
   sku: string;
@@ -121,9 +124,41 @@ function SearchIcon() {
 }
 
 export default function InventoryPage() {
-  const [inventoryList, setInventoryList] = useState<InventoryItem[]>(initialInventory);
+  const [isLoading, setIsLoading] = useState(true);
+  const [inventoryList, setInventoryList] = useState<InventoryItem[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    fetch("/api/admin/inventory", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.inventory) return;
+        setInventoryList(data.inventory.map((item: { variant_id: number; name: string; category: string; sku: string; stock_quantity: number; sold: number; low_stock_threshold: number }) => ({
+          variantId: item.variant_id,
+          name: item.name,
+          category: item.category,
+          sku: item.sku,
+          stock: Number(item.stock_quantity),
+          sold: Number(item.sold),
+          lowStockThreshold: Number(item.low_stock_threshold),
+          status: Number(item.stock_quantity) === 0 ? "Out of Stock" : Number(item.stock_quantity) <= Number(item.low_stock_threshold) ? "Low Stock" : "In Stock",
+        })));
+      })
+      .catch((error) => console.error("Inventory load failed:", error))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const editStock = async (item: InventoryItem) => {
+    if (!item.variantId) return;
+    const value = window.prompt(`Set available stock for ${item.name} (${item.sku})`, String(item.stock));
+    if (value === null) return;
+    const stock = Number(value);
+    if (!Number.isInteger(stock) || stock < 0) { alert("Enter a non-negative whole number."); return; }
+    const response = await fetch("/api/admin/inventory", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ variantId: item.variantId, stockQuantity: stock, reason: "admin_adjustment" }) });
+    if (!response.ok) { const data = await response.json(); alert(data.error || "Unable to update stock."); return; }
+    setInventoryList((current) => current.map((row) => row.variantId === item.variantId ? { ...row, stock, status: stock === 0 ? "Out of Stock" : stock <= (row.lowStockThreshold || 5) ? "Low Stock" : "In Stock" } : row));
+  };
 
   const totalStock = inventoryList.reduce((sum, item) => sum + item.stock, 0);
   const totalSold = inventoryList.reduce((sum, item) => sum + item.sold, 0);
@@ -145,7 +180,7 @@ export default function InventoryPage() {
       <AdminSidebar currentTab="inventory" />
 
       {/* MAIN BODY */}
-      <section className="lg:ml-64">
+      <section className="transition-[margin] duration-300 lg:ml-[var(--admin-sidebar-width)]">
         {/* TOP BAR */}
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D5C1A9]/60 bg-[#FAF7F2]/95 px-5 backdrop-blur-md sm:px-8 lg:px-10">
           <div className="flex items-center gap-4">
@@ -206,7 +241,7 @@ export default function InventoryPage() {
                   <StockIcon />
                 </div>
               </div>
-              <p className="mt-4 text-2xl font-bold text-[#1D1612]">{totalStock} <span className="text-xs font-normal text-[#8B7A6C]">units</span></p>
+              <p className="mt-4 text-2xl font-bold text-[#1D1612]">{isLoading ? <span className="admin-loading-value">000</span> : totalStock} <span className="text-xs font-normal text-[#8B7A6C]">units</span></p>
               <p className="mt-1 text-xs text-emerald-700 font-medium">Ready to dispatch</p>
             </div>
 
@@ -217,7 +252,7 @@ export default function InventoryPage() {
                   <TrendingUpIcon />
                 </div>
               </div>
-              <p className="mt-4 text-2xl font-bold text-[#1D1612]">{totalSold} <span className="text-xs font-normal text-[#8B7A6C]">units</span></p>
+              <p className="mt-4 text-2xl font-bold text-[#1D1612]">{isLoading ? <span className="admin-loading-value">000</span> : totalSold} <span className="text-xs font-normal text-[#8B7A6C]">units</span></p>
               <p className="mt-1 text-xs text-[#8B7A6C]">Customer orders shipped</p>
             </div>
 
@@ -228,7 +263,7 @@ export default function InventoryPage() {
                   <AlertTriangleIcon />
                 </div>
               </div>
-              <p className="mt-4 text-2xl font-bold text-[#A06E31]">{lowStockCount} <span className="text-xs font-normal text-[#8B7A6C]">items</span></p>
+              <p className="mt-4 text-2xl font-bold text-[#A06E31]">{isLoading ? <span className="admin-loading-value">000</span> : lowStockCount} <span className="text-xs font-normal text-[#8B7A6C]">items</span></p>
               <p className="mt-1 text-xs text-[#A06E31] font-medium">Reorder recommended</p>
             </div>
 
@@ -239,7 +274,7 @@ export default function InventoryPage() {
                   <AlertTriangleIcon />
                 </div>
               </div>
-              <p className="mt-4 text-2xl font-bold text-rose-600">{outOfStockCount} <span className="text-xs font-normal text-[#8B7A6C]">items</span></p>
+              <p className="mt-4 text-2xl font-bold text-rose-600">{isLoading ? <span className="admin-loading-value">000</span> : outOfStockCount} <span className="text-xs font-normal text-[#8B7A6C]">items</span></p>
               <p className="mt-1 text-xs text-rose-500 font-medium">Disabled on storefront</p>
             </div>
           </div>
@@ -289,7 +324,7 @@ export default function InventoryPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#D5C1A9]/30">
-                  {filteredItems.map((item) => (
+                  {isLoading ? <AdminTableSkeletonRows columns={7} /> : filteredItems.map((item) => (
                     <tr key={item.sku} className="transition-colors hover:bg-[#FAF7F2]/80">
                       <td className="px-6 py-4 font-semibold text-[#1D1612]">
                         {item.name}
@@ -320,12 +355,13 @@ export default function InventoryPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link
-                          href="/admin/products"
+                        <button
+                          type="button"
+                          onClick={() => editStock(item)}
                           className="text-xs font-semibold text-[#A06E31] hover:underline"
                         >
                           Edit Stock →
-                        </Link>
+                        </button>
                       </td>
                     </tr>
                   ))}

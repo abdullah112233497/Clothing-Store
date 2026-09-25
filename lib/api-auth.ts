@@ -8,7 +8,7 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
   const session = await getCurrentUserFromCookie();
   if (!session?.userId) return null;
   await initDb();
-  const rows = await sql`SELECT id, email, role FROM users WHERE id = ${session.userId} AND is_active = TRUE LIMIT 1`;
+  const rows = await sql`SELECT id, email, role FROM users WHERE id = ${session.userId} AND is_active = TRUE AND role IN ('customer','admin') LIMIT 1`;
   if (!rows[0]) return null;
   return { id: Number(rows[0].id), email: String(rows[0].email), role: rows[0].role as "customer" | "admin" };
 }

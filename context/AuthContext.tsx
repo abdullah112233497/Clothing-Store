@@ -12,6 +12,7 @@ export interface User {
   birthday?: string;
   gender?: string;
   membershipTier?: string;
+  role?: "customer" | "admin";
   memberSince?: string;
 }
 
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshUser();
+    const timer = window.setTimeout(() => void refreshUser(), 0);
 
     const handleAuthChange = () => {
       refreshUser();
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("authChanged", handleAuthChange);
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("authChanged", handleAuthChange);
     };
   }, [refreshUser]);

@@ -74,6 +74,15 @@ button {
   pointer-events: none;
 }
 
+.admin-loading-value {
+  display: inline-block;
+  color: transparent;
+  filter: blur(5px);
+  user-select: none;
+  background: #eae5de;
+  border-radius: 0.35rem;
+}
+
 /* ================= CUSTOM THIN SCROLLBAR ================= */
 .custom-scrollbar-thin {
   scrollbar-width: thin;
@@ -97,4 +106,4 @@ button {
 .custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #a06e31;
 }
-
+

@@ -50,11 +50,8 @@ export default function ProductCard({
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-
-  useEffect(() => {
-    setIsImageLoaded(false);
-  }, [image]);
+  const [loadedImage, setLoadedImage] = useState<string | null>(null);
+  const isImageLoaded = loadedImage === image;
 
   useEffect(() => {
     const checkWishlist = () => {
@@ -214,8 +211,8 @@ export default function ProductCard({
             src={image}
             alt={name}
             loading="lazy"
-            onLoad={() => setIsImageLoaded(true)}
-            onError={() => setIsImageLoaded(true)}
+            onLoad={() => setLoadedImage(image)}
+            onError={() => setLoadedImage(image)}
             className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${
               isImageLoaded ? "opacity-100" : "opacity-0"
             }`}

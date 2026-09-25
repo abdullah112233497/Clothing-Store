@@ -84,7 +84,6 @@ export default function ProductGrid() {
 
   useEffect(() => {
     let active = true;
-    setIsLoading(true);
 
     fetch("/api/products", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))

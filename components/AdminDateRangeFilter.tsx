@@ -26,13 +26,6 @@ export default function AdminDateRangeFilter({
   const [tempPreset, setTempPreset] = useState(value.preset);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync temp state when value prop changes or opened
-  useEffect(() => {
-    setTempStart(value.startDate);
-    setTempEnd(value.endDate);
-    setTempPreset(value.preset);
-  }, [value, isOpen]);
-
   // Close on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -142,7 +135,14 @@ export default function AdminDateRangeFilter({
       {/* TRIGGER BUTTON */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isOpen) {
+            setTempStart(value.startDate);
+            setTempEnd(value.endDate);
+            setTempPreset(value.preset);
+          }
+          setIsOpen(!isOpen);
+        }}
         className={`flex items-center gap-2.5 rounded-xl border border-[#D5C1A9]/80 bg-white px-3.5 py-2 text-xs font-medium text-[#1D1612] shadow-xs transition hover:border-[#A06E31] hover:bg-[#FAF7F2] focus:border-[#A06E31] focus:outline-none ${
           isFiltered ? "border-[#A06E31] bg-[#F5EEE6] ring-1 ring-[#A06E31]/20" : ""
         }`}
@@ -209,20 +209,20 @@ export default function AdminDateRangeFilter({
               Quick Presets
             </p>
             <div className="grid grid-cols-3 gap-1.5">
-              {[
+              {([
                 { id: "all", label: "All Time" },
                 { id: "today", label: "Today" },
                 { id: "yesterday", label: "Yesterday" },
                 { id: "7days", label: "Last 7 Days" },
                 { id: "30days", label: "Last 30 Days" },
                 { id: "this_month", label: "This Month" },
-              ].map((p) => {
+              ] as const).map((p) => {
                 const active = tempPreset === p.id;
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => handleSelectPreset(p.id as any)}
+                    onClick={() => handleSelectPreset(p.id)}
                     className={`rounded-lg px-2.5 py-1.5 text-center text-[11px] font-medium transition ${
                       active
                         ? "bg-[#A06E31] text-white shadow-xs"
