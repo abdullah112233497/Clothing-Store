@@ -25,8 +25,42 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          id="wearwell-first-visit-intro"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              var root = document.documentElement;
+              if (location.pathname.startsWith('/admin') ||
+                  (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+                root.setAttribute('data-store-intro', 'skip');
+                return;
+              }
+              root.setAttribute('data-store-intro', 'ready');
+              function play() {
+                requestAnimationFrame(function() {
+                  root.setAttribute('data-store-intro', 'playing');
+                  window.setTimeout(function() { root.setAttribute('data-store-intro', 'done'); }, 2050);
+                });
+              }
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', play, { once: true });
+              } else play();
+            })();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
+        <div className="store-intro" aria-hidden="true">
+          <div className="store-intro__panel store-intro__panel--left">
+            <span className="store-intro__wordmark">WEARWELL</span>
+          </div>
+          <div className="store-intro__panel store-intro__panel--right">
+            <span className="store-intro__wordmark">WEARWELL</span>
+          </div>
+        </div>
         <AuthProvider>
           <StoreAvailabilityGate>
             <PersistentStoreHeader />

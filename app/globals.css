@@ -38,6 +38,99 @@ button {
   cursor: pointer;
 }
 
+/* First storefront arrival: the wordmark and brown curtain split down the middle. */
+.store-intro {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  animation: store-intro-fallback-hide 0s linear 2.8s forwards;
+}
+
+html[data-store-intro="skip"] .store-intro,
+html[data-store-intro="done"] .store-intro {
+  display: none;
+}
+
+html[data-store-intro="ready"],
+html[data-store-intro="playing"] {
+  overflow: hidden;
+}
+
+html[data-store-intro="ready"] .store-intro,
+html[data-store-intro="playing"] .store-intro {
+  display: block;
+}
+
+.store-intro__panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  overflow: hidden;
+  background: var(--accent);
+  will-change: transform;
+}
+
+.store-intro__panel--left {
+  left: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.store-intro__panel--right {
+  right: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.store-intro__wordmark {
+  position: absolute;
+  top: 50%;
+  display: block;
+  width: 200%;
+  transform: translateY(-50%);
+  color: white;
+  font-size: clamp(1.6rem, 5vw, 4rem);
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.store-intro__panel--left .store-intro__wordmark {
+  left: 0;
+}
+
+.store-intro__panel--right .store-intro__wordmark {
+  right: 0;
+}
+
+html[data-store-intro="playing"] .store-intro__panel--left {
+  animation: store-intro-open-left 1.05s cubic-bezier(0.75, 0, 0.2, 1) 0.8s forwards;
+}
+
+html[data-store-intro="playing"] .store-intro__panel--right {
+  animation: store-intro-open-right 1.05s cubic-bezier(0.75, 0, 0.2, 1) 0.8s forwards;
+}
+
+@keyframes store-intro-open-left {
+  to { transform: translateX(-102%); }
+}
+
+@keyframes store-intro-open-right {
+  to { transform: translateX(102%); }
+}
+
+@keyframes store-intro-fallback-hide {
+  to { visibility: hidden; pointer-events: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-store-intro] .store-intro { display: none; }
+  html[data-store-intro] { overflow: auto; }
+}
+
 /* ================= SKELETON LOADING SHIMMER ================= */
 @keyframes skeleton-shimmer {
   0% {
