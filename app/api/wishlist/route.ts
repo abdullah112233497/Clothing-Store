@@ -1,23 +1,35 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserFromCookie } from "@/lib/auth";
+import { getAuthenticatedCustomer } from "@/lib/api-auth";
 import { sql, initDb } from "@/lib/db";
 
 // GET user's personal wishlist
 export async function GET() {
   try {
-    const session = await getCurrentUserFromCookie();
+    const customer = await getAuthenticatedCustomer();
 
-    if (!session || !session.userId) {
+    if (!customer) {
       return NextResponse.json({ items: [], count: 0 }, { status: 200 });
     }
 
     await initDb();
 
     const items = await sql`
-      SELECT id, product_id, name, price, original_price, category, image, in_stock, created_at
-      FROM wishlist_items
-      WHERE user_id = ${session.userId}
-      ORDER BY created_at DESC;
+      SELECT wi.id, wi.product_id, wi.name, wi.price, wi.original_price, wi.category,
+        wi.image, p.slug, wi.created_at
+      FROM wishlist_items wi
+      JOIN LATERAL (
+        SELECT product.slug FROM products product
+        WHERE product.status = 'active'
+          AND (product.id = wi.product_id OR (wi.product_id IS NULL AND LOWER(product.name) = LOWER(wi.name)))
+          AND EXISTS (
+            SELECT 1 FROM product_variants pv
+            WHERE pv.product_id = product.id AND pv.is_active = TRUE
+              AND pv.stock_quantity > pv.reserved_quantity
+          )
+        ORDER BY product.id DESC LIMIT 1
+      ) p ON TRUE
+      WHERE wi.user_id = ${customer.id}
+      ORDER BY wi.created_at DESC;
     `;
 
     const mapped = items.map((i) => ({
@@ -28,7 +40,8 @@ export async function GET() {
       originalPrice: i.original_price ? Number(i.original_price) : undefined,
       category: i.category || "",
       image: i.image || "",
-      inStock: i.in_stock ?? true,
+      slug: i.slug,
+      inStock: true,
     }));
 
     return NextResponse.json({ items: mapped, count: mapped.length });
@@ -41,9 +54,9 @@ export async function GET() {
 // POST toggle item in user's personal wishlist
 export async function POST(request: Request) {
   try {
-    const session = await getCurrentUserFromCookie();
+    const customer = await getAuthenticatedCustomer();
 
-    if (!session || !session.userId) {
+    if (!customer) {
       return NextResponse.json(
         { error: "Please sign in to add items to your wishlist." },
         { status: 401 }
@@ -61,10 +74,22 @@ export async function POST(request: Request) {
 
     const cleanName = name.trim();
 
+    const available = await sql`
+      SELECT 1 FROM products p WHERE p.status = 'active'
+        AND (p.id = ${productId || null} OR (${productId || null}::integer IS NULL AND LOWER(p.name) = LOWER(${cleanName})))
+        AND EXISTS (
+          SELECT 1 FROM product_variants pv WHERE pv.product_id = p.id
+            AND pv.is_active = TRUE AND pv.stock_quantity > pv.reserved_quantity
+        ) LIMIT 1;
+    `;
+    if (!available.length) {
+      return NextResponse.json({ error: "This product is currently unavailable." }, { status: 409 });
+    }
+
     // Check if already in wishlist
     const existing = await sql`
       SELECT id FROM wishlist_items
-      WHERE user_id = ${session.userId} AND name = ${cleanName}
+      WHERE user_id = ${customer.id} AND name = ${cleanName}
       LIMIT 1;
     `;
 
@@ -72,7 +97,7 @@ export async function POST(request: Request) {
       // Toggle off (remove)
       await sql`
         DELETE FROM wishlist_items
-        WHERE user_id = ${session.userId} AND name = ${cleanName};
+        WHERE user_id = ${customer.id} AND name = ${cleanName};
       `;
       return NextResponse.json({
         wishlisted: false,
@@ -104,7 +129,7 @@ export async function POST(request: Request) {
         image,
         in_stock
       ) VALUES (
-        ${session.userId},
+        ${customer.id},
         ${productId || null},
         ${cleanName},
         ${numericPrice},
@@ -142,9 +167,9 @@ export async function POST(request: Request) {
 // DELETE item from user's personal wishlist
 export async function DELETE(request: Request) {
   try {
-    const session = await getCurrentUserFromCookie();
+    const customer = await getAuthenticatedCustomer();
 
-    if (!session || !session.userId) {
+    if (!customer) {
       return NextResponse.json(
         { error: "Please sign in to manage your wishlist." },
         { status: 401 }
@@ -159,12 +184,12 @@ export async function DELETE(request: Request) {
     if (id) {
       await sql`
         DELETE FROM wishlist_items
-        WHERE user_id = ${session.userId} AND id = ${id};
+        WHERE user_id = ${customer.id} AND id = ${id};
       `;
     } else if (name) {
       await sql`
         DELETE FROM wishlist_items
-        WHERE user_id = ${session.userId} AND name = ${name.trim()};
+        WHERE user_id = ${customer.id} AND name = ${name.trim()};
       `;
     } else {
       return NextResponse.json({ error: "Item ID or name required." }, { status: 400 });

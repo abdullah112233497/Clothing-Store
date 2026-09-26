@@ -3,7 +3,7 @@ import { sql } from "@/lib/db";
 type CheckoutItem = { variantId?: number; name?: string; size?: string; color?: string; quantity?: number };
 type CheckoutInput = {
   items: CheckoutItem[];
-  customer: { name: string; email: string; phone: string; address: string; city: string; postalCode?: string; notes?: string };
+  customer: { name: string; email: string; phone: string; address: string; city: string; province: string; postalCode: string; notes?: string };
   paymentMethod?: string;
 };
 
@@ -16,7 +16,8 @@ const money = (value: unknown) => Number(Number(value).toFixed(2));
 export async function placeOrder(userId: number, input: CheckoutInput) {
   if (!Array.isArray(input.items) || input.items.length === 0) throw new OrderError("Your cart is empty.");
   const customer = input.customer;
-  if (!customer?.name?.trim() || !customer?.email?.trim() || !customer?.phone?.trim() || !customer?.address?.trim() || !customer?.city?.trim()) {
+  if (!customer?.name?.trim() || !customer?.email?.trim() || !customer?.phone?.trim() ||
+      !customer?.address?.trim() || !customer?.city?.trim() || !customer?.province?.trim() || !customer?.postalCode?.trim()) {
     throw new OrderError("Complete customer and shipping information is required.");
   }
 
@@ -62,7 +63,7 @@ export async function placeOrder(userId: number, input: CheckoutInput) {
   const subtotal = money(lines.reduce((sum, row) => sum + Number(row.unit_price) * row.requestedQuantity, 0));
   const shippingCost = 0;
   const orderNumber = `WW-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-  const addressSnapshot = { line1: customer.address.trim(), city: customer.city.trim(), postalCode: customer.postalCode?.trim() || "", country: "Pakistan" };
+  const addressSnapshot = { line1: customer.address.trim(), city: customer.city.trim(), province: customer.province.trim(), postalCode: customer.postalCode.trim(), country: "Pakistan" };
 
   const dbLines = lines.map((line) => ({
     variantId: Number(line.variant_id), productId: Number(line.product_id), name: String(line.name),
@@ -130,7 +131,7 @@ export function serializeOrder(row: Record<string, unknown>) {
   }) : [];
   return { id: Number(row.id), orderNumber: `#${row.order_number}`, status: String(row.status), paymentStatus: String(row.payment_status),
     paymentMethod: String(row.payment_method), customer: { name: row.customer_name, email: row.customer_email, phone: row.customer_phone,
-      address: address.line1 || "", city: address.city || "", postalCode: address.postalCode || "", notes: row.notes || "" },
+      address: address.line1 || "", city: address.city || "", province: address.province || "", postalCode: address.postalCode || "", notes: row.notes || "" },
     courier: row.courier || "Unassigned", trackingNumber: row.tracking_number || "",
     items, subtotal: Number(row.subtotal), shipping: Number(row.shipping_cost), discount: Number(row.discount_amount),
     total: Number(row.total_amount), createdAt: row.created_at };

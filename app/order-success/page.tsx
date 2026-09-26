@@ -23,6 +23,7 @@ type OrderData = {
     phone: string;
     address: string;
     city: string;
+    province?: string;
     postalCode: string;
   };
   paymentMethod: string;
@@ -116,7 +117,7 @@ export default function OrderSuccessPage() {
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      const deliveryAddress = `${order.customer.address}, ${order.customer.city}`;
+      const deliveryAddress = [order.customer.address, order.customer.city, order.customer.province, order.customer.postalCode].filter(Boolean).join(", ");
       const splitAddress = doc.splitTextToSize(deliveryAddress, 170);
       doc.text(splitAddress, 20, 65);
 
@@ -478,6 +479,13 @@ export default function OrderSuccessPage() {
                   {order.customer.city}
                 </p>
               </div>
+
+              {order.customer.province && (
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-gray-400">Province / Region</p>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{order.customer.province}</p>
+                </div>
+              )}
 
               <div className="sm:col-span-2">
                 <p className="text-xs uppercase tracking-wider text-gray-400">

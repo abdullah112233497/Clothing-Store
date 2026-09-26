@@ -6,7 +6,7 @@ import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 const protectedRoutes = ["/profile", "/account/profile", "/checkout"];
 const adminRoutes = ["/admin"];
 
-// Routes only accessible to logged-out users
+// Customer authentication pages are only bypassed for customer sessions.
 const authRoutes = ["/account/login", "/account/signup", "/account/login/register", "/login", "/signup"];
 
 export async function proxy(request: NextRequest) {
@@ -45,12 +45,11 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // 2. Check if authenticated user is trying to visit login/signup
+  // Admin cookies must not turn a storefront sign-in or sign-up link into an
+  // admin-panel redirect. The storefront intentionally treats admins as guests.
   const isAuthRoute = authRoutes.some((route) => pathname === route);
-  if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(
-      new URL(session?.role === "admin" ? "/admin" : "/profile", request.nextUrl)
-    );
+  if (isAuthRoute && isAuthenticated && session?.role === "customer") {
+    return NextResponse.redirect(new URL("/profile", request.nextUrl));
   }
 
   return NextResponse.next();

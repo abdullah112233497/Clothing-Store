@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 import WishlistAuthPrompt from "@/components/WishlistAuthPrompt";
+import { catalogFetch } from "@/lib/catalog-client";
 
 type ProductCardProps = {
   slug?: string;
@@ -55,6 +56,9 @@ export default function ProductCard({
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
 
   useEffect(() => {
     const checkWishlist = () => {
@@ -137,24 +141,28 @@ export default function ProductCard({
   const resolvedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const productLink = `/product/${resolvedSlug}`;
 
-  const handleQuickAdd = () => {
-    const numericPrice = Number(
-      price.replace("Rs. ", "").replace(",", "")
-    );
-
-    const firstAvailable = variants?.find((variant) => variant.available && variant.stock > 0);
-    if (variants && !firstAvailable) {
-      alert(`${name} is currently out of stock.`);
+  const handleQuickAdd = async () => {
+    if (isAdding) return;
+    setIsAdding(true);
+    setCartMessage("");
+    try {
+    const response = await catalogFetch(`/api/products?slug=${encodeURIComponent(resolvedSlug)}`);
+    if (!response.ok) throw new Error("Unable to check availability");
+    const data = await response.json();
+    const freshVariants: ProductVariant[] = data.products?.[0]?.variants || [];
+    const firstAvailable = freshVariants.find((variant) => variant.available && variant.stock > 0);
+    if (!firstAvailable) {
+      setIsUnavailable(true);
       return;
     }
-    const sizeOption = firstAvailable?.options.size || firstAvailable?.options.shoe_size || firstAvailable?.options.waist;
+    const sizeOption = firstAvailable.options.size || firstAvailable.options.shoe_size || firstAvailable.options.waist;
     const newItem: CartItem = {
-      variantId: firstAvailable?.id,
+      variantId: firstAvailable.id,
       slug: resolvedSlug,
       name,
-      price: firstAvailable?.price || numericPrice,
+      price: firstAvailable.price,
       size: sizeOption?.value || "",
-      color: firstAvailable?.options.color?.value || "",
+      color: firstAvailable.options.color?.value || "",
       quantity: 1,
       image,
     };
@@ -165,17 +173,21 @@ export default function ProductCard({
       ? JSON.parse(savedCart)
       : [];
 
-    const existingItemIndex = cartItems.findIndex(
-      (item) =>
-        item.name === newItem.name &&
-        item.size === newItem.size && item.color === newItem.color
-    );
+    const matchesVariant = (item: CartItem) => item.variantId
+      ? item.variantId === newItem.variantId
+      : item.name === newItem.name && item.size === newItem.size && (item.color || "") === newItem.color;
+    const existingItemIndex = cartItems.findIndex(matchesVariant);
+    const inCart = cartItems.filter(matchesVariant).reduce((total, item) => total + Number(item.quantity), 0);
+    if (inCart + 1 > firstAvailable.stock) {
+      setCartMessage("You already have all available items for this option in your bag.");
+      return;
+    }
 
     if (existingItemIndex !== -1) {
       cartItems[existingItemIndex] = {
-        ...cartItems[existingItemIndex],
+        ...newItem,
         quantity:
-          cartItems[existingItemIndex].quantity + 1,
+          Number(cartItems[existingItemIndex].quantity) + 1,
       };
     } else {
       cartItems.push(newItem);
@@ -188,8 +200,15 @@ export default function ProductCard({
 
     window.dispatchEvent(new Event("cartUpdated"));
 
-    alert(`${name} added to cart!`);
+    setCartMessage("Added to your bag.");
+    } catch {
+      setCartMessage("We couldn't check availability. Please try again.");
+    } finally {
+      setIsAdding(false);
+    }
   };
+
+  if (isUnavailable || !variants?.some((variant) => variant.available && variant.stock > 0)) return null;
 
   return (
     <>
@@ -241,13 +260,16 @@ export default function ProductCard({
 
         <button
           onClick={handleQuickAdd}
+          disabled={isAdding}
+          aria-busy={isAdding}
           className="absolute bottom-0 left-0 right-0 translate-y-full bg-[#080808] py-3 text-center text-xs font-medium uppercase tracking-wider text-white transition duration-300 group-hover:translate-y-0 hover:bg-[#A06E31]"
         >
-          Quick Add
+          {isAdding ? "Adding..." : "Quick Add"}
         </button>
       </div>
 
       <div className="pt-3 sm:pt-4">
+        {cartMessage && <p role="status" className="mb-2 text-xs text-gray-600">{cartMessage}</p>}
         <p className="mb-1 text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#A06E31]">
           {category}
         </p>

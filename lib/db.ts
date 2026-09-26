@@ -28,6 +28,11 @@ async function initializeSchema() {
     to_regclass('public.product_images') IS NOT NULL AS images_ready,
     to_regclass('public.product_variants') IS NOT NULL AS variants_ready,
     to_regclass('public.orders') IS NOT NULL AS orders_ready,
+    to_regclass('public.addresses') IS NOT NULL AS addresses_ready,
+    NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='addresses' AND column_name IN ('full_name','phone')
+    ) AS addresses_normalized,
     to_regclass('public.notifications') IS NOT NULL AS notifications_ready,
     to_regclass('public.admin_store_settings') IS NOT NULL AS settings_ready,
     EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='products' AND column_name='admin_metadata') AS product_metadata_ready,
@@ -103,11 +108,14 @@ async function initializeSchema() {
     PRIMARY KEY(variant_id, attribute_value_id))`;
   await sql`CREATE TABLE IF NOT EXISTS addresses (
     id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    label VARCHAR(50) DEFAULT 'Home', full_name VARCHAR(200) NOT NULL, phone VARCHAR(50) NOT NULL,
+    label VARCHAR(50) DEFAULT 'Home',
     line1 VARCHAR(300) NOT NULL, line2 VARCHAR(300), city VARCHAR(100) NOT NULL,
-    province VARCHAR(100), postal_code VARCHAR(30), country VARCHAR(100) NOT NULL DEFAULT 'Pakistan',
+    province VARCHAR(100) NOT NULL, postal_code VARCHAR(30) NOT NULL,
+    country VARCHAR(100) NOT NULL DEFAULT 'Pakistan',
     is_default BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+  // Recipient contact belongs to users/orders, not reusable address records.
+  await sql`ALTER TABLE addresses DROP COLUMN IF EXISTS full_name, DROP COLUMN IF EXISTS phone`;
   await sql`CREATE TABLE IF NOT EXISTS carts (
     id SERIAL PRIMARY KEY, user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;

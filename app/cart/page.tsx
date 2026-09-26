@@ -1,24 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-
-type CartItem = {
-  slug?: string;
-  name: string;
-  price: number;
-  size: string;
-  color?: string;
-  quantity: number;
-  image: string;
-};
+import { useStockCart } from "@/lib/cart-stock";
 
 export default function CartPage() {
-  const router = useRouter();
-
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { cartItems, loaded, checkingStock, stockMessage, stockError, refreshStock, updateCart: updateLocalStorage } = useStockCart();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Promo Code State
@@ -34,57 +21,13 @@ export default function CartPage() {
     }, 3000);
   };
 
-  // Load Cart from LocalStorage
-  const loadCart = () => {
-    try {
-      const savedCart = localStorage.getItem("cartItems");
-      if (savedCart) {
-        const parsed = JSON.parse(savedCart);
-        if (Array.isArray(parsed)) {
-          setCartItems(parsed);
-        } else {
-          setCartItems([]);
-        }
-      } else {
-        setCartItems([]);
-      }
-    } catch (error) {
-      console.error("Failed to parse cartItems", error);
-      setCartItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = window.setTimeout(loadCart, 0);
-
-    const handleCartUpdate = () => {
-      loadCart();
-    };
-
-    window.addEventListener("storage", handleCartUpdate);
-    window.addEventListener("cartUpdated", handleCartUpdate);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("storage", handleCartUpdate);
-      window.removeEventListener("cartUpdated", handleCartUpdate);
-    };
-  }, []);
-
-  // Save Cart to LocalStorage & Dispatch Event
-  const updateLocalStorage = (updatedItems: CartItem[]) => {
-    setCartItems(updatedItems);
-    localStorage.setItem("cartItems", JSON.stringify(updatedItems));
-    window.dispatchEvent(new Event("cartUpdated"));
-  };
-
   // Update Quantity
   const handleQuantityChange = (index: number, newQty: number) => {
-    if (newQty < 1) return;
+    const item = cartItems[index];
+    const alreadyInOtherRows = cartItems.reduce((total, row, rowIndex) => total + (rowIndex !== index && row.variantId === item.variantId ? row.quantity : 0), 0);
+    if (newQty < 1 || checkingStock || stockError || newQty + alreadyInOtherRows > (item.availableQuantity || 0)) return;
     const updated = [...cartItems];
-    updated[index].quantity = newQty;
+    updated[index] = { ...item, quantity: newQty };
     updateLocalStorage(updated);
     showToast(`Updated quantity to ${newQty}`);
   };
@@ -142,7 +85,7 @@ export default function CartPage() {
     0
   );
 
-  if (isLoading) {
+  if (!loaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F6F2]">
         <div className="text-center">
@@ -204,6 +147,9 @@ export default function CartPage() {
               </button>
             )}
           </div>
+
+          {stockMessage && <p role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">{stockMessage}</p>}
+          {stockError && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">{stockError} <button type="button" onClick={() => void refreshStock()} disabled={checkingStock} className="ml-2 font-semibold underline">Retry</button></div>}
 
           {/* ================= EMPTY CART STATE ================= */}
           {cartItems.length === 0 ? (
@@ -305,7 +251,7 @@ export default function CartPage() {
                             onClick={() =>
                               handleQuantityChange(index, item.quantity - 1)
                             }
-                            disabled={item.quantity <= 1}
+                            disabled={item.quantity <= 1 || checkingStock || !!stockError}
                             className="px-3 py-1.5 text-sm font-bold text-gray-600 transition hover:bg-gray-200 disabled:opacity-40"
                             aria-label="Decrease quantity"
                           >
@@ -320,7 +266,8 @@ export default function CartPage() {
                             onClick={() =>
                               handleQuantityChange(index, item.quantity + 1)
                             }
-                            className="px-3 py-1.5 text-sm font-bold text-gray-600 transition hover:bg-gray-200"
+                            disabled={checkingStock || !!stockError || cartItems.filter((row) => row.variantId === item.variantId).reduce((total, row) => total + row.quantity, 0) >= (item.availableQuantity || 0)}
+                            className="px-3 py-1.5 text-sm font-bold text-gray-600 transition hover:bg-gray-200 disabled:opacity-40"
                             aria-label="Increase quantity"
                           >
                             +
@@ -455,6 +402,8 @@ export default function CartPage() {
                   <div className="mt-6 space-y-3">
                     <Link
                       href="/checkout"
+                      aria-disabled={checkingStock || !!stockError}
+                      onClick={(event) => { if (checkingStock || stockError) event.preventDefault(); }}
                       className="block w-full rounded-xl bg-black py-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg transition hover:bg-[#A06E31]"
                     >
                       Proceed to Checkout →

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getWishlistRevision, readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
+import StoreSearch from "@/components/StoreSearch";
 
 type CartItem = {
   quantity: number;
@@ -135,14 +136,12 @@ function CloseIcon() {
 }
 
 export default function Header() {
-  const router = useRouter();
   const pathname = usePathname();
   const { user, isLoggedIn, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -223,16 +222,6 @@ export default function Header() {
     };
   }, [menuOpen]);
 
-  const handleSearch = (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!search.trim()) {
-      return;
-    }
-
-    router.push(`/shop?search=${encodeURIComponent(search.trim())}`);
-  };
-
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur">
@@ -248,7 +237,7 @@ export default function Header() {
           {/* Logo */}
           <Link
             href="/"
-            className="text-lg font-black tracking-[0.2em] text-black transition-opacity hover:opacity-70 sm:text-xl"
+            className="text-sm font-black tracking-[0.12em] text-black transition-opacity hover:opacity-70 sm:text-xl sm:tracking-[0.2em]"
           >
             WEARWELL
           </Link>
@@ -299,9 +288,12 @@ export default function Header() {
 
             {/* Search */}
             <button
+              data-store-search-toggle
               onClick={() => setSearchOpen(!searchOpen)}
               aria-label="Search"
-              className="hidden rounded-full p-2 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:block"
+              aria-expanded={searchOpen}
+              aria-controls="store-search-panel"
+              className="rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
             >
               <SearchIcon />
             </button>
@@ -375,32 +367,7 @@ export default function Header() {
       </div>
 
       {/* Search Box */}
-      {
-        searchOpen && (
-          <div className="border-b border-black/10 bg-white px-5 py-5 sm:px-6">
-            <form
-              onSubmit={handleSearch}
-              className="mx-auto flex max-w-2xl gap-2"
-            >
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search products..."
-                autoFocus
-                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:border-black focus:bg-white"
-              />
-
-              <button
-                type="submit"
-                className="rounded-lg bg-black px-5 py-3 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-gray-800"
-              >
-                Search
-              </button>
-            </form>
-          </div>
-        )
-      }
+      {searchOpen && <StoreSearch onClose={() => setSearchOpen(false)} />}
 
     </header>
 

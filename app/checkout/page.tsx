@@ -3,34 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-type CartItem = {
-  variantId?: number;
-  name: string;
-  price: number;
-  size: string;
-  color?: string;
-  quantity: number;
-  image: string;
-};
+import { useStockCart } from "@/lib/cart-stock";
+import { useAuth } from "@/context/AuthContext";
 
 type SavedAddress = {
   id: string;
   label: "Home" | "Office" | "Other";
   isDefault: boolean;
-  fullName: string;
-  phone: string;
   street: string;
   city: string;
+  province: string;
   postalCode: string;
   country: string;
 };
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { cartItems, loaded, checkingStock, stockMessage, stockError, refreshStock } = useStockCart();
 
   // Saved Addresses from User Profile
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -41,7 +32,8 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("Lahore");
+  const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
 
@@ -49,68 +41,60 @@ export default function CheckoutPage() {
   const [orderError, setOrderError] = useState("");
 
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem("cartItems");
-      if (savedCart) {
-        const parsed = JSON.parse(savedCart);
-        if (Array.isArray(parsed)) {
-          // Hydrate client-only cart state from browser storage after mount.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setCartItems(parsed);
-        }
-      }
-
-      // Pre-fill profile info if logged in
-      const savedProfile = localStorage.getItem("userProfile");
-      if (savedProfile) {
-        const p = JSON.parse(savedProfile);
-        if (p.firstName) setName(`${p.firstName} ${p.lastName || ""}`.trim());
-        if (p.email) setEmail(p.email);
-        if (p.phone) setPhone(p.phone);
-      }
-
-      // Load Saved Addresses from Profile
-      const loadAddresses = () => {
-        const rawAddrs = localStorage.getItem("savedAddresses");
-        if (rawAddrs) {
-          try {
-            const list: SavedAddress[] = JSON.parse(rawAddrs);
-            if (Array.isArray(list) && list.length > 0) {
-              setSavedAddresses(list);
-              const active = list.find((a) => a.isDefault) || list[0];
-              setSelectedAddressId(active.id);
-              if (active.fullName) setName(active.fullName);
-              if (active.phone) setPhone(active.phone);
-              if (active.street) setAddress(active.street);
-              if (active.city) setCity(active.city);
-              if (active.postalCode) setPostalCode(active.postalCode);
-            }
-          } catch (err) {
-            console.error("Failed to parse saved addresses in checkout", err);
-          }
-        }
-      };
-
-      loadAddresses();
-      window.addEventListener("addressesUpdated", loadAddresses);
-      window.addEventListener("storage", loadAddresses);
-      return () => {
-        window.removeEventListener("addressesUpdated", loadAddresses);
-        window.removeEventListener("storage", loadAddresses);
-      };
-    } catch (e) {
-      console.error("Failed to load checkout state", e);
-    } finally {
-      setLoaded(true);
+    let current = true;
+    // Clear account-specific checkout data before loading another user's addresses.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSavedAddresses([]);
+    setSelectedAddressId("");
+    setAddress("");
+    setCity("");
+    setProvince("");
+    setPostalCode("");
+    if (!user) {
+      setName("");
+      setEmail("");
+      setPhone("");
+      return;
     }
-  }, []);
+
+    setName(`${user.firstName} ${user.lastName}`.trim());
+    setEmail(user.email);
+    setPhone(user.phone || "");
+
+    const loadAddresses = async () => {
+      try {
+        const response = await fetch("/api/addresses", { cache: "no-store" });
+        if (!response.ok) throw new Error("Could not load addresses.");
+        const data = await response.json();
+        if (!current) return;
+        const list: SavedAddress[] = Array.isArray(data.addresses) ? data.addresses : [];
+        setSavedAddresses(list);
+        if (list.length > 0) {
+          const activeAddress = list.find((item) => item.isDefault) || list[0];
+          setSelectedAddressId(activeAddress.id);
+          setAddress(activeAddress.street);
+          setCity(activeAddress.city);
+          setProvince(activeAddress.province || "");
+          setPostalCode(activeAddress.postalCode || "");
+        }
+      } catch (error) {
+        console.error("Failed to load checkout addresses", error);
+      }
+    };
+
+    void loadAddresses();
+    window.addEventListener("addressesUpdated", loadAddresses);
+    return () => {
+      current = false;
+      window.removeEventListener("addressesUpdated", loadAddresses);
+    };
+  }, [user]);
 
   const handleSelectSavedAddress = (addr: SavedAddress) => {
     setSelectedAddressId(addr.id);
-    if (addr.fullName) setName(addr.fullName);
-    if (addr.phone) setPhone(addr.phone);
     setAddress(addr.street);
     setCity(addr.city);
+    setProvince(addr.province || "");
     setPostalCode(addr.postalCode || "");
   };
 
@@ -130,17 +114,23 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (cartItems.length === 0) return;
+    if (cartItems.length === 0 || checkingStock || stockError) return;
 
     setPlacingOrder(true);
     setOrderError("");
     try {
+      const verified = await refreshStock();
+      if (!verified || verified.changed || verified.items.length === 0) {
+        setOrderError("Your bag changed or availability could not be confirmed. Please review it before placing your order.");
+        setPlacingOrder(false);
+        return;
+      }
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cartItems.map((item) => item.variantId ? item : { ...item, size: "", color: "" }),
-          customer: { name, email, phone, address, city, postalCode, notes: orderNotes },
+          items: verified.items,
+          customer: { name, email, phone, address, city, province, postalCode, notes: orderNotes },
           paymentMethod: "cod",
         }),
       });
@@ -237,6 +227,8 @@ export default function CheckoutPage() {
             className="grid gap-8 lg:grid-cols-[1fr_400px]"
           >
             {orderError && <p className="lg:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700" role="alert">{orderError}</p>}
+            {stockMessage && <p className="lg:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-900" role="status">{stockMessage}</p>}
+            {stockError && <p className="lg:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700" role="alert">{stockError} <button type="button" onClick={() => void refreshStock()} className="ml-2 font-semibold underline">Retry</button></p>}
             {/* LEFT COLUMN: DELIVERY DETAILS FORM */}
             <div className="space-y-6">
 
@@ -366,12 +358,8 @@ export default function CheckoutPage() {
                                   </span>
                                 )}
                               </div>
-                              <p className="mt-2 text-xs font-bold text-gray-900">
-                                {addr.fullName}
-                              </p>
-                              <p className="text-[11px] text-gray-500">{addr.phone}</p>
-                              <p className="mt-1.5 text-xs text-gray-700 line-clamp-2">
-                                {addr.street}, {addr.city} {addr.postalCode}
+                              <p className="mt-2 text-xs text-gray-700 line-clamp-3">
+                                {addr.street}, {[addr.city, addr.province, addr.postalCode].filter(Boolean).join(", ")}, {addr.country}
                               </p>
                             </div>
                             <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-2 text-[11px]">
@@ -425,14 +413,31 @@ export default function CheckoutPage() {
 
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold text-gray-700">
-                      Postal Code (Optional)
+                      Province / Region <span className="text-red-500">*</span>
                     </label>
 
                     <input
                       type="text"
+                      required
+                      autoComplete="address-level1"
+                      value={province}
+                      onChange={(event) => setProvince(event.target.value)}
+                      placeholder="e.g. Punjab"
+                      className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2]/50 px-4 py-3 text-xs outline-none transition focus:border-black focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-xs font-semibold text-gray-700">
+                      Postal Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="postal-code"
                       value={postalCode}
                       onChange={(event) => setPostalCode(event.target.value)}
-                      placeholder="54000"
+                      placeholder="e.g. 54000"
                       className="w-full rounded-xl border border-gray-200 bg-[#F8F6F2]/50 px-4 py-3 text-xs outline-none transition focus:border-black focus:bg-white"
                     />
                   </div>
@@ -550,7 +555,7 @@ export default function CheckoutPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={placingOrder}
+                  disabled={placingOrder || checkingStock || !!stockError || cartItems.length === 0}
                   className="mt-6 w-full rounded-xl bg-black py-4 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-md transition hover:bg-[#A06E31] disabled:opacity-50"
                 >
                   {placingOrder ? "Placing Order..." : "PLACE ORDER NOW →"}

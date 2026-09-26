@@ -9,7 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductDetailSkeleton from "@/components/ProductDetailSkeleton";
 import WishlistAuthPrompt from "@/components/WishlistAuthPrompt";
 import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
-import { catalogFetch } from "@/lib/catalog-client";
+import { catalogFetch, subscribeCatalogRefresh } from "@/lib/catalog-client";
 
 type Product = {
 id?: number;
@@ -572,9 +572,11 @@ const slug = params.slug as string;
 const [loadedProduct, setLoadedProduct] = useState<{ slug: string; product: Product | null } | null>(null);
 const isLoading = loadedProduct?.slug !== slug;
 const product = isLoading ? null : loadedProduct.product;
-const [selectedSize, setSelectedSize] = useState("M");
-const [selectedColor, setSelectedColor] = useState("Black");
+const [selectedSize, setSelectedSize] = useState("");
+const [selectedColor, setSelectedColor] = useState("");
 const [quantity, setQuantity] = useState(1);
+const [isAdding, setIsAdding] = useState(false);
+const [cartMessage, setCartMessage] = useState("");
 const [selectedImage, setSelectedImage] = useState(
 product?.image || ""
 );
@@ -591,6 +593,38 @@ useLayoutEffect(() => {
   window.scrollTo({ top: 0, left: 0 });
   root.style.scrollBehavior = previousBehavior;
 }, [slug]);
+
+useEffect(() => {
+  const refreshAvailability = async () => {
+    try {
+      const response = await catalogFetch(`/api/products?slug=${encodeURIComponent(slug)}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const variants: NonNullable<Product["variants"]> = data.products?.[0]?.variants || [];
+      if (!variants.length) {
+        setLoadedProduct((current) => current?.slug === slug ? { slug, product: null } : current);
+        return;
+      }
+      setLoadedProduct((current) => current?.slug === slug && current.product
+        ? { slug, product: { ...current.product, variants } }
+        : current);
+      let chosen = variants.find((variant) => {
+        const size = variant.options.size || variant.options.shoe_size || variant.options.waist;
+        return (!size || size.value === selectedSize) &&
+          (!variant.options.color || variant.options.color.value === selectedColor);
+      });
+      if (!chosen) {
+        chosen = variants[0];
+        const size = chosen.options.size || chosen.options.shoe_size || chosen.options.waist;
+        setSelectedColor(chosen.options.color?.value || "");
+        setSelectedSize(size?.value || "");
+        setCartMessage("Availability has changed. Please review the available options.");
+      }
+      setQuantity((current) => Math.min(current, chosen.stock));
+    } catch { /* Keep the current view if the stock service is temporarily unavailable. */ }
+  };
+  return subscribeCatalogRefresh(() => void refreshAvailability());
+}, [slug, selectedColor, selectedSize]);
 
 useEffect(() => {
   let active = true;
@@ -611,10 +645,12 @@ useEffect(() => {
       };
       setLoadedProduct({ slug, product: mapped });
       setSelectedImage(mapped.image);
-      const options = mapped.variants?.[0]?.options || {};
+      const options = mapped.variants?.find((variant) => variant.available && variant.stock > 0)?.options || {};
       const sizeOption = options.size || options.shoe_size || options.waist;
-      if (sizeOption?.value) setSelectedSize(sizeOption.value);
-      if (options.color?.value) setSelectedColor(options.color.value);
+      setSelectedSize(sizeOption?.value || "");
+      setSelectedColor(options.color?.value || "");
+      setQuantity(1);
+      setCartMessage("");
     })
     .catch(() => {
       if (!active) return;
@@ -704,7 +740,7 @@ if (isLoading) {
   return <ProductDetailSkeleton />;
 }
 
-if (!product) {
+if (!product || !product.variants?.some((variant) => variant.available && variant.stock > 0)) {
     return (
       <>
         <main className="flex min-h-[70vh] items-center justify-center bg-[#F8F6F2] px-6">
@@ -714,11 +750,11 @@ if (!product) {
             </p>
 
             <h1 className="mt-4 text-3xl font-semibold text-gray-900">
-              Product Not Found
+              Product Unavailable
             </h1>
 
             <p className="mt-3 text-sm text-gray-500">
-              Sorry, this product could not be found.
+              This product is currently unavailable. Explore our collection to find something you love.
             </p>
 
             <Link
@@ -733,7 +769,89 @@ if (!product) {
     );
   }
 
-  const addToCart = () => {
+  const availableVariants = product.variants.filter((variant) => variant.available && variant.stock > 0);
+  const selectedVariant = availableVariants.find((item) => {
+    const size = item.options.size || item.options.shoe_size || item.options.waist;
+    return (!size || size.value === selectedSize) && (!item.options.color || item.options.color.value === selectedColor);
+  });
+
+  const addToCart = async () => {
+    if (isAdding || !selectedVariant) return false;
+    setIsAdding(true);
+    setCartMessage("");
+    try {
+    const response = await catalogFetch(`/api/products?slug=${encodeURIComponent(slug)}`);
+    if (!response.ok) throw new Error("Unable to check availability");
+    const data = await response.json();
+    const freshVariants: NonNullable<Product["variants"]> = data.products?.[0]?.variants || [];
+    setLoadedProduct({ slug, product: { ...product, variants: freshVariants } });
+    const variant = freshVariants.find((item) => item.id === selectedVariant.id && item.available && item.stock > 0);
+    if (!variant) {
+      const nextVariant = freshVariants.find((item) => item.available && item.stock > 0);
+      const nextSize = nextVariant && (nextVariant.options.size || nextVariant.options.shoe_size || nextVariant.options.waist);
+      setSelectedColor(nextVariant?.options.color?.value || "");
+      setSelectedSize(nextSize?.value || "");
+      setQuantity(1);
+      setCartMessage("Availability has changed. Please review the available options.");
+      return false;
+    }
+    if (variant.stock < quantity) {
+      setQuantity(Math.max(1, variant.stock));
+      setCartMessage(`Only ${variant.stock} available. We've updated the quantity; please review your selection.`);
+      return false;
+    }
+    const size = variant.options.size || variant.options.shoe_size || variant.options.waist;
+    const newItem: CartItem = {
+      variantId: variant.id,
+      slug,
+      name: product.name,
+      price: variant.price,
+      size: size?.value || "",
+      color: variant.options.color?.value || "",
+      quantity,
+      image: product.image,
+    };
+
+    const savedCart = localStorage.getItem("cartItems");
+    const cartItems: CartItem[] = savedCart ? JSON.parse(savedCart) : [];
+    const matchesVariant = (item: CartItem) => item.variantId
+      ? item.variantId === variant.id
+      : item.name === newItem.name && item.size === newItem.size && (item.color || "") === newItem.color;
+    const existingItemIndex = cartItems.findIndex(matchesVariant);
+    const inCart = cartItems.filter(matchesVariant).reduce((total, item) => total + Number(item.quantity), 0);
+    if (inCart + quantity > variant.stock) {
+      const remaining = Math.max(0, variant.stock - inCart);
+      if (remaining > 0) setQuantity(remaining);
+      setCartMessage(remaining > 0
+        ? `You already have ${inCart} in your bag. You can add ${remaining} more; please review the quantity.`
+        : "You already have all available items for this option in your bag.");
+      return false;
+    }
+    if (existingItemIndex !== -1) {
+      cartItems[existingItemIndex] = { ...newItem, quantity: Number(cartItems[existingItemIndex].quantity) + quantity };
+    } else {
+      cartItems.push(newItem);
+    }
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    window.dispatchEvent(new Event("cartUpdated"));
+    return true;
+    } catch {
+      setCartMessage("We couldn't check availability. Please try again.");
+      return false;
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+const handleAddToCart = async () => {
+if (await addToCart()) setCartMessage("Added to your bag.");
+};
+
+const handleBuyNow = async () => {
+if (await addToCart()) router.push("/checkout");
+};
+
+/*
     const variant = product.variants?.find((item) => {
       const size = item.options.size || item.options.shoe_size || item.options.waist;
       return (!size || size.value === selectedSize) && (!item.options.color || item.options.color.value === selectedColor);
@@ -821,7 +939,7 @@ if (!product) {
   );
 }
 
-const availableVariants = product.variants?.filter((variant) => variant.available && variant.stock > 0);
+*/
 const colorOptions = availableVariants
   ? Array.from(new Map(availableVariants.flatMap((variant) => variant.options.color ? [[variant.options.color.value, variant.options.color]] : [])).values())
   : [{ value: "Black", colorHex: "#111111" }, { value: "Beige", colorHex: "#D5C1A9" }, { value: "White", colorHex: "#FFFFFF" }];
@@ -829,7 +947,7 @@ const sizeAttribute = product.attributes?.find((attribute) => ["size", "shoe_siz
 const sizeOptions = availableVariants
   ? Array.from(new Set(availableVariants.filter((variant) => !variant.options.color || variant.options.color.value === selectedColor).map((variant) => variant.options.size?.value || variant.options.shoe_size?.value || variant.options.waist?.value).filter(Boolean))) as string[]
   : ["XS", "S", "M", "L", "XL"];
-const hasColor = !product.attributes || product.attributes.some((attribute) => attribute.code === "color");
+const hasColor = colorOptions.length > 0;
 
 return (
 <>
@@ -1048,9 +1166,8 @@ return (
               </span>
 
               <button
-                onClick={() =>
-                  setQuantity(quantity + 1)
-                }
+                onClick={() => setQuantity(Math.min(quantity + 1, selectedVariant?.stock || 1))}
+                disabled={!selectedVariant || quantity >= selectedVariant.stock}
                 className="px-5 py-3 text-lg transition hover:bg-gray-100"
                 aria-label="Increase quantity"
               >
@@ -1061,16 +1178,19 @@ return (
 
           {/* ACTION BUTTONS */}
           <div className="mt-8 space-y-3">
+            {cartMessage && <p role="status" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">{cartMessage}</p>}
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={handleAddToCart}
+                disabled={isAdding || !selectedVariant}
                 className="rounded-xl border border-black bg-white py-4 text-sm font-semibold transition hover:bg-black hover:text-white"
               >
-                Add to Bag
+                {isAdding ? "Checking stock..." : "Add to Bag"}
               </button>
 
               <button
                 onClick={handleBuyNow}
+                disabled={isAdding || !selectedVariant}
                 className="rounded-xl bg-black py-4 text-sm font-semibold text-white transition hover:bg-[#A06E31]"
               >
                 Buy Now

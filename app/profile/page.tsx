@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import jsPDF from "jspdf";
-import { getWishlistRevision, readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
+import { getWishlistRevision, writeWishlistItems } from "@/lib/wishlist-client";
 
 // ================= TYPES =================
 type UserProfile = {
@@ -23,13 +23,26 @@ type Address = {
   id: string;
   label: "Home" | "Office" | "Other";
   isDefault: boolean;
-  fullName: string;
-  phone: string;
   street: string;
   city: string;
+  province: string;
   postalCode: string;
   country: string;
 };
+
+async function changeAddresses(method: "POST" | "PATCH" | "DELETE", body: unknown): Promise<Address[]> {
+  const response = await fetch("/api/addresses", {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok || !Array.isArray(data.addresses)) {
+    throw new Error(data.error || "Could not update addresses.");
+  }
+  window.dispatchEvent(new Event("addressesUpdated"));
+  return data.addresses;
+}
 
 type OrderItem = {
   name: string;
@@ -53,6 +66,7 @@ type Order = {
 
 type WishlistItem = {
   id: number;
+  slug?: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -201,7 +215,6 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading, logout, updateUser } = useAuth();
 
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Active Tab
@@ -263,52 +276,29 @@ export default function ProfilePage() {
 
   // User Profile State
   const [profile, setProfile] = useState<UserProfile>({
-    firstName: "Abdullah",
-    lastName: "Khan",
-    email: "abdullah.khan@example.com",
-    phone: "+92 300 1234567",
-    birthday: "1998-05-14",
-    gender: "Male",
-    memberSince: "November 2024",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    birthday: "",
+    gender: "",
+    memberSince: "",
   });
 
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<UserProfile>(profile);
 
   // Addresses State
-  const [addresses, setAddresses] = useState<Address[]>([
-    {
-      id: "addr-1",
-      label: "Home",
-      isDefault: true,
-      fullName: "Abdullah Khan",
-      phone: "+92 300 1234567",
-      street: "House 42, Street 8, Block B",
-      city: "Lahore",
-      postalCode: "54000",
-      country: "Pakistan",
-    },
-    {
-      id: "addr-2",
-      label: "Office",
-      isDefault: false,
-      fullName: "Abdullah Khan",
-      phone: "+92 300 1234567",
-      street: "Floor 3, Tech Plaza, Main Boulevard",
-      city: "Lahore",
-      postalCode: "54000",
-      country: "Pakistan",
-    },
-  ]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [savingAddress, setSavingAddress] = useState(false);
 
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [newAddress, setNewAddress] = useState<Omit<Address, "id">>({
     label: "Home",
     isDefault: false,
-    fullName: "",
-    phone: "",
     street: "",
     city: "",
+    province: "",
     postalCode: "",
     country: "Pakistan",
   });
@@ -319,29 +309,6 @@ export default function ProfilePage() {
 
   // Wishlist State (Loaded dynamically from PostgreSQL)
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-
-  useLayoutEffect(() => {
-    // Hydrate before paint so the wishlist tab and badges never flash empty.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setWishlist(readWishlistItems<WishlistItem>());
-  }, []);
-
-  useEffect(() => {
-    const syncWishlistFromCache = (event: Event) => {
-      const customEvent = event as CustomEvent<{ items?: WishlistItem[] }>;
-      setWishlist(
-        Array.isArray(customEvent.detail?.items)
-          ? customEvent.detail.items
-          : readWishlistItems<WishlistItem>(),
-      );
-    };
-    window.addEventListener("wishlistUpdated", syncWishlistFromCache);
-    window.addEventListener("storage", syncWishlistFromCache);
-    return () => {
-      window.removeEventListener("wishlistUpdated", syncWishlistFromCache);
-      window.removeEventListener("storage", syncWishlistFromCache);
-    };
-  }, []);
 
   // Passwords Form
   const [passwords, setPasswords] = useState({
@@ -401,28 +368,47 @@ export default function ProfilePage() {
     if (user) {
       // Mirror authenticated session data into this page's editable form state.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoggedIn(true);
       setProfile((prev) => ({
         ...prev,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        phone: user.phone || prev.phone,
-        birthday: user.birthday || prev.birthday,
-        gender: user.gender || prev.gender,
-        memberSince: user.memberSince || prev.memberSince,
+        phone: user.phone || "",
+        birthday: user.birthday || "",
+        gender: user.gender || "",
+        memberSince: user.memberSince || "",
       }));
       setFormData((prev) => ({
         ...prev,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        phone: user.phone || prev.phone,
-        birthday: user.birthday || prev.birthday,
-        gender: user.gender || prev.gender,
+        phone: user.phone || "",
+        birthday: user.birthday || "",
+        gender: user.gender || "",
       }));
     }
   }, [user]);
+
+  const userId = user?.id;
+  useEffect(() => {
+    let active = true;
+    // Never show the previous account's addresses while the new account loads.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAddresses([]);
+    if (!userId) return;
+    void fetch("/api/addresses", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load addresses.");
+        const data = await response.json();
+        if (active) setAddresses(Array.isArray(data.addresses) ? data.addresses : []);
+      })
+      .catch((error) => {
+        console.error("Failed to load addresses", error);
+        if (active) showToast("Could not load your saved addresses.");
+      });
+    return () => { active = false; };
+  }, [userId]);
 
   useEffect(() => {
     // Load Avatar
@@ -431,20 +417,6 @@ export default function ProfilePage() {
       // Hydrate the client-only avatar from browser storage after mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvatarUrl(savedAvatar);
-    }
-
-    const savedAddrs = localStorage.getItem("savedAddresses");
-    if (savedAddrs) {
-      try {
-        const parsed = JSON.parse(savedAddrs);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAddresses(parsed);
-        }
-      } catch (err) {
-        console.error("Failed to parse savedAddresses", err);
-      }
-    } else {
-      localStorage.setItem("savedAddresses", JSON.stringify(addresses));
     }
 
     // Load & sync wishlist from PostgreSQL database
@@ -464,14 +436,7 @@ export default function ProfilePage() {
       } catch (e) {
         console.error("Failed to load wishlist from DB", e);
       }
-      const savedWishlist = localStorage.getItem("wishlistItems");
-      if (savedWishlist) {
-        try {
-          setWishlist(JSON.parse(savedWishlist));
-        } catch (err) {
-          console.error("Failed to parse wishlistItems", err);
-        }
-      }
+      setWishlist([]);
     };
 
     void fetchUserWishlist();
@@ -485,7 +450,7 @@ export default function ProfilePage() {
         if (!Array.isArray(data.orders)) return;
         setOrders(data.orders.map((order: {
           orderNumber: string; createdAt: string; status: string; items: Array<{ name: string; price: number; quantity: number; image: string; size?: string; attributes?: Record<string, string | { value?: string }> }>;
-          subtotal: number; shipping: number; total: number; paymentMethod: string; customer?: { address?: string; city?: string };
+          subtotal: number; shipping: number; total: number; paymentMethod: string; customer?: { address?: string; city?: string; province?: string; postalCode?: string };
         }) => ({
           id: order.orderNumber,
           date: new Date(order.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
@@ -495,7 +460,7 @@ export default function ProfilePage() {
           shipping: order.shipping,
           total: order.total,
           paymentMethod: order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod,
-          shippingAddress: [order.customer?.address, order.customer?.city].filter(Boolean).join(", "),
+          shippingAddress: [order.customer?.address, order.customer?.city, order.customer?.province, order.customer?.postalCode].filter(Boolean).join(", "),
         })));
       } catch (error) {
         console.error("Failed to load orders from database", error);
@@ -503,100 +468,6 @@ export default function ProfilePage() {
     };
     fetchOrders();
 
-    const baseOrders: Order[] = [
-      {
-        id: "#WW-849102",
-        date: "March 12, 2026",
-        status: "Delivered",
-        items: [
-          {
-            name: "Relaxed Fit Coat",
-            price: 4500,
-            size: "M",
-            quantity: 1,
-            image: "/images/product-1.png",
-          },
-          {
-            name: "Everyday Sneakers",
-            price: 5490,
-            size: "42",
-            quantity: 1,
-            image: "/images/product-6.png",
-          },
-        ],
-        subtotal: 9990,
-        shipping: 0,
-        total: 9990,
-        paymentMethod: "Cash on Delivery",
-        shippingAddress: "House 42, Street 8, Block B, Lahore",
-      },
-      {
-        id: "#WW-710443",
-        date: "February 24, 2026",
-        status: "Delivered",
-        items: [
-          {
-            name: "Classic Oversized Black Dress",
-            price: 2990,
-            size: "S",
-            quantity: 1,
-            image: "/images/product-2.png",
-          },
-        ],
-        subtotal: 2990,
-        shipping: 0,
-        total: 2990,
-        paymentMethod: "Credit Card",
-        shippingAddress: "House 42, Street 8, Block B, Lahore",
-      },
-    ];
-
-    const savedLastOrder = localStorage.getItem("lastOrder");
-    const savedOrderNumber = localStorage.getItem("orderNumber") || "#WW-982105";
-
-    if (savedLastOrder) {
-      try {
-        const parsedOrder = JSON.parse(savedLastOrder);
-        const newLiveOrder: Order = {
-          id: savedOrderNumber,
-          date: "Today",
-          status: "Processing",
-          items: parsedOrder.items || [],
-          subtotal: parsedOrder.subtotal || 0,
-          shipping: parsedOrder.shipping || 0,
-          total: parsedOrder.total || 0,
-          paymentMethod:
-            parsedOrder.paymentMethod === "cod"
-              ? "Cash on Delivery"
-              : "Credit / Debit Card",
-          shippingAddress: parsedOrder.customer
-            ? `${parsedOrder.customer.address}, ${parsedOrder.customer.city}`
-            : "House 42, Street 8, Lahore",
-        };
-
-        setOrders([newLiveOrder, ...baseOrders]);
-
-        if (parsedOrder.customer && !user) {
-          const names = parsedOrder.customer.name.split(" ");
-          const updated: UserProfile = {
-            firstName: names[0] || "Abdullah",
-            lastName: names.slice(1).join(" ") || "Khan",
-            email: parsedOrder.customer.email || "abdullah.khan@example.com",
-            phone: parsedOrder.customer.phone || "+92 300 1234567",
-            birthday: "1998-05-14",
-            gender: "Male",
-            memberSince: "November 2024",
-          };
-          setProfile(updated);
-          setFormData(updated);
-        }
-      } catch (e) {
-        console.error("Failed to parse lastOrder", e);
-        setOrders(baseOrders);
-      }
-    } else {
-      setOrders(baseOrders);
-    }
   }, []);
 
   // Avatar Upload Handler
@@ -616,12 +487,6 @@ export default function ProfilePage() {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleDemoLogin = () => {
-    localStorage.setItem("isLoggedIn", "true");
-    setIsLoggedIn(true);
-    showToast("Signed in as " + profile.firstName + " " + profile.lastName);
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -646,90 +511,50 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddAddress = (e: React.FormEvent) => {
+  const handleAddAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddress.fullName || !newAddress.street || !newAddress.city) {
+    if (!newAddress.street.trim() || !newAddress.city.trim() || !newAddress.province.trim() || !newAddress.postalCode.trim()) {
       showToast("Please fill in all required address fields.");
       return;
     }
-
-    const created: Address = {
-      ...newAddress,
-      id: "addr-" + Date.now(),
-    };
-
-    let updatedList = [...addresses];
-    if (created.isDefault || updatedList.length === 0) {
-      updatedList = updatedList.map((a) => ({ ...a, isDefault: false }));
-      created.isDefault = true;
+    setSavingAddress(true);
+    try {
+      setAddresses(await changeAddresses("POST", newAddress));
+      setShowAddressModal(false);
+      setNewAddress({
+        label: "Home",
+        isDefault: false,
+        street: "",
+        city: "",
+        province: "",
+        postalCode: "",
+        country: "Pakistan",
+      });
+      showToast("Address saved to your account.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not save address.");
+    } finally {
+      setSavingAddress(false);
     }
-    updatedList.push(created);
-
-    setAddresses(updatedList);
-    localStorage.setItem("savedAddresses", JSON.stringify(updatedList));
-    window.dispatchEvent(new Event("addressesUpdated"));
-    setShowAddressModal(false);
-    setNewAddress({
-      label: "Home",
-      isDefault: false,
-      fullName: "",
-      phone: "",
-      street: "",
-      city: "",
-      postalCode: "",
-      country: "Pakistan",
-    });
-    showToast("New address added and saved to profile!");
   };
 
-  const handleDeleteAddress = (id: string) => {
-    const filtered = addresses.filter((a) => a.id !== id);
-    if (filtered.length > 0 && !filtered.some((a) => a.isDefault)) {
-      filtered[0].isDefault = true;
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      setAddresses(await changeAddresses("DELETE", { id }));
+      showToast("Address removed from your account.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not remove address.");
     }
-    setAddresses(filtered);
-    localStorage.setItem("savedAddresses", JSON.stringify(filtered));
-    window.dispatchEvent(new Event("addressesUpdated"));
-    showToast("Address removed from profile.");
   };
 
-  const handleSetDefaultAddress = (id: string) => {
-    const updated = addresses.map((a) => ({
-      ...a,
-      isDefault: a.id === id,
-    }));
-    setAddresses(updated);
-    localStorage.setItem("savedAddresses", JSON.stringify(updated));
-    window.dispatchEvent(new Event("addressesUpdated"));
-    const selected = updated.find((a) => a.id === id);
-    showToast(`"${selected?.label || "Address"}" set as default address for checkout!`);
-  };
-
-  const handleAddToCart = (item: WishlistItem) => {
-    const newItem = {
-      name: item.name,
-      price: item.price,
-      size: "",
-      quantity: 1,
-      image: item.image,
-    };
-
-    const savedCart = localStorage.getItem("cartItems");
-    const cartItems = savedCart ? JSON.parse(savedCart) : [];
-
-    const existingIndex = cartItems.findIndex(
-      (c: OrderItem) => c.name === newItem.name && c.size === newItem.size
-    );
-
-    if (existingIndex !== -1) {
-      cartItems[existingIndex].quantity += 1;
-    } else {
-      cartItems.push(newItem);
+  const handleSetDefaultAddress = async (id: string) => {
+    if (addresses.find((address) => address.id === id)?.isDefault) return;
+    try {
+      setAddresses(await changeAddresses("PATCH", { id }));
+      showToast("Default delivery address updated.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not update address.");
     }
-
-    localStorage.setItem("cartItems", JSON.stringify(cartItems));
-    window.dispatchEvent(new Event("cartUpdated"));
-    showToast(`Added "${item.name}" to your shopping bag!`);
   };
 
   const handleRemoveWishlist = async (id: number) => {
@@ -1772,15 +1597,12 @@ export default function ProfilePage() {
                               )}
                             </div>
 
-                            <h3 className="mt-4 text-sm font-bold text-gray-900">
-                              {addr.fullName}
-                            </h3>
-                            <p className="text-xs text-gray-500">{addr.phone}</p>
-
-                            <p className="mt-3 text-xs leading-relaxed text-gray-700">
+                            <p className="mt-4 text-sm leading-relaxed text-gray-900">
                               {addr.street}
                               <br />
-                              {addr.city} {addr.postalCode}
+                              {[addr.city, addr.province, addr.postalCode].filter(Boolean).join(", ")}
+                              <br />
+                              {addr.country}
                             </p>
                           </div>
 
@@ -1824,15 +1646,7 @@ export default function ProfilePage() {
                             <MapPinIcon />
                           </div>
                           <h3 className="text-sm font-bold text-gray-900">No saved addresses</h3>
-                          <p className="text-xs text-gray-500 mt-1 mb-4">Add your shipping addresses for seamless 1-click checkout.</p>
-                          <button
-                            type="button"
-                            onClick={() => setShowAddressModal(true)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-neutral-800"
-                          >
-                            <PlusIcon />
-                            <span>Add First Address</span>
-                          </button>
+                          <p className="mt-1 text-xs text-gray-500">Use Add Address above to save your first delivery address.</p>
                         </div>
                       )}
                     </div>
@@ -1911,12 +1725,12 @@ export default function ProfilePage() {
                               </div>
                             </div>
 
-                            <button
-                              onClick={() => handleAddToCart(item)}
-                              className="mt-4 w-full rounded-xl bg-black py-3 text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-gray-800"
+                            <Link
+                              href={`/product/${item.slug}`}
+                              className="mt-4 block w-full rounded-xl bg-black py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-gray-800"
                             >
-                              Add to Bag
-                            </button>
+                              Choose Options
+                            </Link>
                           </div>
                         ))}
                       </div>
@@ -2183,43 +1997,12 @@ export default function ProfilePage() {
 
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-700">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Abdullah Khan"
-                  value={newAddress.fullName}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, fullName: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-700">
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="+92 300 1234567"
-                  value={newAddress.phone}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, phone: e.target.value })
-                  }
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-700">
                   Street Address *
                 </label>
                 <input
                   type="text"
                   required
+                  autoComplete="street-address"
                   placeholder="House / Apartment, Street"
                   value={newAddress.street}
                   onChange={(e) =>
@@ -2237,6 +2020,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     required
+                    autoComplete="address-level2"
                     placeholder="e.g. Lahore"
                     value={newAddress.city}
                     onChange={(e) =>
@@ -2248,19 +2032,38 @@ export default function ProfilePage() {
 
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-700">
-                    Postal Code
+                    Province / Region *
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 54000"
-                    value={newAddress.postalCode}
+                    required
+                    autoComplete="address-level1"
+                    placeholder="e.g. Punjab"
+                    value={newAddress.province}
                     onChange={(e) =>
-                      setNewAddress({ ...newAddress, postalCode: e.target.value })
+                      setNewAddress({ ...newAddress, province: e.target.value })
                     }
                     className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-700">
+                  Postal Code *
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoComplete="postal-code"
+                  placeholder="e.g. 54000"
+                  value={newAddress.postalCode}
+                  onChange={(e) => setNewAddress({ ...newAddress, postalCode: e.target.value })}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-black"
+                />
+              </div>
+
+              <p className="text-xs text-gray-500">Delivery country: Pakistan</p>
 
               <label className="flex items-center gap-2 pt-2 text-xs text-gray-700 cursor-pointer">
                 <input
@@ -2277,9 +2080,10 @@ export default function ProfilePage() {
               <div className="mt-6 flex gap-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-black py-3.5 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-gray-800"
+                  disabled={savingAddress}
+                  className="flex-1 rounded-xl bg-black py-3.5 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Save Address
+                  {savingAddress ? "Saving..." : "Save Address"}
                 </button>
                 <button
                   type="button"

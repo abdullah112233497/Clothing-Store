@@ -151,7 +151,7 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
       </button>
 
       {/* Logo */}
-      <div className={`flex h-20 items-center border-b border-[#3A2C22] ${collapsed ? "justify-center px-2" : "px-7"}`}>
+      <div className={`flex h-20 min-w-0 shrink-0 items-center overflow-hidden border-b border-[#3A2C22] ${collapsed ? "justify-center px-2" : "px-7"}`}>
         <Link href="/admin" className={collapsed ? "text-center" : ""} title={collapsed ? "WEARWELL Admin" : undefined}>
           <h1 className={`font-bold text-[#F8F6F2] ${collapsed ? "text-xl tracking-normal" : "text-xl tracking-[0.18em]"}`}>
             {collapsed ? "W" : "WEARWELL"}
@@ -165,7 +165,7 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 space-y-2 py-6 ${collapsed ? "px-3" : "px-4"}`}>
+      <nav className={`min-w-0 flex-1 space-y-2 overflow-x-hidden overflow-y-auto py-6 ${collapsed ? "px-3" : "px-4"}`}>
         {navItems.map((item) => {
           const isActive = currentTab === item.key;
           const Icon = item.icon;
@@ -176,29 +176,31 @@ export default function AdminSidebar({ currentTab }: AdminSidebarProps) {
               onMouseEnter={() => void prefetchAdminData(item.api)}
               onFocus={() => void prefetchAdminData(item.api)}
               title={collapsed ? item.label : undefined}
-              className={`group flex items-center rounded-xl py-3 text-sm transition-all duration-300 ${collapsed ? "justify-center px-2" : "gap-3 px-4"} ${
+              aria-label={collapsed ? item.label : undefined}
+              className={`group flex min-w-0 items-center rounded-xl py-3 text-sm transition-[background-color,color,transform] duration-200 ${collapsed ? "justify-center px-2" : "gap-3 px-4"} ${
                 isActive
                   ? "bg-[#A06E31] font-semibold text-white shadow-md shadow-[#A06E31]/25"
                   : `text-[#D5C1A9]/75 hover:bg-[#2C211B] hover:text-white ${collapsed ? "" : "hover:translate-x-1"}`
               }`}
             >
-              <Icon />
-              {!collapsed && <span>{item.label}</span>}
+              <span className="shrink-0"><Icon /></span>
+              {!collapsed && <span className="min-w-0 truncate">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Logout */}
-      <div className={`border-t border-[#3A2C22] ${collapsed ? "p-3" : "p-4"}`}>
+      <div className={`min-w-0 shrink-0 overflow-hidden border-t border-[#3A2C22] ${collapsed ? "p-3" : "p-4"}`}>
         <button
           type="button"
           onClick={handleLogout}
           title={collapsed ? "Logout" : undefined}
-          className={`flex w-full items-center rounded-xl py-3 text-sm text-[#D5C1A9]/70 transition-all duration-300 hover:bg-rose-500/15 hover:text-rose-200 ${collapsed ? "justify-center px-2" : "gap-3 px-4"}`}
+          aria-label={collapsed ? "Logout" : undefined}
+          className={`flex w-full min-w-0 items-center rounded-xl py-3 text-sm text-[#D5C1A9]/70 transition-[background-color,color] duration-200 hover:bg-rose-500/15 hover:text-rose-200 ${collapsed ? "justify-center px-2" : "gap-3 px-4"}`}
         >
-          <LogoutIcon />
-          {!collapsed && <span>Logout</span>}
+          <span className="shrink-0"><LogoutIcon /></span>
+          {!collapsed && <span className="min-w-0 truncate">Logout</span>}
         </button>
       </div>
     </aside>

@@ -6,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
-import { catalogFetch } from "@/lib/catalog-client";
+import { catalogFetch, subscribeCatalogRefresh } from "@/lib/catalog-client";
+import { searchProducts } from "@/lib/product-search";
 
 type Product = {
   slug?: string;
@@ -14,6 +15,9 @@ type Product = {
   price: string;
   category: "Women" | "Men" | "Accessories";
   image: string;
+  description?: string;
+  brand?: string;
+  base_sku?: string;
   variants?: Array<{ id: number; stock: number; available: boolean; price: number; options: Record<string, { value: string; displayValue?: string; colorHex?: string }> }>;
 };
 
@@ -217,14 +221,17 @@ function ShopContent() {
 
   useEffect(() => {
     let active = true;
-    catalogFetch("/api/products")
+    const refresh = () => catalogFetch("/api/products")
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!active) return;
         if (Array.isArray(data?.products) && data.products.length > 0) {
-          const nextProducts = data.products.map((product: { slug: string; name: string; category_slug: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
+          const nextProducts = data.products.map((product: { slug: string; name: string; category_slug: string; description?: string; brand?: string; base_sku?: string; base_price: number; sale_price: number | null; images: Array<{ url: string }>; variants: Product["variants"] }) => ({
             slug: product.slug,
             name: product.name,
+            description: product.description,
+            brand: product.brand,
+            base_sku: product.base_sku,
             price: `Rs. ${Number(product.sale_price ?? product.base_price).toLocaleString()}`,
             category: product.category_slug.startsWith("ladies-") ? "Women" : product.category_slug.startsWith("men-") ? "Men" : "Accessories",
             image: product.images?.[0]?.url || "",
@@ -243,7 +250,9 @@ function ShopContent() {
       .finally(() => {
         if (active) setIsLoading(false);
       });
-    return () => { active = false; };
+    void refresh();
+    const unsubscribe = subscribeCatalogRefresh(() => void refresh());
+    return () => { active = false; unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -255,19 +264,10 @@ function ShopContent() {
     });
   }, [searchParams]);
 
-  const filteredProducts = products.filter((product) => {
-    const categoryMatch =
-      activeCategory === "All" ||
-      product.category === activeCategory;
-
-    const searchText = searchQuery.toLowerCase();
-
-    const searchMatch =
-      product.name.toLowerCase().includes(searchText) ||
-      product.category.toLowerCase().includes(searchText);
-
-    return categoryMatch && searchMatch;
-  });
+  const filteredProducts = searchProducts(
+    products.filter((product) => activeCategory === "All" || product.category === activeCategory),
+    searchQuery,
+  );
 
   const changeCategory = (category: string) => {
     setActiveCategory(category);
@@ -406,11 +406,13 @@ function ShopContent() {
                   <div className="text-5xl">🔍</div>
 
                   <h3 className="mt-6 text-2xl font-semibold text-gray-900">
-                    No products found
+                    {products.length === 0 ? "Products are currently unavailable" : "No products found"}
                   </h3>
 
                   <p className="mt-3 text-sm text-gray-500">
-                    Try another product name or choose another category.
+                    {products.length === 0
+                      ? "Please check back soon for our next collection."
+                      : "Try another product name or choose another category."}
                   </p>
 
                   <button

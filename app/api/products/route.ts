@@ -5,10 +5,12 @@ export async function GET(request: NextRequest) {
   try {
     const slug = request.nextUrl.searchParams.get("slug");
     const category = request.nextUrl.searchParams.get("category");
-    const products = await getCatalogProducts({ slug, category });
+    const search = request.nextUrl.searchParams.get("search")?.trim().slice(0, 100) || null;
+    const limit = search && request.nextUrl.searchParams.get("suggest") === "1" ? 6 : undefined;
+    const products = await getCatalogProducts({ slug, category, search, limit });
     return NextResponse.json(
       { products },
-      { headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" } },
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
     console.error("Products API error:", error);

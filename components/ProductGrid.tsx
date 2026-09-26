@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import { ProductGridSkeleton } from "./ProductCardSkeleton";
-import { catalogFetch } from "@/lib/catalog-client";
+import { catalogFetch, subscribeCatalogRefresh } from "@/lib/catalog-client";
 
 type Product = {
   id: number | string;
@@ -87,7 +87,7 @@ export default function ProductGrid() {
   useEffect(() => {
     let active = true;
 
-    catalogFetch("/api/products")
+    const refresh = () => catalogFetch("/api/products")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;
@@ -130,8 +130,11 @@ export default function ProductGrid() {
         if (active) setIsLoading(false);
       });
 
+    void refresh();
+    const unsubscribe = subscribeCatalogRefresh(() => void refresh());
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 
@@ -160,6 +163,10 @@ export default function ProductGrid() {
       {/* Skeletons while loading or live products grid */}
       {isLoading ? (
         <ProductGridSkeleton count={8} />
+      ) : products.length === 0 ? (
+        <p className="rounded-xl border border-black/10 bg-[#F8F6F2] px-6 py-10 text-center text-sm text-gray-600">
+          New arrivals are currently unavailable. Check back soon.
+        </p>
       ) : (
         <div className="grid grid-cols-2 gap-x-3.5 gap-y-8 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
