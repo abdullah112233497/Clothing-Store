@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserFromCookie } from "@/lib/auth";
+import { getAuthenticatedCustomer } from "@/lib/api-auth";
 import { sql, initDb } from "@/lib/db";
 
 export async function PUT(request: Request) {
   try {
-    const session = await getCurrentUserFromCookie();
+    const customer = await getAuthenticatedCustomer();
 
-    if (!session || !session.userId) {
+    if (!customer) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
@@ -30,7 +30,7 @@ export async function PUT(request: Request) {
         birthday = ${birthday || ""},
         gender = ${gender || "Prefer not to say"},
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${session.userId}
+      WHERE id = ${customer.id} AND role = 'customer'
       RETURNING id, first_name, last_name, email, phone, birthday, gender, membership_tier, created_at;
     `;
 

@@ -7,7 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import ProductDetailSkeleton from "@/components/ProductDetailSkeleton";
+import WishlistAuthPrompt from "@/components/WishlistAuthPrompt";
 import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
+import { catalogFetch } from "@/lib/catalog-client";
 
 type Product = {
 id?: number;
@@ -543,6 +545,7 @@ details: [
 
 type CartItem = {
 variantId?: number;
+slug?: string;
 name: string;
 price: number;
 size: string;
@@ -579,6 +582,7 @@ product?.image || ""
 const { isLoggedIn } = useAuth();
 const [isWishlisted, setIsWishlisted] = useState(false);
 const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
+const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
 useLayoutEffect(() => {
   const root = document.documentElement;
@@ -590,7 +594,7 @@ useLayoutEffect(() => {
 
 useEffect(() => {
   let active = true;
-  fetch(`/api/products?slug=${encodeURIComponent(slug)}`, { cache: "no-store" })
+  catalogFetch(`/api/products?slug=${encodeURIComponent(slug)}`)
     .then((response) => response.ok ? response.json() : null)
     .then((data) => {
       const row = data?.products?.[0];
@@ -642,7 +646,7 @@ useEffect(() => {
 const handleToggleWishlist = async () => {
   if (!product) return;
   if (!isLoggedIn) {
-    router.push(`/account/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`);
+    setShowAuthPrompt(true);
     return;
   }
   if (isUpdatingWishlist) return;
@@ -696,6 +700,10 @@ const handleToggleWishlist = async () => {
   }
 };
 
+if (isLoading) {
+  return <ProductDetailSkeleton />;
+}
+
 if (!product) {
     return (
       <>
@@ -736,6 +744,7 @@ if (!product) {
     }
     const newItem: CartItem = {
       variantId: variant?.id,
+      slug,
       name: product.name,
       price: product.price,
       size: selectedSize,
@@ -1227,6 +1236,11 @@ return (
     {/* UNIFIED LUXURY FOOTER */}
     <Footer />
   </main>
+  <WishlistAuthPrompt
+    open={showAuthPrompt}
+    onClose={() => setShowAuthPrompt(false)}
+    redirectTo={`/product/${slug}`}
+  />
 </>
 );
 }

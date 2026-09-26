@@ -198,14 +198,27 @@ export default function AdminDashboard() {
     const params = new URLSearchParams();
     if (dateRange.startDate) params.set("from", dateRange.startDate);
     if (dateRange.endDate) params.set("to", dateRange.endDate);
-    adminFetch(`/api/admin/dashboard?${params.toString()}`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Unable to load dashboard data");
-        return response.json();
-      })
-      .then(setDashboard)
-      .catch((error) => console.error("Dashboard load failed:", error))
-      .finally(() => setIsLoading(false));
+    const endpoint = `/api/admin/dashboard?${params.toString()}`;
+    let active = true;
+    const loadDashboard = (forceRefresh = false) => {
+      adminFetch(endpoint, forceRefresh ? { cache: "no-store" } : undefined)
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Unable to load dashboard data");
+          return response.json();
+        })
+        .then((data) => { if (active) setDashboard(data); })
+        .catch((error) => console.error("Dashboard load failed:", error))
+        .finally(() => { if (active) setIsLoading(false); });
+    };
+    const refresh = () => {
+      if (document.visibilityState === "visible") loadDashboard(true);
+    };
+    loadDashboard();
+    window.addEventListener("adminDataRefresh", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("adminDataRefresh", refresh);
+    };
   }, [dateRange.startDate, dateRange.endDate]);
 
   const dashboardStats = useMemo(() => {

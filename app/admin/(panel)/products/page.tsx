@@ -7,6 +7,7 @@ import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminDropdown from "@/components/AdminDropdown";
 import AdminTableSkeletonRows from "@/components/AdminTableSkeletonRows";
 import { adminFetch, invalidateAdminCache } from "@/lib/admin-cache";
+import { invalidateCatalogClientCache } from "@/lib/catalog-client";
 import { PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-images";
 
 /* ==========================================================================
@@ -514,8 +515,8 @@ export default function ProductsPage() {
   const [newColorName, setNewColorName] = useState("");
   const [newColorHex, setNewColorHex] = useState("#8B5A2B");
 
-  const loadProducts = async () => {
-    const response = await adminFetch("/api/admin/products");
+  const loadProducts = async (forceRefresh = false) => {
+    const response = await adminFetch("/api/admin/products", forceRefresh ? { cache: "no-store" } : undefined);
     if (!response.ok) return;
     const data = await response.json();
     setProducts((data.products || []).map((product: { id: number; name: string; category: string; category_slug: string; parent_category_slug?: string; base_sku?: string; base_price: number; sale_price?: number; status: string; stock: number; images?: Array<{ url: string }>; admin_metadata?: Partial<Product>; variant_options?: Array<{ code: string; value: string; displayValue?: string; colorHex?: string }> }) => {
@@ -534,12 +535,19 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") void loadProducts(true);
+    };
     const timer = window.setTimeout(() => {
       void loadProducts()
         .catch((error) => console.error("Products load failed:", error))
         .finally(() => setIsLoading(false));
     }, 0);
-    return () => window.clearTimeout(timer);
+    window.addEventListener("adminDataRefresh", refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("adminDataRefresh", refresh);
+    };
   }, []);
 
   // Prevent background scrolling and interaction when modal is open
@@ -560,19 +568,21 @@ export default function ProductsPage() {
 
   const processUploadedFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    const selected = Array.from(files).slice(0, Math.max(0, 10 - formImages.length));
+    if (!selected.length) { alert("A product can have up to 10 images."); return; }
     setIsUploadingImages(true);
     try {
-      const uploaded: string[] = [];
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) { alert(`${file.name} is not a valid image.`); continue; }
-        if (file.size > 8 * 1024 * 1024) { alert(`${file.name} is larger than 8 MB.`); continue; }
+      const uploaded = await Promise.all(selected.map(async (file) => {
+        if (!file.type.startsWith("image/")) throw new Error(`${file.name} is not a valid image.`);
+        if (file.size > 8 * 1024 * 1024) throw new Error(`${file.name} is larger than 8 MB.`);
         const body = new FormData();
         body.append("file", file);
         const response = await fetch("/api/admin/uploads/cloudinary", { method: "POST", body });
-        const data = await response.json();
+        const data = await response.json().catch(() => ({ error: `Unable to upload ${file.name}.` }));
         if (!response.ok) throw new Error(data.error || `Unable to upload ${file.name}.`);
-        if (data.url) uploaded.push(data.url);
-      }
+        if (!data.url) throw new Error(`Cloudinary did not return a URL for ${file.name}.`);
+        return String(data.url);
+      }));
       setFormImages((prev) => [...prev, ...uploaded.filter((url) => !prev.includes(url))]);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Unable to upload images.");
@@ -659,7 +669,8 @@ export default function ProductsPage() {
     }
 
     if (isUploadingImages) { alert("Please wait for image uploads to finish."); return; }
-    const primaryImage = formImages.length > 0 ? formImages[0] : PRODUCT_IMAGE_PLACEHOLDER;
+    if (formImages.length === 0) { alert("Upload at least one product image to Cloudinary."); return; }
+    const primaryImage = formImages[0];
     const cleanedPrice = formPrice.trim().startsWith("Rs.") ? formPrice.trim() : `Rs. ${formPrice.trim()}`;
 
     const numericPrice = Number(cleanedPrice.replace(/[^0-9.]/g, ""));
@@ -674,7 +685,8 @@ export default function ProductsPage() {
     invalidateAdminCache("/api/admin/products");
     invalidateAdminCache("/api/admin/inventory");
     invalidateAdminCache("/api/admin/dashboard");
-    await loadProducts();
+    invalidateCatalogClientCache();
+    await loadProducts(true);
     setModalOpen(false);
   };
 
@@ -685,7 +697,8 @@ export default function ProductsPage() {
       invalidateAdminCache("/api/admin/products");
       invalidateAdminCache("/api/admin/inventory");
       invalidateAdminCache("/api/admin/dashboard");
-      await loadProducts();
+      invalidateCatalogClientCache();
+      await loadProducts(true);
       setModalOpen(false);
     }
   };

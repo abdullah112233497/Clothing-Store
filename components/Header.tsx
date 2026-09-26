@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
+import { getWishlistRevision, readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 
 type CartItem = {
   quantity: number;
@@ -134,12 +135,21 @@ function CloseIcon() {
 }
 
 export default function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoggedIn, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setMenuOpen(false);
+      setSearchOpen(false);
+    });
+  }, [pathname]);
 
   useEffect(() => {
     const updateCartQuantity = () => {
@@ -170,11 +180,13 @@ export default function Header() {
     const refreshWishlist = async () => {
       updateWishlistFromCache();
       if (!isLoggedIn) return;
+      const revisionAtStart = getWishlistRevision();
       try {
         const res = await fetch("/api/wishlist", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           const items = Array.isArray(data.items) ? data.items : [];
+          if (getWishlistRevision() !== revisionAtStart) return;
           setWishlistCount(items.length);
           writeWishlistItems(items);
           return;
@@ -218,9 +230,7 @@ export default function Header() {
       return;
     }
 
-    window.location.href = `/shop?search=${encodeURIComponent(
-      search.trim()
-    )}`;
+    router.push(`/shop?search=${encodeURIComponent(search.trim())}`);
   };
 
   return (
@@ -296,20 +306,22 @@ export default function Header() {
               <SearchIcon />
             </button>
 
-            {/* Wishlist Link */}
-            <Link
-              href={isLoggedIn ? "/profile?tab=wishlist" : "/account/login?redirect=%2Fprofile%3Ftab%3Dwishlist"}
-              aria-label="Wishlist"
-              title="My Wishlist"
-              className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
-            >
-              <HeartIcon />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
+            {/* Wishlist is available after sign in */}
+            {isLoggedIn && (
+              <Link
+                href="/profile?tab=wishlist"
+                aria-label="Wishlist"
+                title="My Wishlist"
+                className="relative flex items-center justify-center rounded-full p-1 text-gray-700 transition hover:bg-gray-100 hover:text-black sm:p-2"
+              >
+                <HeartIcon />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A06E31] text-[9px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Account / Login (Responsive for all screen sizes: converts to Login button when logged out) */}
             {isLoggedIn ? (

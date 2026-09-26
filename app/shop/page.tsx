@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { catalogFetch } from "@/lib/catalog-client";
 
 type Product = {
   slug?: string;
@@ -216,7 +217,7 @@ function ShopContent() {
 
   useEffect(() => {
     let active = true;
-    fetch("/api/products", { cache: "no-store" })
+    catalogFetch("/api/products")
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!active) return;

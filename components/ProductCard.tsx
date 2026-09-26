@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
+import WishlistAuthPrompt from "@/components/WishlistAuthPrompt";
 
 type ProductCardProps = {
   slug?: string;
@@ -25,6 +25,7 @@ type ProductVariant = {
 
 type CartItem = {
   variantId?: number;
+  slug?: string;
   name: string;
   price: number;
   size: string;
@@ -50,10 +51,10 @@ export default function ProductCard({
   image,
   variants,
 }: ProductCardProps) {
-  const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isUpdatingWishlist, setIsUpdatingWishlist] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   useEffect(() => {
     const checkWishlist = () => {
@@ -79,7 +80,7 @@ export default function ProductCard({
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      router.push(`/account/login?redirect=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/shop")}`);
+      setShowAuthPrompt(true);
       return;
     }
     if (isUpdatingWishlist) return;
@@ -133,7 +134,8 @@ export default function ProductCard({
     }
   };
 
-  const productLink = `/product/${slug || name.toLowerCase().replace(/\s+/g, "-")}`;
+  const resolvedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const productLink = `/product/${resolvedSlug}`;
 
   const handleQuickAdd = () => {
     const numericPrice = Number(
@@ -148,6 +150,7 @@ export default function ProductCard({
     const sizeOption = firstAvailable?.options.size || firstAvailable?.options.shoe_size || firstAvailable?.options.waist;
     const newItem: CartItem = {
       variantId: firstAvailable?.id,
+      slug: resolvedSlug,
       name,
       price: firstAvailable?.price || numericPrice,
       size: sizeOption?.value || "",
@@ -189,6 +192,7 @@ export default function ProductCard({
   };
 
   return (
+    <>
     <article className="group">
       <div className="relative block aspect-[3/4] overflow-hidden bg-[#F1EEE9]">
         <Link
@@ -284,5 +288,11 @@ export default function ProductCard({
         )}
       </div>
     </article>
+    <WishlistAuthPrompt
+      open={showAuthPrompt}
+      onClose={() => setShowAuthPrompt(false)}
+      redirectTo={productLink}
+    />
+    </>
   );
 }

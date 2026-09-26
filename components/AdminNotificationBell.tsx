@@ -16,7 +16,18 @@ export default function AdminNotificationBell() {
     .then((data) => setItems(data?.notifications || []))
     .catch(() => undefined);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    const refresh = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("adminDataRefresh", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("adminDataRefresh", refresh);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;

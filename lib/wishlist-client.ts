@@ -1,6 +1,11 @@
 "use client";
 
 export const WISHLIST_STORAGE_KEY = "wishlistItems";
+let wishlistRevision = 0;
+
+export function getWishlistRevision() {
+  return wishlistRevision;
+}
 
 export function readWishlistItems<T = Record<string, unknown>>(): T[] {
   if (typeof window === "undefined") return [];
@@ -15,9 +20,9 @@ export function readWishlistItems<T = Record<string, unknown>>(): T[] {
 
 export function writeWishlistItems<T>(items: T[]) {
   if (typeof window === "undefined") return;
+  wishlistRevision += 1;
   localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
   window.dispatchEvent(new CustomEvent("wishlistUpdated", {
     detail: { items, count: items.length },
   }));
 }
-

@@ -361,6 +361,42 @@ function formatOrderPrice(val: string | number) {
   return str.startsWith("Rs.") ? str : `Rs. ${str}`;
 }
 
+type ApiOrder = {
+  id: number;
+  orderNumber: string;
+  customer: { name: string; phone: string; email: string; address: string; city: string; notes?: string };
+  items: Array<{ name: string; size?: string; sku: string; price: number; quantity: number }>;
+  courier?: string;
+  trackingNumber?: string;
+  total: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  status: string;
+  createdAt: string;
+};
+
+function mapApiOrder(order: ApiOrder): Order {
+  return {
+    id: order.orderNumber,
+    dbId: order.id,
+    customer: order.customer.name,
+    phone: order.customer.phone,
+    email: order.customer.email,
+    address: order.customer.address,
+    city: order.customer.city,
+    notes: order.customer.notes,
+    product: order.items.map((item) => `${item.name}${item.size ? ` (${item.size})` : ""}`).join(", "),
+    items: order.items.map((item) => ({ name: item.name, size: item.size || "", sku: item.sku, price: `Rs. ${Number(item.price).toLocaleString("en-PK")}`, quantity: item.quantity })),
+    courier: order.courier || "Unassigned",
+    trackingNumber: order.trackingNumber || undefined,
+    total: `Rs. ${Number(order.total).toLocaleString("en-PK")}`,
+    paymentMethod: "Cash on Delivery",
+    paymentStatus: order.paymentStatus === "paid" ? "Collected" : "Pending",
+    status: order.status.charAt(0).toUpperCase() + order.status.slice(1) as Order["status"],
+    date: new Date(order.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+  };
+}
+
 /* =========================
    MAIN ORDERS COMPONENT
 ========================= */
@@ -385,32 +421,24 @@ export default function OrdersPage() {
   const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
 
   useEffect(() => {
-    adminFetch("/api/admin/orders")
+    let active = true;
+    const loadOrders = (forceRefresh = false) => adminFetch("/api/admin/orders", forceRefresh ? { cache: "no-store" } : undefined)
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (!data?.orders) return;
-        setOrders(data.orders.map((order: { id: number; orderNumber: string; customer: { name: string; phone: string; email: string; address: string; city: string; notes?: string }; items: Array<{ name: string; size?: string; sku: string; price: number; quantity: number }>; courier?: string; trackingNumber?: string; total: number; paymentMethod: string; paymentStatus: string; status: string; createdAt: string }) => ({
-          id: order.orderNumber,
-          dbId: order.id,
-          customer: order.customer.name,
-          phone: order.customer.phone,
-          email: order.customer.email,
-          address: order.customer.address,
-          city: order.customer.city,
-          notes: order.customer.notes,
-          product: order.items.map((item) => `${item.name}${item.size ? ` (${item.size})` : ""}`).join(", "),
-          items: order.items.map((item) => ({ name: item.name, size: item.size || "", sku: item.sku, price: `Rs. ${Number(item.price).toLocaleString("en-PK")}`, quantity: item.quantity })),
-          courier: order.courier || "Unassigned",
-          trackingNumber: order.trackingNumber || undefined,
-          total: `Rs. ${Number(order.total).toLocaleString("en-PK")}`,
-          paymentMethod: "Cash on Delivery",
-          paymentStatus: order.paymentStatus === "paid" ? "Collected" : "Pending",
-          status: order.status.charAt(0).toUpperCase() + order.status.slice(1) as Order["status"],
-          date: new Date(order.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-        })));
+        if (!active || !data?.orders) return;
+        setOrders(data.orders.map(mapApiOrder));
       })
       .catch((error) => console.error("Orders load failed:", error))
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (active) setIsLoading(false); });
+    const refresh = () => {
+      if (document.visibilityState === "visible") void loadOrders(true);
+    };
+    void loadOrders();
+    window.addEventListener("adminDataRefresh", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("adminDataRefresh", refresh);
+    };
   }, []);
 
   // Prevent background scrolling and interaction when modal is open

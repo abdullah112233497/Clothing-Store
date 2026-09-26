@@ -66,7 +66,8 @@ export async function POST(request: Request) {
         phone,
         birthday,
         gender,
-        membership_tier
+        membership_tier,
+        role
       ) VALUES (
         ${firstName.trim()},
         ${lastName.trim()},
@@ -75,7 +76,8 @@ export async function POST(request: Request) {
         ${phone.trim()},
         ${birthday},
         ${gender},
-        'VIP Black'
+        'VIP Black',
+        'customer'
       )
       RETURNING id, first_name, last_name, email, phone, birthday, gender, membership_tier, created_at;
     `;

@@ -33,9 +33,12 @@ function readCache(input: string) {
 export async function adminFetch(input: string, init?: RequestInit) {
   const method = (init?.method || "GET").toUpperCase();
   if (method !== "GET" || typeof window === "undefined") return fetch(input, init);
-  const cached = readCache(input);
-  if (cached) return cachedResponse(cached.value);
-  const response = await fetch(input, init);
+  const forceRefresh = init?.cache === "no-store";
+  if (!forceRefresh) {
+    const cached = readCache(input);
+    if (cached) return cachedResponse(cached.value);
+  }
+  const response = await fetch(input, { ...init, cache: "no-store" });
   if (response.ok) {
     const entry = { value: await response.clone().json(), timestamp: Date.now() };
     memory.set(input, entry);

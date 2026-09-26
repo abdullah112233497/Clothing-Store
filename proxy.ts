@@ -3,11 +3,11 @@ import type { NextRequest } from "next/server";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 // Routes that require authentication
-const protectedRoutes = ["/profile", "/checkout"];
+const protectedRoutes = ["/profile", "/account/profile", "/checkout"];
 const adminRoutes = ["/admin"];
 
 // Routes only accessible to logged-out users
-const authRoutes = ["/account/login", "/account/signup", "/login", "/signup"];
+const authRoutes = ["/account/login", "/account/signup", "/account/login/register", "/login", "/signup"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -34,16 +34,23 @@ export async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
-  if (isProtected && !isAuthenticated) {
-    const loginUrl = new URL("/account/login", request.nextUrl);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (isProtected) {
+    if (session?.role === "admin") {
+      return NextResponse.redirect(new URL("/admin", request.nextUrl));
+    }
+    if (!isAuthenticated || session?.role !== "customer") {
+      const loginUrl = new URL("/account/login", request.nextUrl);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // 2. Check if authenticated user is trying to visit login/signup
   const isAuthRoute = authRoutes.some((route) => pathname === route);
   if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/profile", request.nextUrl));
+    return NextResponse.redirect(
+      new URL(session?.role === "admin" ? "/admin" : "/profile", request.nextUrl)
+    );
   }
 
   return NextResponse.next();
@@ -53,9 +60,11 @@ export const config = {
   matcher: [
     "/profile/:path*",
     "/profile",
+    "/account/profile",
     "/checkout",
     "/account/login",
     "/account/signup",
+    "/account/login/register",
     "/login",
     "/signup",
     "/admin",

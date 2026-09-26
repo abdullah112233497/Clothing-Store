@@ -13,6 +13,11 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
   return { id: Number(rows[0].id), email: String(rows[0].email), role: rows[0].role as "customer" | "admin" };
 }
 
+export async function getAuthenticatedCustomer(): Promise<AuthenticatedUser | null> {
+  const user = await getAuthenticatedUser();
+  return user?.role === "customer" ? user : null;
+}
+
 export const unauthorized = (message = "Authentication required.") =>
   NextResponse.json({ error: message }, { status: 401 });
 

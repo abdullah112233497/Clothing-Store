@@ -44,6 +44,20 @@ export default function AdminPanelShell({ children }: { children: React.ReactNod
     return () => window.clearTimeout(timer);
   }, [pathname]);
 
+  useEffect(() => {
+    const notifyVisiblePage = () => {
+      if (document.visibilityState === "visible") {
+        window.dispatchEvent(new Event("adminDataRefresh"));
+      }
+    };
+    const timer = window.setInterval(notifyVisiblePage, 15_000);
+    document.addEventListener("visibilitychange", notifyVisiblePage);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", notifyVisiblePage);
+    };
+  }, []);
+
   return (
     <AdminSidebarContext.Provider value={value}>
       <div

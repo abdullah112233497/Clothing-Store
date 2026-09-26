@@ -9,12 +9,35 @@ let initialization: Promise<void> | null = null;
 
 /** Idempotently creates/upgrades the normalized commerce schema. */
 export function initDb() {
-  if (!initialization) initialization = initializeSchema();
+  if (!initialization) {
+    initialization = initializeSchema().catch((error) => {
+      // A temporary Neon/network failure must not poison this server process.
+      // The next request can retry once the database is reachable again.
+      initialization = null;
+      throw error;
+    });
+  }
   return initialization;
 }
 
 async function initializeSchema() {
   if (!databaseUrl) throw new Error("DATABASE_URL is not configured.");
+  const readiness = await sql`SELECT
+    to_regclass('public.users') IS NOT NULL AS users_ready,
+    to_regclass('public.products') IS NOT NULL AS products_ready,
+    to_regclass('public.product_images') IS NOT NULL AS images_ready,
+    to_regclass('public.product_variants') IS NOT NULL AS variants_ready,
+    to_regclass('public.orders') IS NOT NULL AS orders_ready,
+    to_regclass('public.notifications') IS NOT NULL AS notifications_ready,
+    to_regclass('public.admin_store_settings') IS NOT NULL AS settings_ready,
+    EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='products' AND column_name='admin_metadata') AS product_metadata_ready,
+    EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='orders' AND column_name='tracking_number') AS order_tracking_ready,
+    EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='payments' AND column_name='reconciled_at') AS payment_reconciliation_ready`;
+  const schema = readiness[0];
+  if (schema && Object.values(schema).every(Boolean)) return;
+
+  // DDL and seed work is only a recovery/bootstrap path. Normal requests pay
+  // for the single readiness query above instead of dozens of schema queries.
   await sql`CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY, first_name VARCHAR(100) NOT NULL, last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, phone VARCHAR(50),

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { forbidden, getAuthenticatedUser, unauthorized } from "@/lib/api-auth";
-import { optimizeCloudinaryImageUrl, PRODUCT_IMAGE_PLACEHOLDER } from "@/lib/product-images";
+import { optimizeCloudinaryImageUrl } from "@/lib/product-images";
 
 export const runtime = "nodejs";
 
@@ -14,17 +14,16 @@ export async function POST(request: Request) {
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
   if (!cloudName || !apiKey || !apiSecret) {
-    return NextResponse.json({
-      url: PRODUCT_IMAGE_PLACEHOLDER,
-      publicId: "docs/models",
-      placeholder: true,
-      warning: "Cloudinary credentials are incomplete, so a temporary Cloudinary image was used.",
-    });
+    return NextResponse.json(
+      { error: "Cloudinary is not fully configured on the server." },
+      { status: 503 },
+    );
   }
 
   const form = await request.formData();
   const file = form.get("file");
-  if (!(file instanceof File) || !file.type.startsWith("image/")) {
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]);
+  if (!(file instanceof File) || !allowedTypes.has(file.type)) {
     return NextResponse.json({ error: "Please select a valid image file." }, { status: 400 });
   }
   if (file.size > 8 * 1024 * 1024) {

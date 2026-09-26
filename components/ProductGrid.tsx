@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import { ProductGridSkeleton } from "./ProductCardSkeleton";
+import { catalogFetch } from "@/lib/catalog-client";
 
 type Product = {
   id: number | string;
@@ -86,7 +87,7 @@ export default function ProductGrid() {
   useEffect(() => {
     let active = true;
 
-    fetch("/api/products", { cache: "no-store" })
+    catalogFetch("/api/products")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;

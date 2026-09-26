@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type CartItem = {
+  slug?: string;
   name: string;
   price: number;
   size: string;
@@ -237,9 +238,10 @@ export default function CartPage() {
               {/* LEFT COLUMN: ITEMS LIST */}
               <div className="space-y-4">
                 {cartItems.map((item, index) => {
-                  const itemSlug = item.name
+                  const itemSlug = item.slug || item.name
                     .toLowerCase()
-                    .replace(/\s+/g, "-");
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "");
 
                   return (
                     <div

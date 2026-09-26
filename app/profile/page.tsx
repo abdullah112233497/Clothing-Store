@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useLayoutEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import jsPDF from "jspdf";
-import { readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
+import { getWishlistRevision, readWishlistItems, writeWishlistItems } from "@/lib/wishlist-client";
 
 // ================= TYPES =================
 type UserProfile = {
@@ -209,7 +209,7 @@ export default function ProfilePage() {
     "details" | "orders" | "addresses" | "wishlist" | "security"
   >("details");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const checkUrlTab = () => {
       if (typeof window === "undefined") return;
       const params = new URLSearchParams(window.location.search);
@@ -221,6 +221,8 @@ export default function ProfilePage() {
         setActiveTab(tabParam as "details" | "orders" | "addresses" | "wishlist" | "security");
       }
     };
+    // Read the requested tab before paint to avoid flashing the Details tab.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkUrlTab();
     window.addEventListener("popstate", checkUrlTab);
     return () => window.removeEventListener("popstate", checkUrlTab);
@@ -317,6 +319,29 @@ export default function ProfilePage() {
 
   // Wishlist State (Loaded dynamically from PostgreSQL)
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+
+  useLayoutEffect(() => {
+    // Hydrate before paint so the wishlist tab and badges never flash empty.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setWishlist(readWishlistItems<WishlistItem>());
+  }, []);
+
+  useEffect(() => {
+    const syncWishlistFromCache = (event: Event) => {
+      const customEvent = event as CustomEvent<{ items?: WishlistItem[] }>;
+      setWishlist(
+        Array.isArray(customEvent.detail?.items)
+          ? customEvent.detail.items
+          : readWishlistItems<WishlistItem>(),
+      );
+    };
+    window.addEventListener("wishlistUpdated", syncWishlistFromCache);
+    window.addEventListener("storage", syncWishlistFromCache);
+    return () => {
+      window.removeEventListener("wishlistUpdated", syncWishlistFromCache);
+      window.removeEventListener("storage", syncWishlistFromCache);
+    };
+  }, []);
 
   // Passwords Form
   const [passwords, setPasswords] = useState({
@@ -424,13 +449,15 @@ export default function ProfilePage() {
 
     // Load & sync wishlist from PostgreSQL database
     const fetchUserWishlist = async () => {
+      const revisionAtStart = getWishlistRevision();
       try {
         const res = await fetch("/api/wishlist", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.items)) {
+            if (getWishlistRevision() !== revisionAtStart) return;
             setWishlist(data.items);
-            localStorage.setItem("wishlistItems", JSON.stringify(data.items));
+            writeWishlistItems(data.items);
             return;
           }
         }
@@ -447,20 +474,7 @@ export default function ProfilePage() {
       }
     };
 
-    fetchUserWishlist();
-
-    const handleSyncWishlist = (event: Event) => {
-      const customEvent = event as CustomEvent<{ items?: WishlistItem[] }>;
-      if (Array.isArray(customEvent.detail?.items)) {
-        setWishlist(customEvent.detail.items);
-        return;
-      }
-
-      setWishlist(readWishlistItems<WishlistItem>());
-    };
-
-    window.addEventListener("wishlistUpdated", handleSyncWishlist);
-    window.addEventListener("storage", handleSyncWishlist);
+    void fetchUserWishlist();
 
     // Database is the source of truth for authenticated order history.
     const fetchOrders = async () => {
@@ -720,6 +734,7 @@ export default function ProfilePage() {
 
   const handleRemoveWishlist = async (id: number) => {
     const target = wishlist.find((w) => w.id === id);
+    if (!target) return;
     const previous = wishlist;
     const updated = wishlist.filter((w) => w.id !== id);
     setWishlist(updated);

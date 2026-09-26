@@ -25,6 +25,12 @@ export async function GET() {
 
     const user = users[0];
 
+    // Admin sessions belong exclusively to the admin portal and must never
+    // hydrate the storefront's customer account context.
+    if (user.role === "admin") {
+      return NextResponse.json({ user: null });
+    }
+
     return NextResponse.json({
       user: {
         id: user.id,
